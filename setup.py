@@ -27,7 +27,7 @@ else:
     libraries=["ca","Com","readline","rt"]
 
 
-rev="2.0"
+rev="2.0.1"
 CA_SOURCE="src/_ca314.cpp" # for threaded version.
 setup(name="CaChannel",
       version=rev,
