@@ -10,7 +10,7 @@ from distutils.core import setup, Extension
 
 EPICSBASE=os.path.join(os.getcwd(), 'epicsbase')
 
-HOSTARCH=os.popen(os.path.join(EPICSBASE,"startup","EpicsHostArch.pl")).read()
+HOSTARCH=os.popen('perl ' + os.path.join(EPICSBASE,"startup","EpicsHostArch.pl")).read()
 
 try:
     UNAME=platform.uname()[0]
