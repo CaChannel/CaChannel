@@ -1,15 +1,18 @@
 """
-CaChannel class having identical API as of caPython/CaChannel class, 
+CaChannel class having identical API as of caPython/CaChannel class,
 based on PythonCA ( > 1.20.1beta2)
 
 Author:     Xiaoqiang Wang
 Created:    Sep. 22, 2008
-Changes:     
+Changes:
 """
 
-import ca, time, types
+import ca
 
 ca.cs_never_search = 4
+
+# retrieve numeric waveforms as numpy arrays, default No
+USE_NUMPY = False
 
 class CaChannelException(Exception):
     def __init__(self, status):
@@ -18,7 +21,7 @@ class CaChannelException(Exception):
         return self.status
 
 class CaChannel:
-    """CaChannel: A Python class with identical API as of caPython/CaChannel 
+    """CaChannel: A Python class with identical API as of caPython/CaChannel
 
     Example:
         import CaChannel
@@ -63,13 +66,13 @@ class CaChannel:
             pass
 
     def version(self):
-        print "CaChannel, version v24-01-11"
+        print "CaChannel, version v28-03-12"
 #
 # Class helper methods
 #
     def setTimeout(self, timeout):
         """Set the timeout for this channel."""
-        if (timeout>=0 or timeout == None):
+        if (timeout>=0 or timeout is None):
             self.__timeout = timeout
         else:
             raise ValueError
@@ -105,7 +108,7 @@ class CaChannel:
         >>> status = chan.pend_event(2)
         catest is connected
         """
-        if pvName == None:
+        if pvName is None:
             pvName = self.pvname
         else:
             self.pvname = pvName
@@ -113,7 +116,7 @@ class CaChannel:
         try:
             self.__chid = ca.search(pvName, self._conn_callback)
         except ca.error, msg:
-            raise CaChannelException,msg 
+            raise CaChannelException(msg)
 
     def search(self, pvName=None):
         """Attempt to establish a connection to a process variable.
@@ -126,22 +129,22 @@ class CaChannel:
         >>> chan.state()
         2
         """
-        if pvName == None:
+        if pvName is None:
             pvName = self.pvname
         else:
             self.pvname = pvName
         try:
             self.__chid = ca.search(pvName, None)
         except ca.error, msg:
-            raise CaChannelException,msg
+            raise CaChannelException(msg)
 
     def clear_channel(self):
         """Close a channel created by one of the search functions"""
         if(self.__chid is not None):
             try:
-                status = ca.clear(self.__chid)
+                ca.clear(self.__chid)
             except ca.error,msg:
-                raise CaChannelException,msg 
+                raise CaChannelException(msg)
 
 #
 # Write methods
@@ -159,10 +162,10 @@ class CaChannel:
             req_type = self.field_type()
 
         # single numeric value
-        if (isinstance(value, int) or 
-            isinstance(value, long) or 
-            isinstance(value, float) or
-            isinstance(value, bool)):
+        if (isinstance(value, int) or
+                isinstance(value, long) or
+                isinstance(value, float) or
+                isinstance(value, bool)):
             pval = (CaChannel.dbr_d[req_type](value),)
         # single string value
         #   if DBR_CHAR, split into chars
@@ -192,25 +195,27 @@ class CaChannel:
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> chan.array_put(123)
-        >>> chan.pend_io(1)
+        >>> chan.flush_io()
         >>> chan.getw()
         123.0
         >>> chan = CaChannel('cabo')
         >>> chan.searchw()
         >>> chan.array_put('Busy', ca.DBR_STRING)
-        >>> chan.pend_io(1)
+        >>> chan.flush_io()
         >>> chan.getw()
         1
         >>> chan = CaChannel('cawave')
         >>> chan.searchw()
         >>> chan.array_put([1,2,3])
-        >>> chan.pend_io(1)
+        >>> chan.flush_io()
         >>> chan.getw()
         [1.0, 2.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        >>> chan.getw(count=3, use_numpy=True)
+        array([ 1.,  2.,  3.])
         >>> chan = CaChannel('cawavec')
         >>> chan.searchw()
         >>> chan.array_put('1234',count=3)
-        >>> chan.pend_io(1)
+        >>> chan.flush_io()
         >>> chan.getw(count=4)
         [49, 50, 51, 0]
         """
@@ -219,7 +224,7 @@ class CaChannel:
         try:
             ca.put(self.__chid, val, None, None, req_type)
         except ca.error,msg:
-            raise CaChannelException,msg
+            raise CaChannelException(msg)
 
     def array_put_callback(self, value, req_type, count, callback, *user_args):
         """Write a value or array of values to a channel and execute the user
@@ -255,13 +260,13 @@ class CaChannel:
         >>> status = chan.pend_event(1)
         cawavec put completed
         """
-        if req_type is None: req_type = -1
+        if req_type is None: req_type = 0
         val = self._setup_put(value, req_type, count)
         self._callbacks['putCB']=(callback, user_args)
         try:
             ca.put(self.__chid, val, None, self._put_callback, req_type)
         except ca.error,msg:
-            raise CaChannelException,msg
+            raise CaChannelException(msg)
 #
 # Read methods
 #   getValue
@@ -269,18 +274,19 @@ class CaChannel:
 #   array_get_callback
 #
 
-    # Obtain read value after ECA_NORMAL is returned on an array_get(). 
+    # Obtain read value after ECA_NORMAL is returned on an array_get().
     def getValue(self):
         """Return the value(s) after array_get has completed"""
         return self.val
 
     # Simulate with a synchronous getw function call
-    def array_get(self, req_type=None, count=None):
+    def array_get(self, req_type=None, count=None, **keywords):
         """Read a value or array of values from a channel. The new value is
         retrieved by a call to getValue method.
         Parameters:
             req_type: database request type. Defaults to be the native data type.
             count: number of data values to read, Defaults to be the native count.
+
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> chan.putw(123)
@@ -288,9 +294,9 @@ class CaChannel:
         >>> chan.getValue()
         123.0
         """
-        self.val = self.getw(req_type, count)
+        self.val = self.getw(req_type, count, **keywords)
 
-    def array_get_callback(self, req_type, count, callback, *user_args):
+    def array_get_callback(self, req_type, count, callback, *user_args, **keywords):
         """Read a value or array of values from a channel and execute the user
         supplied callback after the get has completed.
         Parameters:
@@ -299,6 +305,7 @@ class CaChannel:
             callback: function called when the get is completed.
             *user_args: user provided arguments that are passed to callback when
             it is invoked.
+
         >>> def getCB(epicsArgs, userArgs):
         ...     for item in sorted(epicsArgs.keys()):
         ...         if item.startswith('pv_'):
@@ -335,12 +342,12 @@ class CaChannel:
         pv_value 0
         """
         if req_type is None: req_type = ca.dbf_type_to_DBR(self.field_type())
-        if count is None: count = 0
+        if count is None: count = self.element_count()
         self._callbacks['getCB']=(callback, user_args)
         try:
-            status=ca.get(self.__chid, self._get_callback, req_type, count)
+            ca.get(self.__chid, self._get_callback, req_type, count, keywords.get('use_numpy', USE_NUMPY))
         except ca.error,msg:
-            raise CaChannelException,msg
+            raise CaChannelException(msg)
 
 #
 # Event methods
@@ -351,7 +358,7 @@ class CaChannel:
     # Creates a new event id and stores it on self.__evid.  Only one event registered
     # per CaChannel object.  If an event is already registered the event is cleared
     # before registering a new event.
-    def add_masked_array_event(self, req_type, count, mask, callback, *user_args):
+    def add_masked_array_event(self, req_type, count, mask, callback, *user_args, **keywords):
         """Specify a callback function to be executed whenever changes occur to a PV.
         Parameters:
             req_type: database request type. Defaults to be the native data type.
@@ -361,7 +368,8 @@ class CaChannel:
             callback: function called when the get is completed.
             *user_args: user provided arguments that are passed to callback when
             it is invoked.
-        
+            **keywards: other options
+
         >>> def eventCB(epicsArgs, userArgs):
         ...     print 'pv_value', epicsArgs['pv_value']
         ...     print 'pv_status', epicsArgs['pv_status'], ca.alarmStatusString(epicsArgs['pv_status'])
@@ -375,27 +383,33 @@ class CaChannel:
         pv_status 7 STATE
         pv_severity 1 MINOR
         >>> chan.clear_event()
+        >>> chan.add_masked_array_event(ca.DBR_STS_STRING, None, None, eventCB)
+        >>> status = chan.pend_event(1)
+        pv_value Busy
+        pv_status 7 STATE
+        pv_severity 1 MINOR
+        >>> chan.clear_event()
         """
         if req_type is None: req_type = ca.dbf_type_to_DBR(self.field_type())
-        if count is None: count = 0
+        if count is None: count = self.element_count()
         if mask is None: mask = ca.DBE_VALUE|ca.DBE_ALARM
         if self.__evid is not None:
             self.clear_event()
-            self.pend_io()
+            self.flush_io()
         self._callbacks['eventCB']=(callback, user_args)
         try:
-            self.__evid = ca.monitor(self.__chid, self._event_callback, count, mask)
+            self.__evid = ca.monitor(self.__chid, self._event_callback, count, mask, req_type, keywords.get('use_numpy', USE_NUMPY))
         except ca.error,msg:
-            raise CaChannelException,msg
+            raise CaChannelException(msg)
 
     def clear_event(self):
         """Remove previously installed callback function."""
         if self.__evid is not None:
             try:
-                status=ca.clear_monitor(self.__evid)
+                ca.clear_monitor(self.__evid)
                 self.__evid = None
             except ca.error,msg:
-               raise CaChannelException,msg 
+                raise CaChannelException(msg)
 
 #
 # Execute methods
@@ -418,7 +432,7 @@ class CaChannel:
                 timeout = self.__timeout
         status = ca.pend_io(float(timeout))
         if status != 0:
-            raise CaChannelException, ca.caError._caErrorMsg[status]
+            raise CaChannelException(ca.caError._caErrorMsg[status])
 
     def pend_event(self,timeout=None):
         """Flush the send buffer and wait for timeout seconds.
@@ -433,7 +447,7 @@ class CaChannel:
 
     def poll(self):
         """Flush the send buffer and execute outstanding background activity."""
-        status = ca.poll() 
+        status = ca.poll()
         # status is always ECA_TIMEOUT
         return status
 
@@ -441,7 +455,7 @@ class CaChannel:
         """Flush the send buffer and does not execute outstanding background activity."""
         status = ca.flush()
         if status != 0:
-            raise CaChannelException, ca.caError._caErrorMsg[status]
+            raise CaChannelException(ca.caError._caErrorMsg[status])
 
 #
 # Channel Access Macros
@@ -459,12 +473,13 @@ class CaChannel:
                   self._conn_state, self._host_name, self._raccess,
                   self._waccess) = ca.ch_info(self.__chid)
         except ca.error,msg:
-            raise CaChannelException,msg
+            raise CaChannelException(msg)
         return info
 
 
     def field_type(self):
         """Native field type.
+
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> ftype = chan.field_type()
@@ -478,6 +493,7 @@ class CaChannel:
 
     def element_count(self):
         """Native element count.
+
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> chan.element_count()
@@ -488,6 +504,7 @@ class CaChannel:
 
     def name(self):
         """Channel name specified when the channel was connected.
+
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> chan.name()
@@ -503,6 +520,7 @@ class CaChannel:
             ca.cs_conn          PV was found and available
             ca.cs_closed        PV not closed
             ca.cs_never_search  PV not searched yet
+
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> chan.state()
@@ -536,6 +554,7 @@ class CaChannel:
         """Attempt to establish a connection to a process variable.
         Parameters:
             pvName: process variable name
+
         >>> chan = CaChannel('non-exist-channel')
         >>> chan.searchw()
         Traceback (most recent call last):
@@ -553,7 +572,7 @@ class CaChannel:
             timeout = self.__timeout
         status = ca.pend_io(timeout)
         if status != 0:
-            raise CaChannelException, ca.caError._caErrorMsg[status]
+            raise CaChannelException(ca.caError._caErrorMsg[status])
 
     def putw(self, value, req_type=None):
         """Write a value or array of values to a channel
@@ -594,48 +613,45 @@ class CaChannel:
         try:
             ca.put(self.__chid, val, None, None, req_type)
         except ca.error,msg:
-            raise CaChannelException,msg
-        if self.__timeout is None:
-            timeout = CaChannel.ca_timeout
-        else:
-            timeout = self.__timeout
-        status = ca.pend_io(timeout)
-        if status != 0:
-            raise CaChannelException, ca.caError._caErrorMsg[status]
+            raise CaChannelException(msg)
+        self.flush_io()
 
-    def getw(self, req_type=None, count=None):
-        """Return a value or array of values from a channel.
+    def getw(self, req_type=None, count=None, **keywords):
+        """Return a value or a dict from a channel depending on req_type.
         Parameters:
             req_type: database request type. Defaults to be the native data type.
             count: number of data values to read, Defaults to be the native count.
         """
         updated = [False]
         value = [0]
-        def update_value(valstat):
-            if valstat is None:
+        def update_value(args):
+            if args is None:
                 return
             try:
-                value[0] = valstat[0]
+                value[0] = self._format_cb_args(args)
             finally:
                 updated[0] = True
         if req_type is None: req_type = ca.dbf_type_to_DBR(self.field_type())
-        if count is None: count = 0
+        if count is None: count = self.element_count()
         try:
-            ca.get(self.__chid, update_value, req_type, count)
+            ca.get(self.__chid, update_value, req_type, count, keywords.get('use_numpy', USE_NUMPY))
         except ca.error,msg:
-            raise CaChannelException,msg
+            raise CaChannelException(msg)
         if self.__timeout is None:
             timeout = CaChannel.ca_timeout
         else:
             timeout = self.__timeout
-        status = ca.pend_io(timeout)
-        n = 0
-        while n*0.02 < timeout and not updated[0]:
-            ca.pend_event(0.02)
-            n+=1
+        ca.flush_io(timeout)
+        n = timeout / 0.001
+        while n > 0 and not updated[0]:
+            ca.pend_event(0.001)
+            n-=1
         if not updated[0]:
-            raise CaChannelException, ca.caError._caErrorMsg[10] # ECA_TIMEOUT
-        return value[0]
+            raise CaChannelException(ca.caError._caErrorMsg[10]) # ECA_TIMEOUT
+        if ca.dbr_type_is_plain(req_type):
+            return value[0]['pv_value']
+        else:
+            return value[0]
 
 #
 # Callback functions
@@ -672,7 +688,7 @@ class CaChannel:
         epicsArgs = self._format_cb_args(args)
         callback(epicsArgs, userArgs)
 
-    def _event_callback(self, args): 
+    def _event_callback(self, args):
         try:
             callback, userArgs = self._callbacks.get('eventCB')
         except:

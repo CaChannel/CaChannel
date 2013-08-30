@@ -1,15 +1,15 @@
+
 #define FormatPlaintoValue(COUNT, VAL, PYTYPE, FORMAT) \
     {\
         register unsigned long cur;\
         if(COUNT==1)\
-            value = Py_BuildValue(FORMAT,*((PYTYPE*)VAL));\
+            value = FORMAT(*(PYTYPE*)VAL);\
         else{\
             register PYTYPE *vp = (PYTYPE *) VAL;\
-            value = PyList_New(0);\
+            value = PyList_New(count);\
             for (cur=0;cur < count; cur++){\
-                PyObject *ent=Py_BuildValue(FORMAT, *vp++);\
-                PyList_Append(value,ent);\
-                Py_XDECREF(ent);\
+                PyObject *ent=FORMAT(*(vp++));\
+                PyList_SetItem(value,cur,ent);\
             }\
         }\
     }
@@ -17,14 +17,49 @@
     {\
         register unsigned long cur;\
         if(COUNT==1)\
-            value = Py_BuildValue(FORMAT,(PYTYPE) cval->value);\
+            value = FORMAT((PYTYPE) cval->value);\
         else{\
-            value = PyList_New(0);\
+            value = PyList_New(count);\
             register dbr_##DBRTYPE##_t *vp=(dbr_##DBRTYPE##_t *)(VP);\
             for (cur=0;cur < count; cur++){\
-                PyObject *ent=Py_BuildValue(FORMAT,(PYTYPE) *vp++);\
-                PyList_Append(value,ent);\
-                Py_XDECREF(ent);\
+                PyObject *ent=FORMAT((PYTYPE) *(vp++));\
+                PyList_SetItem(value,cur,ent);\
+            }\
+        }\
+    }
+
+#define FormatPlaintoValueArray(COUNT, VAL, PYTYPE, FORMAT, NPTYPE) \
+    {\
+        if(COUNT==1)\
+            value = FORMAT(*((PYTYPE*)VAL));\
+        else{\
+            npy_intp ndims[]  = {COUNT};\
+            value =  PyArray_SimpleNew(1, ndims, NPTYPE); \
+            memcpy(PyArray_DATA(value), VAL, COUNT*sizeof(PYTYPE)); \
+        }\
+    }
+#define FormatDBRtoValueArray(COUNT, VP, PYTYPE, FORMAT,  NPTYPE) \
+    {\
+        if(COUNT==1)\
+            value = FORMAT((PYTYPE) cval->value);\
+        else{\
+            npy_intp ndims[]  = {COUNT};\
+            value =  PyArray_SimpleNew(1, ndims, NPTYPE); \
+            memcpy(PyArray_DATA(value), VP, COUNT*sizeof(PYTYPE)); \
+        }\
+    }
+
+#define FormatDBRStringtoValue(COUNT, DBRTYPE, VP, PYTYPE, FORMAT) \
+    {\
+        register unsigned long cur;\
+        if(COUNT==1)\
+            value = FORMAT(*(PYTYPE) cval->value);\
+        else{\
+            value = PyList_New(count);\
+            register dbr_##DBRTYPE##_t *vp=(dbr_##DBRTYPE##_t *)(VP);\
+            for (cur=0;cur < count; cur++){\
+                PyObject *ent=FORMAT(*(PYTYPE) *(vp++));\
+                PyList_SetItem(value,cur,ent);\
             }\
         }\
     }
@@ -34,7 +69,8 @@ PyObject *
 _convert_ca_to_Python(chtype type, 
                     unsigned long count, 
                     void *val, 
-                    int status){
+                    int status, 
+                    int use_numpy){
     PyObject *arglist = NULL;
     PyObject *value   = NULL;
 
@@ -48,31 +84,61 @@ _convert_ca_to_Python(chtype type,
     /* build arglist, value is inserted */
     switch(type){
     case DBR_STRING:
-        FormatPlaintoValue(count, val, dbr_string_t, "z");
+        FormatPlaintoValue(count, val, dbr_string_t, PyString_FromString);
         arglist = Py_BuildValue("((Oii))", value, -1, status);
         break;
     case DBR_SHORT: 
-        FormatPlaintoValue(count, val, dbr_short_t,  "i");
+        if(use_numpy == 0)
+            FormatPlaintoValue(count, val, dbr_short_t,  PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatPlaintoValueArray(count, val, dbr_short_t,  PyInt_FromLong,  NPY_SHORT)
+        #endif
         arglist = Py_BuildValue("((Oii))", value, -1, status);
         break;
     case DBR_FLOAT:
-        FormatPlaintoValue(count, val, dbr_float_t,  "f");
+        if(use_numpy == 0)
+            FormatPlaintoValue(count, val, dbr_float_t,  PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+            FormatPlaintoValueArray(count, val, dbr_float_t,  PyFloat_FromDouble,  NPY_FLOAT)
+        #endif
         arglist = Py_BuildValue("((Oii))", value, -1, status);
         break;
     case DBR_ENUM:
-        FormatPlaintoValue(count, val, dbr_enum_t,   "i");
+        if(use_numpy == 0)
+            FormatPlaintoValue(count, val, dbr_enum_t,   PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatPlaintoValueArray(count, val, dbr_enum_t,  PyInt_FromLong,  NPY_USHORT)
+        #endif
         arglist = Py_BuildValue("((Oii))", value, -1, status);
         break;
     case DBR_CHAR:
-        FormatPlaintoValue(count, val, dbr_char_t,   "b");
+        if (use_numpy == 0)
+            FormatPlaintoValue(count, val, dbr_char_t,   PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatPlaintoValueArray(count, val, dbr_char_t,   PyInt_FromLong,  NPY_BYTE)
+        #endif
         arglist = Py_BuildValue("((Oii))", value, -1, status);
         break;
     case DBR_LONG:
-        FormatPlaintoValue(count, val, dbr_long_t,   "i");
+        if (use_numpy == 0)
+            FormatPlaintoValue(count, val, dbr_long_t,   PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatPlaintoValueArray(count, val, dbr_long_t,   PyInt_FromLong,  NPY_INT)
+        #endif
         arglist = Py_BuildValue("((Oii))", value, -1, status);
         break;
-    case DBR_DOUBLE: 
-        FormatPlaintoValue(count, val, dbr_double_t, "d");
+    case DBR_DOUBLE:
+        if (use_numpy == 0)
+            FormatPlaintoValue(count, val, dbr_double_t, PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+            FormatPlaintoValueArray(count, val, dbr_double_t, PyFloat_FromDouble, NPY_DOUBLE)
+        #endif
         arglist = Py_BuildValue("((Oii))", value, -1, status);
         break;
 
@@ -81,7 +147,7 @@ _convert_ca_to_Python(chtype type,
     case DBR_CTRL_STRING:
     {
         struct dbr_sts_string  *cval=(struct dbr_sts_string  *)val;
-        FormatDBRtoValue(count, string,  cval->value , dbr_string_t_ptr, "z");
+        FormatDBRStringtoValue(count, string,  cval->value , dbr_string_t_ptr, PyString_FromString); 
         arglist=Py_BuildValue("((Oii))",value,
                  (int) cval->severity,(int) cval->status);
     }
@@ -89,7 +155,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_STS_SHORT: 
     {
         struct dbr_sts_short  *cval=(struct dbr_sts_short  *)val;
-        FormatDBRtoValue(count, short, &(cval->value), dbr_short_t,   "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, short, &(cval->value), dbr_short_t,   PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count, &(cval->value), dbr_short_t,   PyInt_FromLong, NPY_SHORT)
+        #endif
         arglist=Py_BuildValue("((Oii))",value,
                  (int) cval->severity,(int) cval->status);
     }
@@ -97,15 +168,25 @@ _convert_ca_to_Python(chtype type,
     case DBR_STS_FLOAT:
     {
         struct dbr_sts_float  *cval=(struct dbr_sts_float  *)val;
-        FormatDBRtoValue(count, float, &(cval->value), dbr_float_t,   "f");
-        arglist=Py_BuildValue("((Oii))",value,
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, float, &(cval->value), dbr_float_t, PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count, &(cval->value), dbr_float_t, PyFloat_FromDouble, NPY_FLOAT)
+        #endif
+        arglist =Py_BuildValue("((Oii))",value,
                  (int) cval->severity,(int) cval->status);
     }
         break;
     case DBR_STS_ENUM:
     {
         struct dbr_sts_enum  *cval=(struct dbr_sts_enum  *)val;    
-        FormatDBRtoValue(count, enum, &(cval->value),  dbr_enum_t,    "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, enum, &(cval->value),  dbr_enum_t,     PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,  &(cval->value), dbr_enum_t,      PyInt_FromLong, NPY_USHORT)
+        #endif
         arglist=Py_BuildValue("((Oii))",value,
                  (int) cval->severity,(int) cval->status);
     }
@@ -113,7 +194,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_STS_CHAR:
     {
         struct dbr_sts_char  *cval=(struct dbr_sts_char  *)val;    
-        FormatDBRtoValue(count, char, &(cval->value), dbr_char_t,     "b");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, char, &(cval->value), dbr_char_t,     PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,  &(cval->value), dbr_char_t,     PyInt_FromLong, NPY_BYTE)
+        #endif
         arglist=Py_BuildValue("((Oii))",value,
                  (int) cval->severity,(int) cval->status);
     }
@@ -121,7 +207,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_STS_LONG:
     {
         struct dbr_sts_long  *cval=(struct dbr_sts_long  *)val;
-        FormatDBRtoValue(count, long, &(cval->value), dbr_long_t,     "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, long, &(cval->value), dbr_long_t,     PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,  &(cval->value), dbr_long_t,     PyInt_FromLong, NPY_INT)
+        #endif
         arglist=Py_BuildValue("((Oii))",value,
                  (int) cval->severity,(int) cval->status);
     }
@@ -129,7 +220,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_STS_DOUBLE:
     {   
         struct dbr_sts_double  *cval=(struct dbr_sts_double  *)val;
-        FormatDBRtoValue(count, double, &(cval->value), dbr_double_t, "d");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, double, &(cval->value), dbr_double_t, PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,    &(cval->value), dbr_double_t, PyFloat_FromDouble, NPY_DOUBLE)
+        #endif
         arglist=Py_BuildValue("((Oii))",value,
                  (int) cval->severity,(int) cval->status);
     }
@@ -138,7 +234,7 @@ _convert_ca_to_Python(chtype type,
     case DBR_TIME_STRING:
     {
         struct dbr_time_string  *cval=(struct dbr_time_string  *)val;
-        FormatDBRtoValue(count, string,  cval->value , dbr_string_t_ptr, "z");
+        FormatDBRStringtoValue(count, string,  cval->value, dbr_string_t_ptr, PyString_FromString);
         arglist=Py_BuildValue("((Oiid))",value,
                  (int) cval->severity,(int) cval->status, TS2secs(cval->stamp));
     }
@@ -146,7 +242,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_TIME_SHORT: 
     {
         struct dbr_time_short  *cval=(struct dbr_time_short  *)val;
-        FormatDBRtoValue(count, short, &(cval->value), dbr_short_t,      "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, short, &(cval->value), dbr_short_t,      PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,   &(cval->value), dbr_short_t,      PyInt_FromLong, NPY_SHORT)
+        #endif
         arglist=Py_BuildValue("((Oiid))",value,
                  (int) cval->severity,(int) cval->status, TS2secs(cval->stamp));
     }
@@ -154,7 +255,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_TIME_FLOAT:
     {
         struct dbr_time_float  *cval=(struct dbr_time_float  *)val;
-        FormatDBRtoValue(count, float, &(cval->value), dbr_float_t,      "f");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, float, &(cval->value), dbr_float_t,      PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,   &(cval->value), dbr_float_t,      PyFloat_FromDouble, NPY_FLOAT)
+        #endif
         arglist=Py_BuildValue("((Oiid))",value,
                  (int) cval->severity,(int) cval->status, TS2secs(cval->stamp));
     }
@@ -162,7 +268,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_TIME_ENUM:
     {
         struct dbr_time_enum  *cval=(struct dbr_time_enum  *)val;    
-        FormatDBRtoValue(count, enum, &(cval->value), dbr_enum_t,        "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, enum, &(cval->value), dbr_enum_t,        PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,  &(cval->value), dbr_enum_t,        PyInt_FromLong, NPY_USHORT)
+        #endif
         arglist=Py_BuildValue("((Oiid))",value,
                  (int) cval->severity,(int) cval->status, TS2secs(cval->stamp));
     }
@@ -170,7 +281,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_TIME_CHAR:
     {
         struct dbr_time_char  *cval=(struct dbr_time_char  *)val;    
-        FormatDBRtoValue(count, char, &(cval->value), dbr_char_t,        "b");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, char, &(cval->value), dbr_char_t,        PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,  &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
+        #endif
         arglist=Py_BuildValue("((Oiid))",value,
                  (int) cval->severity,(int) cval->status, TS2secs(cval->stamp));
     }
@@ -178,7 +294,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_TIME_LONG:
     {
         struct dbr_time_long  *cval=(struct dbr_time_long  *)val;
-        FormatDBRtoValue(count, long, &(cval->value), dbr_long_t,        "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, long, &(cval->value), dbr_long_t,        PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,  &(cval->value), dbr_long_t,        PyInt_FromLong, NPY_INT)
+        #endif
         arglist=Py_BuildValue("((Oiid))",value,
                  (int) cval->severity,(int) cval->status, TS2secs(cval->stamp));
     }
@@ -186,7 +307,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_TIME_DOUBLE:        
     {   
         struct dbr_time_double  *cval=(struct dbr_time_double  *)val;
-        FormatDBRtoValue(count, double, &(cval->value), dbr_double_t,    "d");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, double, &(cval->value), dbr_double_t,    PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,    &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
+        #endif
         arglist=Py_BuildValue("((Oiid))",value,
                  (int) cval->severity,(int) cval->status, TS2secs(cval->stamp));
     }
@@ -195,7 +321,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_GR_SHORT:
     {
         struct dbr_gr_short  *cval=(struct dbr_gr_short  *)val;
-        FormatDBRtoValue(count, short,  &(cval->value), dbr_short_t,     "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, short,  &(cval->value), dbr_short_t,     PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+             FormatDBRtoValueArray(count,   &(cval->value), dbr_short_t,     PyInt_FromLong, NPY_SHORT)
+        #endif
         arglist=Py_BuildValue("((Oiid(siiiiii)))",
                 value,
                 cval->severity,
@@ -214,7 +345,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_GR_FLOAT:
     {
         struct dbr_gr_float  *cval=(struct dbr_gr_float  *)val;        
-        FormatDBRtoValue(count, float,  &(cval->value), dbr_float_t,     "f");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, float,  &(cval->value), dbr_float_t,     PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,    &(cval->value), dbr_float_t,     PyFloat_FromDouble, NPY_FLOAT)
+        #endif
         arglist=Py_BuildValue("((Oiid(sffffffi)))",
                 value,
                 cval->severity,
@@ -234,7 +370,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_GR_ENUM:
     {
         struct dbr_gr_enum  *cval=(struct dbr_gr_enum  *)val;
-        FormatDBRtoValue(count, enum,  &(cval->value), dbr_enum_t,       "i"); 
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, enum,  &(cval->value), dbr_enum_t,       PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,   &(cval->value), dbr_enum_t,       PyInt_FromLong, NPY_USHORT)
+        #endif
         char (*strs)[][MAX_ENUM_STRING_SIZE]=(char (*)[][MAX_ENUM_STRING_SIZE]) &cval->strs;
         unsigned long nstr=cval->no_str,i;
         PyObject *ptup=PyTuple_New(nstr);
@@ -255,7 +396,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_GR_CHAR:
     {
         struct dbr_gr_char  *cval=(struct dbr_gr_char  *)val;        
-        FormatDBRtoValue(count, char,  &(cval->value), dbr_char_t,        "b");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, char,  &(cval->value), dbr_char_t,        PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,   &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
+        #endif
         arglist=Py_BuildValue("((Oiid(sbbbbbb)))",
                 value,
                 cval->severity,
@@ -274,7 +420,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_GR_LONG:
     {
         struct dbr_gr_long  *cval=(struct dbr_gr_long  *)val;        
-        FormatDBRtoValue(count, long,  &(cval->value), dbr_long_t,       "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, long,  &(cval->value), dbr_long_t,       PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,   &(cval->value), dbr_long_t,       PyInt_FromLong, NPY_INT) 
+        #endif
         arglist=Py_BuildValue("((Oiid(siiiiii)))",
                 value,
                 cval->severity,
@@ -294,7 +445,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_GR_DOUBLE:
     {
         struct dbr_gr_double  *cval=(struct dbr_gr_double  *)val;        
-        FormatDBRtoValue(count, double,  &(cval->value), dbr_double_t,    "d");
+        if (use_numpy)
+            FormatDBRtoValue(count, double,  &(cval->value), dbr_double_t,    PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,     &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
+        #endif
         arglist=Py_BuildValue("((Oiid(sddddddi)))",
                 value,
                 cval->severity,
@@ -315,7 +471,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_CTRL_SHORT:
     {
         struct dbr_ctrl_short  *cval=(struct dbr_ctrl_short  *)val;
-        FormatDBRtoValue(count, short,  &(cval->value), dbr_short_t,      "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, short,  &(cval->value), dbr_short_t,      PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,    &(cval->value), dbr_short_t,      PyInt_FromLong, NPY_SHORT)
+        #endif
         arglist=Py_BuildValue("((Oiid(siiiiiiii)))",
                 value,
                 cval->severity,
@@ -336,7 +497,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_CTRL_FLOAT:
     {
         struct dbr_ctrl_float  *cval=(struct dbr_ctrl_float  *)val;        
-        FormatDBRtoValue(count, float,  &(cval->value), dbr_float_t,      "f");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, float,  &(cval->value), dbr_float_t,      PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+             FormatDBRtoValueArray(count,   &(cval->value), dbr_float_t,      PyFloat_FromDouble, NPY_FLOAT) 
+        #endif
         arglist=Py_BuildValue("((Oiid(sffffffffi)))",
                 value,
                 cval->severity,
@@ -358,7 +524,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_CTRL_ENUM:
     {
         struct dbr_ctrl_enum  *cval=(struct dbr_ctrl_enum  *)val;
-        FormatDBRtoValue(count, enum,  &(cval->value), dbr_enum_t,        "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, enum,  &(cval->value), dbr_enum_t,        PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,   &(cval->value), dbr_enum_t,        PyInt_FromLong, NPY_USHORT)
+        #endif
         char (*strs)[][MAX_ENUM_STRING_SIZE]=(char (*)[][MAX_ENUM_STRING_SIZE]) &cval->strs;
         unsigned long nstr=cval->no_str,i;
         PyObject *ptup=PyTuple_New(nstr);
@@ -379,7 +550,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_CTRL_CHAR:
     {
         struct dbr_ctrl_char  *cval=(struct dbr_ctrl_char  *)val;        
-        FormatDBRtoValue(count, char,  &(cval->value), dbr_char_t,        "b");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, char,  &(cval->value), dbr_char_t,        PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,   &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
+        #endif
         arglist=Py_BuildValue("((Oiid(sbbbbbbbb)))",
                 value,
                 cval->severity,
@@ -400,7 +576,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_CTRL_LONG:
     {
         struct dbr_ctrl_long  *cval=(struct dbr_ctrl_long  *)val;        
-        FormatDBRtoValue(count, long,  &(cval->value), dbr_long_t,        "i");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, long,  &(cval->value), dbr_long_t,        PyInt_FromLong)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,   &(cval->value), dbr_long_t,        PyInt_FromLong, NPY_INT)
+        #endif
         arglist=Py_BuildValue("((Oiid(siiiiiiii)))",
                 value,
                 cval->severity,
@@ -422,7 +603,12 @@ _convert_ca_to_Python(chtype type,
     case DBR_CTRL_DOUBLE:
     {
         struct dbr_ctrl_double  *cval=(struct dbr_ctrl_double  *)val;        
-        FormatDBRtoValue(count, double,  &(cval->value), dbr_double_t,    "d");
+        if (use_numpy == 0)
+            FormatDBRtoValue(count, double,  &(cval->value), dbr_double_t,    PyFloat_FromDouble)
+        #ifdef WITH_NUMPY
+        else
+            FormatDBRtoValueArray(count,     &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
+        #endif
         arglist=Py_BuildValue("((Oiid(sddddddddi)))",
                 value,
                 cval->severity,

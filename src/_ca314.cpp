@@ -8,7 +8,10 @@
   python setup.py install
 */
 
-const char * _Py_ca_version="$Revision: 1.16 $";
+const char * _Py_ca_version="$Revision: 1.22 $";
+
+#include "Python.h"
+#include "pythread.h"
 
 #if (defined( __GNUC__ ) && (__GNUC__ >= 3)) || defined(Darwin) || defined(HP_UX) || defined(WIN32)
 #  include <stdarg.h>
@@ -45,16 +48,17 @@ const char * _Py_ca_version="$Revision: 1.16 $";
 #include <epicsMutex.h>
 #include <epicsEvent.h>
 
-#include "Python.h"
-#include "pythread.h"
+#ifdef WITH_NUMPY
+#include <numpy/arrayobject.h>
+int with_numpy = 1; 
+#else
+int  with numpy = 0; 
+#endif
 
 #if PY_VERSION_HEX < 0x02050000
 #define PyErr_WarnEx(category, msg, level) PyErr_Warn(category, msg)
 #endif
  
-#if PY_MAJOR_VERSION >= 3
-#define PyString_FromString PyBytes_FromString
-#endif
 
 //#define DEBUG 1
 #define  DEBUG 0
@@ -99,15 +103,15 @@ static int exceptionCallbackFormated(long, const char *, int, const char *, ...)
 extern "C"{ void init_ca(void); } /* otherwise python cannot find the entry point to this module. */
 
 static void ca_context_destroy_wrapper(void);
-static PyObject *GetValfromArgs(struct event_handler_args args);
-static PyObject *_convert_ca_to_Python(chtype type, unsigned long count, void *pvalue, int satus);
+static PyObject *GetValfromArgs(struct event_handler_args args, int use_numpy = 0);
+static PyObject *_convert_ca_to_Python(chtype type, unsigned long count, void *pvalue, int satus,  int use_numpy);
 static int       _convert_Py_to_ca(chtype type, unsigned long count, PyObject *val, void *pbuf);
 
 static PyObject *Py_ca_search(PyObject *self, PyObject *args);
 static PyObject *Py_ca_clear(PyObject *self, PyObject *args);
-static PyObject *Py_ca_get(PyObject *self, PyObject *args);
+static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_put(PyObject *self, PyObject *args);
-static PyObject *Py_ca_monitor(PyObject *self, PyObject *args);
+static PyObject *Py_ca_monitor(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_clear_monitor(PyObject *self, PyObject *args);
 static PyObject *Py_ca_pend_io(PyObject *self, PyObject *args);
 static PyObject *Py_ca_test_io(PyObject *self, PyObject *args);
@@ -148,9 +152,9 @@ static PyMethodDef CA_Methods[]={
   /* name in Python, function, flag(1 always), doc(str*) */
   {"search", Py_ca_search, METH_VARARGS, "EPICS CA search_and_connect"}, 
   {"clear", Py_ca_clear, METH_VARARGS, "EPICS CA channel close"}, 
-  {"get", Py_ca_get, METH_VARARGS, "EPICS CA: get value in native form"}, 
+  {"get", (PyCFunction)Py_ca_get, METH_VARARGS|METH_KEYWORDS, "EPICS CA: get value in native form"}, 
   {"put", Py_ca_put, METH_VARARGS, "EPICS CA:put value"}, 
-  {"monitor", Py_ca_monitor, METH_VARARGS, "EPICS CA:set up monitor callback"}, 
+  {"monitor", (PyCFunction)Py_ca_monitor, METH_VARARGS|METH_KEYWORDS, "EPICS CA:set up monitor callback"}, 
   {"clear_monitor", Py_ca_clear_monitor, METH_VARARGS, "EPICS CA:delete monitor callback"}, 
   {"pendio", Py_ca_pend_io, METH_VARARGS, "EPICS CA: wait for io completion"}, 
   {"pend_io", Py_ca_pend_io, METH_VARARGS, "EPICS CA: wait for io completion"}, 
@@ -189,7 +193,7 @@ static PyMethodDef CA_Methods[]={
 static PyObject *CaError=NULL;
 
 /* glue routines to call Python code as callback */
-static void  get_callback(struct event_handler_args );
+static void  get_callback(struct event_handler_args);
 
 static void  exec_callback(struct connection_handler_args);
 static void  con_change_callback(struct connection_handler_args);
@@ -206,8 +210,9 @@ public:
   PyObject *args;
   PyThreadState *tstate;
   purgebleT purgeble; /* this callback is used only once */
-  
-  _ca_frame(evid EVID, PyObject *pfunc, PyObject *args, PyThreadState *tstate, purgebleT purgeble=DontPurge);
+  int use_numpy; 
+
+  _ca_frame(evid EVID, PyObject *pfunc, PyObject *args, PyThreadState *tstate, purgebleT purgeble=DontPurge, int use_numpy = 0);
   ~_ca_frame();
   int lock(int wait=WAIT_LOCK);
   int unlock();
@@ -215,7 +220,7 @@ public:
 
 
 _ca_frame::_ca_frame(evid EVID, PyObject *pfunc, PyObject *args, 
- 		     PyThreadState *tstate, purgebleT purgeble)
+ 		     PyThreadState *tstate, purgebleT purgeble, int use_numpy)
 {
   int status=0;
 
@@ -239,6 +244,7 @@ _ca_frame::_ca_frame(evid EVID, PyObject *pfunc, PyObject *args,
   this->EVID=EVID;
   this->tstate=tstate;
   this->purgeble=purgeble;
+  this->use_numpy=use_numpy; 
 }
 
 int _ca_frame::lock(int wait ){ /* wait=WAIT_LOCK is the default */
@@ -375,7 +381,7 @@ static PyObject *Py_ca_task_exit(PyObject *self, PyObject *args)
   else{
     PyErr_WarnEx(NULL, "CA taks is already closed.", 2);
   }
-  Py_XINCREF(Py_None);
+  Py_INCREF(Py_None);
   return Py_None;
 }
 
@@ -453,6 +459,12 @@ extern "C"{
       PyErr_SetString(CaError, 
 		      "init_ca: failed to register exception handler\n");
     }
+    #ifdef WITH_NUMPY
+    if (_import_array() < 0) {
+        with_numpy = 0; 
+        PyErr_Clear(); 
+    }
+    #endif
   }
 } //extern 
 
@@ -566,20 +578,25 @@ Py_ca_clear(PyObject *self, PyObject *args){
 } 
 
 static PyObject *
-Py_ca_get(PyObject *self, PyObject *args){
+Py_ca_get(PyObject *self, PyObject *args, PyObject *kws){
   chid ch_id;
   int status=ECA_NORMAL;
   unsigned long ecount;
   chtype type;
   const char *ca_errmsg=NULL;
-  _ca_frame *pframe=NULL;
+  _ca_frame *pframe=NULL;  
+  static char *kwlist[] = {(char*)"ch_id", (char*)"callback", (char*)"type", (char*)"count", (char*)"use_numpy",  NULL}; 
+  int use_numpy = 0; 
 
   PyObject *pcallback, *rval;
   PyThreadState *my_thread_state;
 
-  if(!PyArg_ParseTuple(args, "lOll", &ch_id, &pcallback, &type, &ecount))
-    return NULL;
-  
+  if(!PyArg_ParseTupleAndKeywords(args, kws, "lOlk|i", kwlist, &ch_id, &pcallback, &type, &ecount, &use_numpy))
+    return NULL; 
+  //if(!PyArg_ParseTuple(args, "lOll", &ch_id, &pcallback, &type, &ecount))
+  //  return NULL;
+  if (with_numpy == 0) use_numpy = 0; 
+
   Py_BEGIN_ALLOW_THREADS{
     ENTER_CA{
       if (DEBUG)
@@ -591,14 +608,11 @@ Py_ca_get(PyObject *self, PyObject *args){
   }Py_END_ALLOW_THREADS;
   if (status == ECA_NORMAL){
     my_thread_state=PyThreadState_Get();
-    pframe=new _ca_frame(NULL, pcallback, Py_None, my_thread_state, Purgeble);
+    pframe=new _ca_frame(NULL, pcallback, Py_None, my_thread_state, Purgeble, use_numpy);
     Py_BEGIN_ALLOW_THREADS{
       ENTER_CA{
 	if (type == -1){
 	  type = dbf_type_to_DBR_TIME(ca_field_type(ch_id));
-	}
-	if (ecount==0){
-	  ecount=ca_element_count(ch_id);
 	}
 	{
 	  status=ca_array_get_callback(type, ecount, 
@@ -716,7 +730,7 @@ static void get_callback(struct event_handler_args args)
 	    arglist=Py_BuildValue("((Oi))", Py_None, status);
 	  }
 	  else{
-	    arglist=GetValfromArgs(args);
+	    arglist=GetValfromArgs(args,  pframe->use_numpy);
 	    if (arglist == (PyObject *) NULL){
 	      arglist=PyTuple_New(0);
 	      Py_XINCREF(arglist);
@@ -779,11 +793,11 @@ static void get_callback(struct event_handler_args args)
   return;
 }
 
-static PyObject *GetValfromArgs(struct event_handler_args args){
+static PyObject *GetValfromArgs(struct event_handler_args args, int use_numpy){
   PyObject *retObj; 
   /*errlogPrintf("call back get %ld number of elements\n", args.count);*/
   retObj=_convert_ca_to_Python(args.type, args.count, 
-			       (void *) args.dbr, args.status);
+			       (void *) args.dbr, args.status, use_numpy);
   return retObj;
 }
 /* helper function by Wang-san */
@@ -1439,7 +1453,7 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-Py_ca_monitor(PyObject *self, PyObject *args){
+Py_ca_monitor(PyObject *self, PyObject *args, PyObject *kws){
   chid ch_id;
   int status=-1;
   unsigned long ecount=0;
@@ -1448,9 +1462,15 @@ Py_ca_monitor(PyObject *self, PyObject *args){
   PyObject *pcallback, *rval;
   _ca_frame *pframe;
   const char *ca_errmsg=NULL;
+  static char *kwlist[] = {(char*)"ch_id", (char*)"callback", (char*)"count", (char*)"mask", (char*)"type", (char*)"use_numpy",  NULL}; 
+  int use_numpy = 0; 
 
-  if(!PyArg_ParseTuple(args, "lOl|l", &ch_id, &pcallback, &ecount, &evmask))
-    return NULL;
+  if(!PyArg_ParseTupleAndKeywords(args, kws, "lOk|kli", kwlist, &ch_id, &pcallback, &ecount, &evmask, &type, &use_numpy))
+    return NULL; 
+
+  //if(!PyArg_ParseTuple(args, "lOl|l", &ch_id, &pcallback, &ecount, &evmask))
+  //  return NULL;
+  if (with_numpy == 0) use_numpy = 0; 
 
   Py_BEGIN_ALLOW_THREADS{
     ENTER_CA{
@@ -1465,14 +1485,12 @@ Py_ca_monitor(PyObject *self, PyObject *args){
     return NULL;
   }
 
-  pframe=new _ca_frame(NULL, pcallback, Py_None, PyThreadState_Get(), DontPurge);
+  pframe=new _ca_frame(NULL, pcallback, Py_None, PyThreadState_Get(), DontPurge, use_numpy);
   {
     Py_BEGIN_ALLOW_THREADS{
       ENTER_CA{
-	type =dbf_type_to_DBR_TIME(ca_field_type(ch_id));
-	if (ecount == 0){
-	  ecount=ca_element_count(ch_id);
-	}
+    if (!dbr_type_is_valid(type))
+	    type =dbf_type_to_DBR_TIME(ca_field_type(ch_id));
 	status=ca_create_subscription(type, ecount, ch_id, evmask, 
 				      get_callback, pframe, 
 				      &pframe->EVID);
@@ -1710,7 +1728,6 @@ static PyObject *Py_ca_name(PyObject *self, PyObject *args){
         pobj = PyString_FromString(ca_name(ch_id));
     }LEAVE_CA;
  
-     Py_XINCREF(pobj);
      return pobj;
  }
  
@@ -1724,7 +1741,6 @@ static PyObject *Py_ca_name(PyObject *self, PyObject *args){
          pobj = PyString_FromString(dbf_type_to_text(field_type));
      }LEAVE_CA;
  
-     Py_XINCREF(pobj);
      return pobj;
  }
  
@@ -1738,7 +1754,6 @@ static PyObject *Py_ca_name(PyObject *self, PyObject *args){
          pobj = PyString_FromString(dbr_type_to_text(req_type));
      }LEAVE_CA;
  
-     Py_XINCREF(pobj);
      return pobj;
  }
  
@@ -2205,7 +2220,7 @@ Py_ca_convert(PyObject *self, PyObject *args){
 
   pobj=_convert_ca_to_Python(dbf_type_to_DBR_TIME(ca_field_type(ch_id)), 
 			     ca_element_count(ch_id), 
-			     pbuf, status);
+			     pbuf, status,  0);
 
   if(pobj){
     return pobj;
