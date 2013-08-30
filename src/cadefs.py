@@ -8,6 +8,7 @@ This defines constants  and classes useful to inteprete code returned from CA li
 DBE_VALUE =(1<<0)  
 DBE_LOG   =(1<<1)
 DBE_ALARM =(1<<2)
+DBE_PROPERTY=(1<<3)
 # also chekc ECA_IODONE/ECA_IOINPROGRESS in caError.py 
 IODONE = 42
 IOINPROGRESS = 43
