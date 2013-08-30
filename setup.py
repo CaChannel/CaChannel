@@ -6,21 +6,16 @@ Python2.4 or later should be used.
 
 import os
 import platform
-try:
-    UNAME=platform.uname()[0]
-except:
-    UNAME="Unknowon"
+from distutils.core import setup, Extension
 
 EPICSBASE=os.path.join(os.getcwd(), 'epicsbase')
 
 HOSTARCH=os.popen(os.path.join(EPICSBASE,"startup","EpicsHostArch.pl")).read()
 
-
-CA_SOURCE="src/_ca314.cpp" # for threaded version.
-
-## start normal setup.
-from distutils.core import setup, Extension
-rev="2.0"
+try:
+    UNAME=platform.uname()[0]
+except:
+    UNAME="Unknowon"
 
 if UNAME.lower() == "alpha":
     libraries=["ca","As","Com"]
@@ -30,7 +25,10 @@ elif UNAME.lower() == "darwin":
     libraries=["ca","Com","readline"]
 else:
     libraries=["ca","Com","readline","rt"]
-#
+
+
+rev="2.0"
+CA_SOURCE="src/_ca314.cpp" # for threaded version.
 setup(name="CaChannel",
       version=rev,
       author="Xiaoqiang Wang",
