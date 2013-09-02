@@ -52,7 +52,7 @@ const char * _Py_ca_version="$Revision: 1.22 $";
 #include <numpy/arrayobject.h>
 int with_numpy = 1; 
 #else
-int  with numpy = 0; 
+int  with_numpy = 0; 
 #endif
 
 #if PY_VERSION_HEX < 0x02050000
