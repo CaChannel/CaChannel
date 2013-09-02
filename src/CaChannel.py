@@ -21,13 +21,12 @@ class CaChannelException(Exception):
         return self.status
 
 class CaChannel:
-    """CaChannel: A Python class with identical API as of caPython/CaChannel
+    """CaChannel: A Python class with identical API as of caPython/CaChannel.
 
-    Example:
-        import CaChannel
-        chan = CaChannel.CaChannel('catest')
-        chan.searchw()
-        print chan.getw()
+    >>> import CaChannel
+    >>> chan = CaChannel.CaChannel('catest')
+    >>> chan.searchw()
+    >>> print chan.getw()
     """
 
     ca_timeout = 1.0
@@ -71,13 +70,21 @@ class CaChannel:
 # Class helper methods
 #
     def setTimeout(self, timeout):
-        """Set the timeout for this channel."""
+        """Set the timeout for this channel object. It overrides the class timeout.
+
+        ==========      =========
+        Arguments       Comments
+        ==========      =========
+        timeout         timeout in seconds
+        ==========      =========
+
+        """
         if (timeout>=0 or timeout is None):
             self.__timeout = timeout
         else:
             raise ValueError
     def getTimeout(self):
-        """Retrieve the timeout set for this channel."""
+        """Retrieve the timeout set for this channel object."""
         return self.__timeout
 
 
@@ -93,17 +100,34 @@ class CaChannel:
 
     def search_and_connect(self, pvName, callback, *user_args):
         """Attempt to establish a connection to a process variable.
-        Parameters:
-            pvName: process variable name
-            callback: function called when connection completes and connection
-            status changes later on.
-            *user_args: user provided arguments that are passed to callback when
-            it is invoked.
+
+        ==========      =========
+        Arguments       Comments
+        ==========      =========
+        pvName          process variable name
+        callback        function called when connection completes and connection status changes later on.
+        user_args       user provided arguments that are passed to callback when it is invoked.
+        ==========      =========
+
+        The user arguments are returned to the user in a tuple in the callback function.
+        The order of the arguments is preserved.
+
+        Each Python callback function is required to have two arguments.
+        The first argument is a tuple containing the results of the action.
+        The second argument is a tuple containing any user arguments specified by ``user_args``.
+        If no arguments were specified then the tuple is empty.
+
+
+        .. note:: All remote operation requests such as the above are accumulated (buffered)
+           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> chan = CaChannel('catest')
         >>> def connCB(epicsArgs, userArgs):
-        ...     if epicsArgs[1] == 6:
-        ...         print ca.name(epicsArgs[0]), "is connected"
+        ...     chid = epicsArgs[0]
+        ...     connection_state = epicsArgs[1]
+        ...     if connection_state == ca.CA_OP_CONN_UP:
+        ...         print ca.name(chid), "is connected"
         >>> chan.search_and_connect(None, connCB, chan)
         >>> status = chan.pend_event(2)
         catest is connected
@@ -120,8 +144,16 @@ class CaChannel:
 
     def search(self, pvName=None):
         """Attempt to establish a connection to a process variable.
-        Parameters:
-            pvName: process variable name
+
+        ==========      =========
+        Arguments       Comments
+        ==========      =========
+        pvName          process variable name
+        ==========      =========
+
+        .. note:: All remote operation requests such as the above are accumulated (buffered)
+           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> chan = CaChannel()
         >>> chan.search('catest')
@@ -139,7 +171,18 @@ class CaChannel:
             raise CaChannelException(msg)
 
     def clear_channel(self):
-        """Close a channel created by one of the search functions"""
+        """Close a channel created by one of the search functions.
+
+        Clearing a channel does not cause its connection handler to be called.
+        Clearing a channel does remove any monitors registered for that channel.
+        If the channel is currently connected then resources are freed only some
+        time afer this request is flushed out to the server.
+
+        .. note:: All remote operation requests such as the above are accumulated (buffered)
+           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           is called. This allows several requests to be efficiently sent over the network in one message.
+
+        """
         if(self.__chid is not None):
             try:
                 ca.clear(self.__chid)
@@ -187,10 +230,14 @@ class CaChannel:
 
     def array_put(self, value, req_type=None, count=None):
         """Write a value or array of values to a channel
-        Parameters:
-            value: data to be written. For multiple values use a list or tuple
-            req_type: database request type. Defaults to be the native data type.
-            count: number of data values to write, Defaults to be the native count.
+
+        ==========      =========
+        Arguments       Comments
+        ==========      =========
+        value           data to be written. For multiple values use a list or tuple
+        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        count           number of data values to write. Defaults to be the native count.
+        ==========      =========
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -229,13 +276,33 @@ class CaChannel:
     def array_put_callback(self, value, req_type, count, callback, *user_args):
         """Write a value or array of values to a channel and execute the user
         supplied callback after the put has completed.
-        Parameters:
-            value: data to be written. For multiple values use a list or tuple.
-            req_type: database request type. Defaults to be the native data type.
-            count: number of data values to write, Defaults to be the native count.
-            callback: function called when the write is completed.
-            *user_args: user provided arguments that are passed to callback when
-            it is invoked.
+
+        ==========      =========
+        Arguments       Comments
+        ==========      =========
+        value           data to be written. For multiple values use a list or tuple.
+        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        count           number of data values to write, Defaults to be the native count.
+        callback        function called when the write is completed.
+        user_args       user provided arguments that are passed to callback when
+                        it is invoked.
+        ==========      =========
+
+        Each Python callback function is required to have two arguments.
+        The first argument is a dictionary containing the results of the action.
+
+        =======  =====  =======
+        field    type   comment
+        =======  =====  =======
+        chid     int    channels id structure
+        type     int    database request type (ca.DBR_XXXX)
+        count    int    number of values to transfered
+        status   int    CA status return code (ca.ECA_XXXX)
+        =======  =====  =======
+
+        The second argument is a tuple containing any user arguments specified by ``user_args``.
+        If no arguments were specified then the tuple is empty.
+
 
         >>> def putCB(epicsArgs, userArgs):
         ...     print ca.name(epicsArgs['chid']), 'put completed'
@@ -283,9 +350,18 @@ class CaChannel:
     def array_get(self, req_type=None, count=None, **keywords):
         """Read a value or array of values from a channel. The new value is
         retrieved by a call to getValue method.
-        Parameters:
-            req_type: database request type. Defaults to be the native data type.
-            count: number of data values to read, Defaults to be the native count.
+
+        =========    =============
+        Arguments    Comments
+        =========    =============
+        req_type     database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        count        number of data values to read, Defaults to be the native count.
+        =========    =============
+
+        .. note:: All remote operation requests such as the above are accumulated (buffered)
+           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           is called. This allows several requests to be efficiently sent over the network in one message.
+
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -299,12 +375,74 @@ class CaChannel:
     def array_get_callback(self, req_type, count, callback, *user_args, **keywords):
         """Read a value or array of values from a channel and execute the user
         supplied callback after the get has completed.
-        Parameters:
-            req_type: database request type. Defaults to be the native data type.
-            count: number of data values to read, Defaults to be the native count.
-            callback: function called when the get is completed.
-            *user_args: user provided arguments that are passed to callback when
-            it is invoked.
+
+        ==========      =========
+        Arguments       Comments
+        ==========      =========
+        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        count           number of data values to read, Defaults to be the native count.
+        callback        function called when the get is completed.
+        user_args       user provided arguments that are passed to callback when
+                        it is invoked.
+        ==========      =========
+
+        Each Python callback function is required to have two arguments.
+        The first argument is a dictionary containing the results of the action.
+
+        +-----------------+---------------+------------------------------------+-------------------------+---------------+-------------+---------------+
+        | field           |  type         |  comment                           |       request type                                                    |
+        |                 |               |                                    +----------+--------------+---------------+-------------+---------------+
+        |                 |               |                                    | DBR_XXXX | DBR_STS_XXXX | DBR_TIME_XXXX | DBR_GR_XXXX | DBR_CTRL_XXXX |
+        +=================+===============+====================================+==========+==============+===============+=============+===============+
+        | chid            |   int         |   channels id number               |    X     |       X      |     X         |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | type            |   int         |   database request type            |    X     |       X      |     X         |   X         | X             |
+        |                 |               |   (ca.DBR_XXXX)                    |          |              |               |             |               |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | count           |   int         |   number of values to transfered   |    X     |       X      |     X         |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | status          |   int         |   CA status return code            |    X     |       X      |     X         |   X         | X             |
+        |                 |               |   (ca.ECA_XXXX)                    |          |              |               |             |               |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_value        |               |   PV value                         |    X     |       X      |     X         |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_status       |   int         |   PV alarm status                  |          |       X      |     X         |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_severity     |   int         |   PV alarm severity                |          |       X      |     X         |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_seconds      |   float       |   timestamp                        |          |              |     X         |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_nostrings    |   int         |   ENUM PV's number of states       |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_statestrings |   string list |   ENUM PV's states string          |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_units        |   string      |   units                            |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_precision    |   int         |   precision                        |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_updislim     |   float       |   upper display limit              |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_lodislim     |   float       |   lower display limit              |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_upalarmlim   |   float       |   upper alarm limit                |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_upwarnlim    |   float       |   upper warning limit              |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_loalarmlim   |   float       |   lower alarm limit                |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_lowarnlim    |   float       |   lower warning limit              |          |              |               |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_upctrllim    |   float       |   upper control limit              |          |              |               |             | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_loctrllim    |   float       |   lower control limit              |          |              |               |             | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+
+        The second argument is a tuple containing any user arguments specified by ``user_args``.
+        If no arguments were specified then the tuple is empty.
+
+        .. note:: All remote operation requests such as the above are accumulated (buffered)
+           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> def getCB(epicsArgs, userArgs):
         ...     for item in sorted(epicsArgs.keys()):
@@ -350,7 +488,7 @@ class CaChannel:
             raise CaChannelException(msg)
 
 #
-# Event methods
+# Monitor methods
 #   add_masked_array_event
 #   clear_event
 #
@@ -360,15 +498,23 @@ class CaChannel:
     # before registering a new event.
     def add_masked_array_event(self, req_type, count, mask, callback, *user_args, **keywords):
         """Specify a callback function to be executed whenever changes occur to a PV.
-        Parameters:
-            req_type: database request type. Defaults to be the native data type.
-            count: number of data values to read, Defaults to be the native count.
-            mask: logical or of ca.DBE_VALUE, ca.DBE_LOG, ca.DBE_ALARM. Defaults to
-            be ca.DBE_VALUE|ca.DBE_ALARM.
-            callback: function called when the get is completed.
-            *user_args: user provided arguments that are passed to callback when
-            it is invoked.
-            **keywards: other options
+
+        ==========      =======
+        Arguments       Comments
+        ==========      =======
+        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        count           number of data values to read, Defaults to be the native count.
+        mask            logical or of ``ca.DBE_VALUE``, ``ca.DBE_LOG``, ``ca.DBE_ALARM``.
+                        Defaults to be ``ca.DBE_VALUE|ca.DBE_ALARM``.
+        callback        function called when the get is completed.
+        user_args       user provided arguments that are passed to callback when
+                        it is invoked.
+        keywards        other options
+        ==========      =======
+
+        .. note:: All remote operation requests such as the above are accumulated (buffered)
+           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> def eventCB(epicsArgs, userArgs):
         ...     print 'pv_value', epicsArgs['pv_value']
@@ -403,7 +549,12 @@ class CaChannel:
             raise CaChannelException(msg)
 
     def clear_event(self):
-        """Remove previously installed callback function."""
+        """Remove previously installed callback function.
+
+        .. note:: All remote operation requests such as the above are accumulated (buffered)
+           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           is called. This allows several requests to be efficiently sent over the network in one message.
+        """
         if self.__evid is not None:
             try:
                 ca.clear_monitor(self.__evid)
@@ -420,10 +571,15 @@ class CaChannel:
 #
 
     def pend_io(self,timeout=None):
-        """Flush the send buffer and wait until outstanding queries complete
+        """Flush the send buffer and wait until outstanding queries (``search``, ``array_get``) complete
         or the specified timeout expires.
-        Parameters:
-            timeout: seconds to wait
+
+        ==========      ==========
+        Arguments       Comments
+        ==========      ==========
+        timeout         seconds to wait
+        ==========      ==========
+
         """
         if timeout is None:
             if self.__timeout is None:
@@ -435,9 +591,16 @@ class CaChannel:
             raise CaChannelException(ca.caError._caErrorMsg[status])
 
     def pend_event(self,timeout=None):
-        """Flush the send buffer and wait for timeout seconds.
-        Parameters:
-            timeout: seconds to wait
+        """Flush the send buffer and process background activity (connect/get/put/monitor callbacks) for ``timeout`` seconds.
+
+        It will not return before the specified timeout expires and all unfinished channel access labor has been processed.
+
+        ==========      ==========
+        Arguments       Comments
+        ==========      ==========
+        timeout         seconds to wait
+        ==========      ==========
+
         """
         if timeout is None:
             timeout = 0.1
@@ -446,7 +609,10 @@ class CaChannel:
         return status
 
     def poll(self):
-        """Flush the send buffer and execute outstanding background activity."""
+        """Flush the send buffer and execute any outstanding background activity.
+
+        .. note:: It is an alias to ``pend_event(1e-12)``.
+        """
         status = ca.poll()
         # status is always ECA_TIMEOUT
         return status
@@ -478,7 +644,7 @@ class CaChannel:
 
 
     def field_type(self):
-        """Native field type.
+        """Native type of the PV in the server (``ca.DBF_XXXX``).
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -487,12 +653,14 @@ class CaChannel:
         6
         >>> ca.dbf_text(ftype)
         'DBF_DOUBLE'
+        >>> ca.DBF_DOUBLE == ftype
+        True
         """
         self.get_info()
         return self._field_type
 
     def element_count(self):
-        """Native element count.
+        """Maximum array element count of the PV in the server.
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -503,7 +671,7 @@ class CaChannel:
         return self._element_count
 
     def name(self):
-        """Channel name specified when the channel was connected.
+        """Channel name specified when the channel was created.
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -513,13 +681,17 @@ class CaChannel:
         return ca.name(self.__chid)
 
     def state(self):
-        """Current state of the connections.
-        Possible channel states:
-            ca.cs_never_conn    PV not found
-            ca.cs_prev_conn     PV was found but unavailable
-            ca.cs_conn          PV was found and available
-            ca.cs_closed        PV not closed
-            ca.cs_never_search  PV not searched yet
+        """Current state of the CA connection.
+
+            ==================    =============
+            States                Meaning
+            ==================    =============
+            ca.cs_never_conn      PV not found
+            ca.cs_prev_conn       PV was found but unavailable
+            ca.cs_conn            PV was found and available
+            ca.cs_closed          PV not closed
+            ca.cs_never_search    PV not searched yet
+            ==================    =============
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -538,12 +710,12 @@ class CaChannel:
         return self._host_name
 
     def read_access(self):
-        """Right to read the channel."""
+        """Access right to read the channel. True if the channel can be read, False otherwise."""
         self.get_info()
         return self._raccess
 
     def write_access(self):
-        """Right to write the channel."""
+        """Access right to write the channel. True if the channel can be written, False otherwise."""
         self.get_info()
         return self._waccess
 #
@@ -552,8 +724,12 @@ class CaChannel:
 # These functions wait for completion of the requested action.
     def searchw(self, pvName=None):
         """Attempt to establish a connection to a process variable.
-        Parameters:
-            pvName: process variable name
+
+        ==========      =========
+        Arguments       Comments
+        ==========      =========
+        pvName          process variable name
+        ==========      =========
 
         >>> chan = CaChannel('non-exist-channel')
         >>> chan.searchw()
@@ -576,9 +752,21 @@ class CaChannel:
 
     def putw(self, value, req_type=None):
         """Write a value or array of values to a channel
-        Parameters:
-            value: data to be written. For multiple values use a list or tuple
-            req_type: database request type. Defaults to be the native data type.
+
+        If the request type is omitted the data is written as the Python type corresponding to the native format.
+        Multi-element data is specified as a tuple or a list.
+        Internally the sequence is converted to a list before inserting the values into a C array.
+        Access using non-numerical types is restricted to the first element in the data field.
+        Mixing character types with numerical types writes bogus results but is not prohibited at this time.
+        DBF_ENUM fields can be written using DBR_ENUM and DBR_STRING types.
+        DBR_STRING writes of a field of type DBF_ENUM must be accompanied by a valid string out of the possible enumerated values.
+
+        ==========      =========
+        Arguments       Comments
+        ==========      =========
+        value           data to be written. For multiple values use a list or tuple
+        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        ==========      =========
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -618,9 +806,20 @@ class CaChannel:
 
     def getw(self, req_type=None, count=None, **keywords):
         """Return a value or a dict from a channel depending on req_type.
-        Parameters:
-            req_type: database request type. Defaults to be the native data type.
-            count: number of data values to read, Defaults to be the native count.
+
+        ==========      =========
+        Arguments       Comments
+        ==========      =========
+        req_type        database request type. Defaults to be the native data type.
+        count           number of data values to read, Defaults to be the native count.
+        ==========      =========
+
+        If the request type is omitted the data is returned to the user as the Python type corresponding to the native format.
+        Multi-element data has all the elements returned as items in a list and must be accessed using a numericaltype.
+        Access using non-numerical types is restricted to the first element in the data field.
+        DBF_ENUM fields can be read using DBR_ENUM and DBR_STRING types.
+        DBR_STRING reads of a field of type DBF_ENUM returns the string corresponding to the current enumerated value.
+
         """
         updated = [False]
         value = [0]
@@ -663,8 +862,8 @@ class CaChannel:
             callback, userArgs = self._callbacks.get('connCB')
         except:
             return
-        if self.state() == 2: OP=6
-        else: OP=7
+        if self.state() == 2: OP = 6
+        else: OP = 7
         epicsArgs = (self.__chid, OP)
         callback(epicsArgs, userArgs)
 
