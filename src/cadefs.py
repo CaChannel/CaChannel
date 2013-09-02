@@ -4,12 +4,21 @@ contstants and enumerated conststant
 This defines constants  and classes useful to inteprete code returned from CA library.
 """
 #
+CA_OP_GET = 0
+CA_OP_PUT = 1
+CA_OP_CREATE_CHANNEL = 2
+CA_OP_ADD_EVENT = 3
+CA_OP_CLEAR_EVENT = 4
+CA_OP_OTHER = 5
+# used with connection callbacks
+CA_OP_CONN_UP = 6
+CA_OP_CONN_DOWN = 7
 # imported from caeventmask.h
-DBE_VALUE =(1<<0)  
+DBE_VALUE =(1<<0)
 DBE_LOG   =(1<<1)
 DBE_ALARM =(1<<2)
 DBE_PROPERTY=(1<<3)
-# also chekc ECA_IODONE/ECA_IOINPROGRESS in caError.py 
+# also chekc ECA_IODONE/ECA_IOINPROGRESS in caError.py
 IODONE = 42
 IOINPROGRESS = 43
 #
@@ -32,17 +41,17 @@ def INVALID_DB_FIELD(x):
 
 #/* data request buffer types */
 DBR_NATIVE= DBF_NATIVE
-DBR_STRING = 	DBF_STRING	
-DBR_INT	 =	DBF_INT		
-DBR_SHORT = DBF_INT		
-DBR_FLOAT = DBF_FLOAT	
+DBR_STRING = 	DBF_STRING
+DBR_INT	 =	DBF_INT
+DBR_SHORT = DBF_INT
+DBR_FLOAT = DBF_FLOAT
 DBR_ENUM = DBF_ENUM
 DBR_CHAR = DBF_CHAR
 DBR_LONG = DBF_LONG
 DBR_DOUBLE = DBF_DOUBLE
 DBR_STS_STRING = 7
 DBR_STS_SHORT = 8
-DBR_STS_INT = DBR_STS_SHORT	
+DBR_STS_INT = DBR_STS_SHORT
 DBR_STS_FLOAT = 9
 DBR_STS_ENUM = 10
 DBR_STS_CHAR = 11
@@ -58,7 +67,7 @@ DBR_TIME_LONG = 19
 DBR_TIME_DOUBLE = 20
 DBR_GR_STRING = 21
 DBR_GR_SHORT = 22
-DBR_GR_INT = DBR_GR_SHORT	
+DBR_GR_INT = DBR_GR_SHORT
 DBR_GR_FLOAT = 23
 DBR_GR_ENUM = 24
 DBR_GR_CHAR = 25
@@ -66,7 +75,7 @@ DBR_GR_LONG = 26
 DBR_GR_DOUBLE = 27
 DBR_CTRL_STRING = 28
 DBR_CTRL_SHORT = 	29
-DBR_CTRL_INT = 	DBR_CTRL_SHORT	
+DBR_CTRL_INT = 	DBR_CTRL_SHORT
 DBR_CTRL_FLOAT = 30
 DBR_CTRL_ENUM = 31
 DBR_CTRL_CHAR = 32
@@ -84,7 +93,7 @@ def INVALID_DB_REQ(x):
 
 class AlarmSeverity:
     """Alarm Severity class
-    
+
     AlarmSeverity class is provided to keep constants representing EPICS channel severity status.
     It also keeps strings and colors for each severity states.
     """
