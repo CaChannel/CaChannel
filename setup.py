@@ -8,6 +8,12 @@ import os
 import platform
 from distutils.core import setup, Extension
 
+# Use setuptools to include build_sphinx, upload/sphinx commands
+try:
+    from setuptools import setup, find_packages
+except:
+    pass
+
 EPICSBASE=os.path.join(os.getcwd(), 'epicsbase')
 
 HOSTARCH=os.popen('perl ' + os.path.join(EPICSBASE,"startup","EpicsHostArch.pl")).read()
