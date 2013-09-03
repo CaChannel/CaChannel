@@ -26,7 +26,9 @@ class CaChannel:
     >>> import CaChannel
     >>> chan = CaChannel.CaChannel('catest')
     >>> chan.searchw()
+    >>> chan.putw(12.3)
     >>> print chan.getw()
+    12.3
     """
 
     ca_timeout = 1.0
@@ -859,7 +861,7 @@ class CaChannel:
             timeout = CaChannel.ca_timeout
         else:
             timeout = self.__timeout
-        ca.flush_io(timeout)
+        self.flush_io()
         n = timeout / 0.001
         while n > 0 and not updated[0]:
             ca.pend_event(0.001)
