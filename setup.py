@@ -5,6 +5,7 @@ Python2.4 or later should be used.
 """
 
 import os
+import sys
 import platform
 from distutils.core import setup, Extension
 
@@ -20,21 +21,50 @@ HOSTARCH=os.popen('perl ' + os.path.join(EPICSBASE,"startup","EpicsHostArch.pl")
 
 try:
     UNAME=platform.uname()[0]
+    ARCH=platform.architecture()[0]
 except:
-    UNAME="Unknowon"
+    UNAME="Unknown"
+    ARCH="Unknown"
 
-if UNAME.lower() == "alpha":
-    libraries=["ca","As","Com"]
-elif UNAME.lower() == "win32":
+lflags=[]
+if UNAME.lower() == "windows":
+    UNAME="WIN32"
+    if ARCH=="64bit":
+        HOSTARCH="windows-x64"
+    else:
+        HOSTARCH="win32-x86"
+    lflags+=['/LTCG', '/NODEFAULTLIB:libcmt.lib',]
     libraries=["ca","Com","ws2_32","msvcrt","user32", "advapi32"]
 elif UNAME.lower() == "darwin":
+    HOSTARCH = 'darwin-x86'
     libraries=["ca","Com","readline"]
-else:
+elif UNAME.lower() == "linux":
+    if ARCH=="64bit":
+        HOSTARCH="linux-x86_64"
+    else:
+        HOSTARCH="linux-x86" 
     libraries=["ca","Com","readline","rt"]
-
+else:
+    print "Platform", UNAME, ARCH, " Not Supported"
+    sys.exit(1)
 
 rev="2.0.1"
 CA_SOURCE="src/_ca314.cpp" # for threaded version.
+ca_module = Extension("_ca",[CA_SOURCE],
+                             include_dirs=[os.path.join(EPICSBASE,"include"),
+                                           os.path.join(EPICSBASE,"include", "os",UNAME),
+                                           os.path.join(EPICSBASE,"include", "os"),],
+                             define_macros=[("PYCA_VERSION",'"\\"%s\\""'%rev),
+                                            (UNAME, None)],
+                             undef_macros=["_DLL"],
+                             extra_link_args = lflags,
+                             libraries=libraries,
+                             library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),],
+            )
+
+if UNAME != "WIN32":
+    ca_module.runtime_library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),]
+
 setup(name="CaChannel",
       version=rev,
       author="Xiaoqiang Wang",
@@ -55,16 +85,5 @@ setup(name="CaChannel",
       ],
       package_dir={"": "src"},
       py_modules=["ca", "caError", "cadefs","_ca_kek", "_ca_fnal", "CaChannel"],
-      ext_modules=[Extension("_ca",[CA_SOURCE],
-                             include_dirs=[os.path.join(EPICSBASE,"include"),
-                                           os.path.join(EPICSBASE,"include", "os",UNAME),
-                                           os.path.join(EPICSBASE,"include", "os"),],
-                             define_macros=[("PYCA_VERSION",'"\\"%s\\""'%rev),
-                                            (UNAME, None)],
-                             undef_macros="WITH_TK",
-                             libraries=libraries,
-                             library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),],
-                             runtime_library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),],
-                            )
-                  ],
+      ext_modules=[ca_module,]
     )
