@@ -7,17 +7,15 @@ Python2.4 or later should be used.
 import os
 import sys
 import platform
-from distutils.core import setup, Extension
+from distutils.core import Extension
 
 # Use setuptools to include build_sphinx, upload/sphinx commands
 try:
-    from setuptools import setup, find_packages
+    from setuptools import setup
 except:
     pass
 
 EPICSBASE=os.path.join(os.getcwd(), 'epicsbase')
-
-HOSTARCH=os.popen('perl ' + os.path.join(EPICSBASE,"startup","EpicsHostArch.pl")).read()
 
 try:
     UNAME=platform.uname()[0]
@@ -42,25 +40,23 @@ elif UNAME.lower() == "linux":
     if ARCH=="64bit":
         HOSTARCH="linux-x86_64"
     else:
-        HOSTARCH="linux-x86" 
+        HOSTARCH="linux-x86"
     libraries=["ca","Com","readline","rt"]
 else:
     print "Platform", UNAME, ARCH, " Not Supported"
     sys.exit(1)
 
-rev="2.0.1"
+rev="2.2.0"
 CA_SOURCE="src/_ca314.cpp" # for threaded version.
 ca_module = Extension("_ca",[CA_SOURCE],
-                             include_dirs=[os.path.join(EPICSBASE,"include"),
-                                           os.path.join(EPICSBASE,"include", "os",UNAME),
-                                           os.path.join(EPICSBASE,"include", "os"),],
-                             define_macros=[("PYCA_VERSION",'"\\"%s\\""'%rev),
-                                            (UNAME, None)],
-                             undef_macros=["_DLL"],
-                             extra_link_args = lflags,
-                             libraries=libraries,
-                             library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),],
-            )
+                      include_dirs=[os.path.join(EPICSBASE,"include"),
+                                    os.path.join(EPICSBASE,"include", "os",UNAME),
+                                    os.path.join(EPICSBASE,"include", "os"),],
+                      define_macros=[("PYCA_VERSION",'"\\"%s\\""'%rev), (UNAME, None)],
+                      undef_macros=["_DLL"],
+                      extra_link_args = lflags,
+                      libraries=libraries,
+                      library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),])
 
 if UNAME != "WIN32":
     ca_module.runtime_library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),]
@@ -85,5 +81,4 @@ setup(name="CaChannel",
       ],
       package_dir={"": "src"},
       py_modules=["ca", "caError", "cadefs","_ca_kek", "_ca_fnal", "CaChannel"],
-      ext_modules=[ca_module,]
-    )
+      ext_modules=[ca_module,])
