@@ -381,6 +381,8 @@ static PyObject *Py_ca_task_exit(PyObject *self, PyObject *args)
   else{
     PyErr_WarnEx(NULL, "CA taks is already closed.", 2);
   }
+
+
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -459,10 +461,13 @@ extern "C"{
       PyErr_SetString(CaError, 
 		      "init_ca: failed to register exception handler\n");
     }
+    PyDict_SetItemString(d, "with_numpy", Py_False);
     #ifdef WITH_NUMPY
     if (_import_array() < 0) {
         with_numpy = 0; 
         PyErr_Clear(); 
+    } else {
+        PyDict_SetItemString(d, "with_numpy", Py_True);
     }
     #endif
   }
@@ -1727,7 +1732,6 @@ static PyObject *Py_ca_name(PyObject *self, PyObject *args){
      ENTER_CA{
         pobj = PyString_FromString(ca_name(ch_id));
     }LEAVE_CA;
- 
      return pobj;
  }
  
@@ -1740,7 +1744,6 @@ static PyObject *Py_ca_name(PyObject *self, PyObject *args){
      ENTER_CA{
          pobj = PyString_FromString(dbf_type_to_text(field_type));
      }LEAVE_CA;
- 
      return pobj;
  }
  
@@ -1753,7 +1756,6 @@ static PyObject *Py_ca_name(PyObject *self, PyObject *args){
      ENTER_CA{
          pobj = PyString_FromString(dbr_type_to_text(req_type));
      }LEAVE_CA;
- 
      return pobj;
  }
  
