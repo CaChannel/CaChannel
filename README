@@ -12,11 +12,13 @@ http://www-acc.kek.jp/EPICS_Gr/products.html
 Installation
 ------------
 EPICS base 3.14.12.3 headers and static libraries are packed under ``epicsbase`` 
-for OS X (Intel 32/64 bit) and Linux (Intel 32/64 bit).
+for OS X (Intel 32/64 bit), Linux (Intel 32/64 bit) and Windows (Intel 32/64 bit).
 
 ::
 
     $ python setup.py build
     $ [sudo] python setup.py install
 
+or use pip::
 
+    $ [sudo] pip install cachannel
