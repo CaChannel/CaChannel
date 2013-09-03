@@ -17,6 +17,7 @@ except:
 from distutils.core import setup, Extension
 
 EPICSBASE=os.path.join(os.getcwd(), 'epicsbase')
+EPICSBASE=os.environ.get('EPICS_BASE')
 
 try:
     UNAME=platform.uname()[0]
@@ -48,12 +49,32 @@ else:
     sys.exit(1)
 
 rev="2.2.0"
+
+define_macros = [("PYCA_VERSION",'"\\"%s\\""'%rev), (UNAME, None)]
+include_dirs = [os.path.join(EPICSBASE,"include"),
+                os.path.join(EPICSBASE,"include", "os",UNAME),
+                os.path.join(EPICSBASE,"include", "os"),
+                ]
+
+# guess numpy path
+WITH_NUMPY = False
+try:
+    import numpy
+except:
+    WITH_NUMPY = False
+else:
+    numpy_header = os.path.join(os.path.dirname(numpy.__file__),'core','include')
+    if not os.path.exists(os.path.join(numpy_header,'numpy','arrayobject.h')):
+        WITH_NUMPY = False
+
+if WITH_NUMPY:
+    define_macros += [('WITH_NUMPY', None)]
+    include_dirs += [numpy_header]
+
 CA_SOURCE="src/_ca314.cpp" # for threaded version.
 ca_module = Extension("_ca",[CA_SOURCE],
-                      include_dirs=[os.path.join(EPICSBASE,"include"),
-                                    os.path.join(EPICSBASE,"include", "os",UNAME),
-                                    os.path.join(EPICSBASE,"include", "os"),],
-                      define_macros=[("PYCA_VERSION",'"\\"%s\\""'%rev), (UNAME, None)],
+                      include_dirs=include_dirs,
+                      define_macros=define_macros,
                       undef_macros=["_DLL"],
                       extra_link_args = lflags,
                       libraries=libraries,
