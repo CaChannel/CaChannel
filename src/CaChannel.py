@@ -356,6 +356,11 @@ class CaChannel:
         =========    =============
         req_type     database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
         count        number of data values to read, Defaults to be the native count.
+        keywords     .. list-table:: optional arguments assigned by keywords
+                        :widths: 10, 90
+
+                        * - use_numpy
+                          - True if waveform should be returned as numpy array. Default CaChannel.USE_NUMPY.
         =========    =============
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
@@ -384,6 +389,11 @@ class CaChannel:
         callback        function called when the get is completed.
         user_args       user provided arguments that are passed to callback when
                         it is invoked.
+        keywords        .. list-table:: optional arguments assigned by keywords
+                           :widths: 10, 90
+
+                           * - use_numpy
+                             - True if waveform should be returned as numpy array. Default CaChannel.USE_NUMPY.
         ==========      =========
 
         Each Python callback function is required to have two arguments.
@@ -509,7 +519,11 @@ class CaChannel:
         callback        function called when the get is completed.
         user_args       user provided arguments that are passed to callback when
                         it is invoked.
-        keywards        other options
+        keywords        .. list-table:: optional arguments assigned by keywords
+                           :widths: 10, 90
+
+                           * - use_numpy
+                             - True if waveform should be returned as numpy array. Default CaChannel.USE_NUMPY.
         ==========      =======
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
@@ -812,6 +826,11 @@ class CaChannel:
         ==========      =========
         req_type        database request type. Defaults to be the native data type.
         count           number of data values to read, Defaults to be the native count.
+        keywords        .. list-table:: optional arguments assigned by keywords
+                           :widths: 10, 90
+
+                           * - use_numpy
+                             - True if waveform should be returned as numpy array. Default CaChannel.USE_NUMPY.
         ==========      =========
 
         If the request type is omitted the data is returned to the user as the Python type corresponding to the native format.
