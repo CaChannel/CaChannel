@@ -7,13 +7,14 @@ Python2.4 or later should be used.
 import os
 import sys
 import platform
-from distutils.core import Extension
 
 # Use setuptools to include build_sphinx, upload/sphinx commands
 try:
     from setuptools import setup
 except:
     pass
+
+from distutils.core import setup, Extension
 
 EPICSBASE=os.path.join(os.getcwd(), 'epicsbase')
 
