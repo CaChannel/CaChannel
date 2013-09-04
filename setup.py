@@ -17,7 +17,6 @@ except:
 from distutils.core import setup, Extension
 
 EPICSBASE=os.path.join(os.getcwd(), 'epicsbase')
-EPICSBASE=os.environ.get('EPICS_BASE')
 
 try:
     UNAME=platform.uname()[0]
