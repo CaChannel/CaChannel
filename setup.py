@@ -57,7 +57,7 @@ include_dirs = [os.path.join(EPICSBASE,"include"),
                 ]
 
 # guess numpy path
-WITH_NUMPY = False
+WITH_NUMPY = True
 try:
     import numpy
 except:
