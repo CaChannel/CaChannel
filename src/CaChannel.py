@@ -879,42 +879,54 @@ class CaChannel:
 # These functions hook user supplied callback functions to CA extension
 
     def _conn_callback(self):
-        try:
-            callback, userArgs = self._callbacks.get('connCB')
-        except:
+        callback = self._callbacks.get('connCB')
+        if callback is None:
             return
+        callbackFunc, userArgs = callback
         if self.state() == 2: OP = 6
         else: OP = 7
         epicsArgs = (self.__chid, OP)
-        callback(epicsArgs, userArgs)
+        try:
+            callbackFunc(epicsArgs, userArgs)
+        except:
+            pass
 
     def _put_callback(self, args):
-        try:
-            callback, userArgs = self._callbacks.get('putCB')
-        except:
+        callback = self._callbacks.get('putCB')
+        if callback is None:
             return
+        callbackFunc, userArgs = callback
         epicsArgs={}
         epicsArgs['chid']=self.__chid
         epicsArgs['type']=self.field_type()
         epicsArgs['count']=self.element_count()
         epicsArgs['status']=args[1]
-        callback(epicsArgs, userArgs)
+        try:
+            callbackFunc(epicsArgs, userArgs)
+        except:
+            pass
 
     def _get_callback(self, args):
-        try:
-            callback, userArgs = self._callbacks.get('getCB')
-        except:
+        callback = self._callbacks.get('getCB')
+        if callback is None:
             return
+        callbackFunc, userArgs = callback
         epicsArgs = self._format_cb_args(args)
-        callback(epicsArgs, userArgs)
+        try:
+            callbackFunc(epicsArgs, userArgs)
+        except:
+            pass
 
     def _event_callback(self, args):
-        try:
-            callback, userArgs = self._callbacks.get('eventCB')
-        except:
+        callback = self._callbacks.get('eventCB')
+        if callback is None:
             return
+        callbackFunc, userArgs = callback
         epicsArgs = self._format_cb_args(args)
-        callback(epicsArgs, userArgs)
+        try:
+            callbackFunc(epicsArgs, userArgs)
+        except:
+            pass
 
     def _format_cb_args(self, args):
         epicsArgs={}
