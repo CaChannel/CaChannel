@@ -48,7 +48,7 @@ else:
     print "Platform", UNAME, ARCH, " Not Supported"
     sys.exit(1)
 
-rev="2.2.0"
+rev="2.2.1"
 
 define_macros = [("PYCA_VERSION",'"\\"%s\\""'%rev), (UNAME, None)]
 include_dirs = [os.path.join(EPICSBASE,"include"),
