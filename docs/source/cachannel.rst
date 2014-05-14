@@ -66,45 +66,73 @@ It is not possible to read part of the data and then read the rest of the data.
 
 
 
+:mod:`CaChannel`
+----------------
+
+.. module:: CaChannel
+   :synopsis: High level interface to EPICS channel access.
+
+:mod:`CaChannel` module is a (relatively) high level interface to operate on channel access.
+It provides almost one to one function map to the channel access C API.
+So basic knowledge of channel access is assumed. 
+
+But it does make it pythonic in other ways, single :class:`CaChannel` object, flexible parameter input
+and value return.
+
+.. data:: USE_NUMPY
+
+    If numpy support is enabled at compiling time and numpy package is available at runtime,
+    numeric data types can be returned as numpy arrays when `USE_NUMPY=True`. 
+    This boosts performance on large size arrays (>1M elements).
+
+
+Exception :class:`CaChannelException`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. exception:: CaChannel.CaChannelException
+
+    This is the exception type throwed by any channel access operations. 
+    Its string representation shows the descriptive message.
+
 Class :class:`CaChannel`
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: CaChannel.CaChannel
 
 Connect
-^^^^^^^
+~~~~~~~
     .. automethod:: CaChannel.CaChannel.search
     .. automethod:: CaChannel.CaChannel.search_and_connect
     .. automethod:: CaChannel.CaChannel.searchw
     .. automethod:: CaChannel.CaChannel.clear_channel()
 
 Read
-^^^^
+~~~~
     .. automethod:: CaChannel.CaChannel.array_get
     .. automethod:: CaChannel.CaChannel.getValue
     .. automethod:: CaChannel.CaChannel.array_get_callback
     .. automethod:: CaChannel.CaChannel.getw
 
 Write
-^^^^^
+~~~~~
     .. automethod:: CaChannel.CaChannel.array_put
     .. automethod:: CaChannel.CaChannel.array_put_callback
     .. automethod:: CaChannel.CaChannel.putw
 
 Monitor
-^^^^^^^
+~~~~~~~
     .. automethod:: CaChannel.CaChannel.add_masked_array_event
     .. automethod:: CaChannel.CaChannel.clear_event
 
 Execute
-^^^^^^^
+~~~~~~~
     .. automethod:: CaChannel.CaChannel.pend_io
     .. automethod:: CaChannel.CaChannel.pend_event
     .. automethod:: CaChannel.CaChannel.poll
     .. automethod:: CaChannel.CaChannel.flush_io
 
 Information
-^^^^^^^^^^^
+~~~~~~~~~~~
     .. automethod:: CaChannel.CaChannel.field_type
     .. automethod:: CaChannel.CaChannel.element_count
     .. automethod:: CaChannel.CaChannel.name
