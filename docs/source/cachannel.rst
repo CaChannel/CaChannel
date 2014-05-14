@@ -20,7 +20,7 @@ Process variables (PV) are accessible though channel access. Interactions with E
    :synopsis: Low level operation to channel access C library
 
 This is a module to present the interface of low level channel access C library. 
-As such, :mod:`ca` module interface can change without notice. It is discouraged to reply on it.
+As such, :mod:`ca` module interface can change without notice. It is discouraged to rely on it.
 However these macros defined in *cadef.h* and *db_access.h* are guaranteed. 
 
 Data Types
