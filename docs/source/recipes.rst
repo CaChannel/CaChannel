@@ -23,16 +23,18 @@ Get Control Information
 
 Get Wavefrom as Numpy Array
 ---------------------------
-At function level 
+- At function level 
 
-::
+  ::
+    
     from CaChannel import ca, CaChannel
     chan = CaChanne('myWaveformPV')
     print chan.getw(use_numpy=True)
 
-At module level
+- At module level
 
-::
+  ::
+
     import CaChannel
     CaChannel.USE_NUMPY = True
     chan = CaChannel.CaChanne('myWaveformPV')
