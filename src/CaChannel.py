@@ -6,6 +6,11 @@ Author:     Xiaoqiang Wang
 Created:    Sep. 22, 2008
 Changes:
 """
+# python 2 -> 3 compatible layer
+from __future__ import print_function
+import sys
+if sys.hexversion > 0x03000000:
+    long = int
 
 import ca
 
@@ -45,7 +50,7 @@ class CaChannel:
     >>> chan = CaChannel.CaChannel('catest')
     >>> chan.searchw()
     >>> chan.putw(12.3)
-    >>> print chan.getw()
+    >>> chan.getw()
     12.3
     """
 
@@ -85,7 +90,7 @@ class CaChannel:
             pass
 
     def version(self):
-        print "CaChannel, version v28-03-12"
+        return "CaChannel, version v28-03-12"
 #
 # Class helper methods
 #
@@ -149,7 +154,7 @@ class CaChannel:
         ...     chid = epicsArgs[0]
         ...     connection_state = epicsArgs[1]
         ...     if connection_state == ca.CA_OP_CONN_UP:
-        ...         print ca.name(chid), "is connected"
+        ...         print(ca.name(chid), "is connected")
         >>> chan.search_and_connect(None, connCB, chan)
         >>> status = chan.pend_event(2)
         catest is connected
@@ -161,7 +166,7 @@ class CaChannel:
         self._callbacks['connCB']=(callback, user_args)
         try:
             self.__chid = ca.search(pvName, self._conn_callback)
-        except ca.error, msg:
+        except ca.error as msg:
             raise CaChannelException(msg)
 
     def search(self, pvName=None):
@@ -186,7 +191,7 @@ class CaChannel:
             self.pvname = pvName
         try:
             self.__chid = ca.search(pvName, None)
-        except ca.error, msg:
+        except ca.error as msg:
             raise CaChannelException(msg)
 
     def clear_channel(self):
@@ -205,7 +210,7 @@ class CaChannel:
         if(self.__chid is not None):
             try:
                 ca.clear(self.__chid)
-            except ca.error,msg:
+            except ca.error as msg:
                 raise CaChannelException(msg)
 
 #
@@ -285,7 +290,7 @@ class CaChannel:
         val = self._setup_put(value, req_type, count)
         try:
             ca.put(self.__chid, val, None, None, req_type)
-        except ca.error,msg:
+        except ca.error as msg:
             raise CaChannelException(msg)
 
     def array_put_callback(self, value, req_type, count, callback, *user_args):
@@ -316,7 +321,7 @@ class CaChannel:
 
 
         >>> def putCB(epicsArgs, userArgs):
-        ...     print ca.name(epicsArgs['chid']), 'put completed'
+        ...     print(ca.name(epicsArgs['chid']), 'put completed')
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> chan.array_put_callback(145, None, None, putCB)
@@ -343,7 +348,7 @@ class CaChannel:
         self._callbacks['putCB']=(callback, user_args)
         try:
             ca.put(self.__chid, val, None, self._put_callback, req_type)
-        except ca.error,msg:
+        except ca.error as msg:
             raise CaChannelException(msg)
 #
 # Read methods
@@ -467,7 +472,7 @@ class CaChannel:
         >>> def getCB(epicsArgs, userArgs):
         ...     for item in sorted(epicsArgs.keys()):
         ...         if item.startswith('pv_'):
-        ...             print item,epicsArgs[item]
+        ...             item,epicsArgs[item]
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> chan.putw(145)
@@ -504,7 +509,7 @@ class CaChannel:
         self._callbacks['getCB']=(callback, user_args)
         try:
             ca.get(self.__chid, self._get_callback, req_type, count, keywords.get('use_numpy', USE_NUMPY))
-        except ca.error,msg:
+        except ca.error as msg:
             raise CaChannelException(msg)
 
 #
@@ -541,9 +546,9 @@ class CaChannel:
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> def eventCB(epicsArgs, userArgs):
-        ...     print 'pv_value', epicsArgs['pv_value']
-        ...     print 'pv_status', epicsArgs['pv_status'], ca.alarmStatusString(epicsArgs['pv_status'])
-        ...     print 'pv_severity', epicsArgs['pv_severity'], ca.alarmSeverityString(epicsArgs['pv_severity'])
+        ...     print('pv_value', epicsArgs['pv_value'])
+        ...     print('pv_status', epicsArgs['pv_status'], ca.alarmStatusString(epicsArgs['pv_status']))
+        ...     print('pv_severity', epicsArgs['pv_severity'], ca.alarmSeverityString(epicsArgs['pv_severity']))
         >>> chan = CaChannel('cabo')
         >>> chan.searchw()
         >>> chan.putw(1)
@@ -569,7 +574,7 @@ class CaChannel:
         self._callbacks['eventCB']=(callback, user_args)
         try:
             self.__evid = ca.monitor(self.__chid, self._event_callback, count, mask, req_type, keywords.get('use_numpy', USE_NUMPY))
-        except ca.error,msg:
+        except ca.error as msg:
             raise CaChannelException(msg)
 
     def clear_event(self):
@@ -583,7 +588,7 @@ class CaChannel:
             try:
                 ca.clear_monitor(self.__evid)
                 self.__evid = None
-            except ca.error,msg:
+            except ca.error as msg:
                 raise CaChannelException(msg)
 
 #
@@ -652,7 +657,7 @@ class CaChannel:
             info=(self._field_type, self._element_count, self._puser,
                   self._conn_state, self._host_name, self._raccess,
                   self._waccess) = ca.ch_info(self.__chid)
-        except ca.error,msg:
+        except ca.error as msg:
             raise CaChannelException(msg)
         return info
 
@@ -817,7 +822,7 @@ class CaChannel:
         val = self._setup_put(value, req_type)
         try:
             ca.put(self.__chid, val, None, None, req_type)
-        except ca.error,msg:
+        except ca.error as msg:
             raise CaChannelException(msg)
         self.flush_io()
 
@@ -859,7 +864,7 @@ class CaChannel:
         if count is None: count = self.element_count()
         try:
             ca.get(self.__chid, update_value, req_type, count, keywords.get('use_numpy', USE_NUMPY))
-        except ca.error,msg:
+        except ca.error as msg:
             raise CaChannelException(msg)
         timeout = self.getTimeout()
         self.flush_io()

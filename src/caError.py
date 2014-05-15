@@ -1,3 +1,7 @@
+import sys
+if sys.hexversion >= 0x03000000:
+    intern = sys.intern
+
 from ca import _ca
 class caError(_ca.error):
   """ EPICS ca.py Errors"""
@@ -67,6 +71,8 @@ __caErrorMsg=(
 "Virtual circuit unresponsive",
 )
 _caErrorMsg=map(intern,__caErrorMsg)
+if sys.hexversion >= 0x03000000:
+    _caErrorMsg = list(_caErrorMsg)
 
 ErrCode2Class={}
 class PyCa_NoCallback(caError):

@@ -10,13 +10,11 @@ $Revision: 1.4 $
 __version__ = "$Revision: 1.4 $"
 # $Source: /cvs/G/EPICS/extensions/src/PythonCA/src/ca.py,v $
 
-try:
-    import signal
-except:
-    print "signal module is not avaialble"
-    
-import time,thread,gc,sys,atexit
-from exceptions import ValueError
+import time,gc,sys,atexit
+if sys.hexversion >= 0x03000000:
+  import _thread as thread
+else:
+  import thread
 
 # autGIL is not compatible with Tkinter and wx. So code was removed
 
