@@ -10,6 +10,7 @@ Contents:
  tutorial
  cachannel
  recipes
+ changes
 
 Indices and tables
 ==================
