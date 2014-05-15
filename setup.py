@@ -36,6 +36,7 @@ if UNAME.lower() == "windows":
     libraries=["ca","Com","ws2_32","msvcrt","user32", "advapi32"]
 elif UNAME.lower() == "darwin":
     HOSTARCH = 'darwin-x86'
+    lflags+=['-stdlib=libstdc++',]
     libraries=["ca","Com","readline"]
 elif UNAME.lower() == "linux":
     if ARCH=="64bit":
