@@ -23,6 +23,24 @@ class CaChannelException(Exception):
 class CaChannel:
     """CaChannel: A Python class with identical API as of caPython/CaChannel.
 
+    This class implements the methods to operate on channel access so that you can find
+    their  C library counterparts ,
+    http://www.aps.anl.gov/epics/base/R3-14/12-docs/CAref.html#Function.
+    Therefore an understanding of C API helps much.
+
+    To get started easily, convenient methods are created for often used operations,
+
+    ==========    ======
+    Operation     Method
+    ==========    ======
+    connect       :meth:`searchw`
+    read          :meth:`getw`
+    write         :meth:`putw`
+    ==========    ======
+
+    They have shorter names and default arguments. It is recommended to start with these methods.
+    Study the other C alike methods when necessary.
+
     >>> import CaChannel
     >>> chan = CaChannel.CaChannel('catest')
     >>> chan.searchw()
@@ -74,11 +92,7 @@ class CaChannel:
     def setTimeout(self, timeout):
         """Set the timeout for this channel object. It overrides the class timeout.
 
-        ==========      =========
-        Arguments       Comments
-        ==========      =========
-        timeout         timeout in seconds
-        ==========      =========
+        :param float timeout:  timeout in seconds
 
         """
         if (timeout>=0 or timeout is None):
@@ -86,8 +100,17 @@ class CaChannel:
         else:
             raise ValueError
     def getTimeout(self):
-        """Retrieve the timeout set for this channel object."""
-        return self.__timeout
+        """Retrieve the timeout set for this channel object.
+
+        :return: timeout in seconds for this channel instance
+
+        """
+        if self.__timeout is None:
+            timeout = CaChannel.ca_timeout
+        else:
+            timeout = self.__timeout
+
+        return timeout
 
 
 #
@@ -103,13 +126,10 @@ class CaChannel:
     def search_and_connect(self, pvName, callback, *user_args):
         """Attempt to establish a connection to a process variable.
 
-        ==========      =========
-        Arguments       Comments
-        ==========      =========
-        pvName          process variable name
-        callback        function called when connection completes and connection status changes later on.
-        user_args       user provided arguments that are passed to callback when it is invoked.
-        ==========      =========
+        :param str pvName:          process variable name
+        :param callable callback:   function called when connection completes and connection status changes later on.
+        :param user_args:           user provided arguments that are passed to callback when it is invoked.
+        :raises CaChannelException: if error happens
 
         The user arguments are returned to the user in a tuple in the callback function.
         The order of the arguments is preserved.
@@ -121,7 +141,7 @@ class CaChannel:
 
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> chan = CaChannel('catest')
@@ -147,14 +167,11 @@ class CaChannel:
     def search(self, pvName=None):
         """Attempt to establish a connection to a process variable.
 
-        ==========      =========
-        Arguments       Comments
-        ==========      =========
-        pvName          process variable name
-        ==========      =========
+        :param str pvName: process variable name
+        :raises CaChannelException: if error happens
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> chan = CaChannel()
@@ -178,10 +195,10 @@ class CaChannel:
         Clearing a channel does not cause its connection handler to be called.
         Clearing a channel does remove any monitors registered for that channel.
         If the channel is currently connected then resources are freed only some
-        time afer this request is flushed out to the server.
+        time after this request is flushed out to the server.
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         """
@@ -233,13 +250,9 @@ class CaChannel:
     def array_put(self, value, req_type=None, count=None):
         """Write a value or array of values to a channel
 
-        ==========      =========
-        Arguments       Comments
-        ==========      =========
-        value           data to be written. For multiple values use a list or tuple
-        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
-        count           number of data values to write. Defaults to be the native count.
-        ==========      =========
+        :param value:           data to be written. For multiple values use a list or tuple
+        :param req_type:        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        :param int count:       number of data values to write. Defaults to be the native count.
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -279,16 +292,12 @@ class CaChannel:
         """Write a value or array of values to a channel and execute the user
         supplied callback after the put has completed.
 
-        ==========      =========
-        Arguments       Comments
-        ==========      =========
-        value           data to be written. For multiple values use a list or tuple.
-        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
-        count           number of data values to write, Defaults to be the native count.
-        callback        function called when the write is completed.
-        user_args       user provided arguments that are passed to callback when
-                        it is invoked.
-        ==========      =========
+        :param value:           data to be written. For multiple values use a list or tuple.
+        :param req_type:        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        :param int count:       number of data values to write, Defaults to be the native count.
+        :param callable callback: function called when the write is completed.
+        :param user_args:       user provided arguments that are passed to callback when it is invoked.
+        :raises CaChannelException: if error happens
 
         Each Python callback function is required to have two arguments.
         The first argument is a dictionary containing the results of the action.
@@ -353,17 +362,17 @@ class CaChannel:
         """Read a value or array of values from a channel. The new value is
         retrieved by a call to getValue method.
 
-        =========    =============
-        Arguments    Comments
-        =========    =============
-        req_type     database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
-        count        number of data values to read, Defaults to be the native count.
-        keywords     .. list-table:: optional arguments assigned by keywords
-                        :widths: 10, 90
+        :param req_type:    database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        :param int count:   number of data values to read, Defaults to be the native count.
+        :param keywords:    optional arguments assigned by keywords
 
-                        * - use_numpy
-                          - True if waveform should be returned as numpy array. Default CaChannel.USE_NUMPY.
-        =========    =============
+                            ===========   =====
+                            keyword       value
+                            ===========   =====
+                            use_numpy     True if waveform should be returned as numpy array. Default :data:`CaChannel.USE_NUMPY`.
+                            ===========   =====
+
+        :raises CaChannelException: if error happens
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
            and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
@@ -383,20 +392,19 @@ class CaChannel:
         """Read a value or array of values from a channel and execute the user
         supplied callback after the get has completed.
 
-        ==========      =========
-        Arguments       Comments
-        ==========      =========
-        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
-        count           number of data values to read, Defaults to be the native count.
-        callback        function called when the get is completed.
-        user_args       user provided arguments that are passed to callback when
-                        it is invoked.
-        keywords        .. list-table:: optional arguments assigned by keywords
-                           :widths: 10, 90
+        :param req_type:        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        :param int count:       number of data values to read, Defaults to be the native count.
+        :param callable callback:  function called when the get is completed.
+        :param user_args:       user provided arguments that are passed to callback when it is invoked.
+        :param keywords:        optional arguments assigned by keywords
 
-                           * - use_numpy
-                             - True if waveform should be returned as numpy array. Default CaChannel.USE_NUMPY.
-        ==========      =========
+                                ===========   =====
+                                keyword       value
+                                ===========   =====
+                                use_numpy     True if waveform should be returned as numpy array. Default :data:`CaChannel.USE_NUMPY`.
+                                ===========   =====
+
+        :raises CaChannelException: if error happens
 
         Each Python callback function is required to have two arguments.
         The first argument is a dictionary containing the results of the action.
@@ -511,25 +519,25 @@ class CaChannel:
     def add_masked_array_event(self, req_type, count, mask, callback, *user_args, **keywords):
         """Specify a callback function to be executed whenever changes occur to a PV.
 
-        ==========      =======
-        Arguments       Comments
-        ==========      =======
-        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
-        count           number of data values to read, Defaults to be the native count.
-        mask            logical or of ``ca.DBE_VALUE``, ``ca.DBE_LOG``, ``ca.DBE_ALARM``.
-                        Defaults to be ``ca.DBE_VALUE|ca.DBE_ALARM``.
-        callback        function called when the get is completed.
-        user_args       user provided arguments that are passed to callback when
-                        it is invoked.
-        keywords        .. list-table:: optional arguments assigned by keywords
-                           :widths: 10, 90
+        :param req_type:        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        :param int  count:      number of data values to read, Defaults to be the native count.
+        :param mask:            logical or of ``ca.DBE_VALUE``, ``ca.DBE_LOG``, ``ca.DBE_ALARM``.
+                                Defaults to be ``ca.DBE_VALUE|ca.DBE_ALARM``.
+        :param callable callback:        function called when the get is completed.
+        :param user_args:       user provided arguments that are passed to callback when
+                                it is invoked.
+        :param keywords:        optional arguments assigned by keywords
 
-                           * - use_numpy
-                             - True if waveform should be returned as numpy array. Default CaChannel.USE_NUMPY.
-        ==========      =======
+                                ===========   =====
+                                keyword       value
+                                ===========   =====
+                                use_numpy     True if waveform should be returned as numpy array. Default :data:`CaChannel.USE_NUMPY`.
+                                ===========   =====
+
+        :raises CaChannelException: if error happens
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> def eventCB(epicsArgs, userArgs):
@@ -568,7 +576,7 @@ class CaChannel:
         """Remove previously installed callback function.
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
         """
         if self.__evid is not None:
@@ -590,18 +598,12 @@ class CaChannel:
         """Flush the send buffer and wait until outstanding queries (``search``, ``array_get``) complete
         or the specified timeout expires.
 
-        ==========      ==========
-        Arguments       Comments
-        ==========      ==========
-        timeout         seconds to wait
-        ==========      ==========
+        :param float timeout:         seconds to wait
+        :raises CaChannelException: if timeout or other error happens
 
         """
         if timeout is None:
-            if self.__timeout is None:
-                timeout = CaChannel.ca_timeout
-            else:
-                timeout = self.__timeout
+            timeout = self.getTimeout()
         status = ca.pend_io(float(timeout))
         if status != 0:
             raise CaChannelException(ca.caError._caErrorMsg[status])
@@ -611,11 +613,7 @@ class CaChannel:
 
         It will not return before the specified timeout expires and all unfinished channel access labor has been processed.
 
-        ==========      ==========
-        Arguments       Comments
-        ==========      ==========
-        timeout         seconds to wait
-        ==========      ==========
+        :param float timeout:  seconds to wait
 
         """
         if timeout is None:
@@ -726,12 +724,20 @@ class CaChannel:
         return self._host_name
 
     def read_access(self):
-        """Access right to read the channel. True if the channel can be read, False otherwise."""
+        """Access right to read the channel.
+
+         :return: True if the channel can be read, False otherwise.
+
+         """
         self.get_info()
         return self._raccess
 
     def write_access(self):
-        """Access right to write the channel. True if the channel can be written, False otherwise."""
+        """Access right to write the channel.
+
+        :return: True if the channel can be written, False otherwise.
+
+        """
         self.get_info()
         return self._waccess
 #
@@ -741,11 +747,10 @@ class CaChannel:
     def searchw(self, pvName=None):
         """Attempt to establish a connection to a process variable.
 
-        ==========      =========
-        Arguments       Comments
-        ==========      =========
-        pvName          process variable name
-        ==========      =========
+        :param str pvName:          process variable name
+        :raises CaChannelException: if timeout or error happens
+
+        .. note:: This method waits for connection to be established or fail with exception.
 
         >>> chan = CaChannel('non-exist-channel')
         >>> chan.searchw()
@@ -758,10 +763,7 @@ class CaChannel:
         else:
             self.pvname = pvName
         self.__chid = ca.search(pvName, None)
-        if self.__timeout is None:
-            timeout = CaChannel.ca_timeout
-        else:
-            timeout = self.__timeout
+        timeout = self.getTimeout()
         status = ca.pend_io(timeout)
         if status != 0:
             raise CaChannelException(ca.caError._caErrorMsg[status])
@@ -777,12 +779,11 @@ class CaChannel:
         DBF_ENUM fields can be written using DBR_ENUM and DBR_STRING types.
         DBR_STRING writes of a field of type DBF_ENUM must be accompanied by a valid string out of the possible enumerated values.
 
-        ==========      =========
-        Arguments       Comments
-        ==========      =========
-        value           data to be written. For multiple values use a list or tuple
-        req_type        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
-        ==========      =========
+        :param value:           data to be written. For multiple values use a list or tuple
+        :param req_type:        database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
+        :raises CaChannelException: if timeout or error happens
+
+        .. note:: This method does flush the request to the channel access server.
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -821,22 +822,25 @@ class CaChannel:
         self.flush_io()
 
     def getw(self, req_type=None, count=None, **keywords):
-        """Return a value or a dict from a channel depending on req_type.
+        """Read the value from a channel.
 
-        ==========      =========
-        Arguments       Comments
-        ==========      =========
-        req_type        database request type. Defaults to be the native data type.
-        count           number of data values to read, Defaults to be the native count.
-        keywords        .. list-table:: optional arguments assigned by keywords
-                           :widths: 10, 90
+        :param req_type:        database request type. Defaults to be the native data type.
+        :param int count:       number of data values to read, Defaults to be the native count.
+        :param keywords:        optional arguments assigned by keywords
 
-                           * - use_numpy
-                             - True if waveform should be returned as numpy array. Default CaChannel.USE_NUMPY.
-        ==========      =========
+                                ===========   =====
+                                keyword       value
+                                ===========   =====
+                                use_numpy     True if waveform should be returned as numpy array. Default :data:`CaChannel.USE_NUMPY`.
+                                ===========   =====
+        :return:                If req_type is plain request type, only the value is returned. Otherwise a dict returns
+                                with information depending on the request type, same as the first argument passed to user's callback.
+                                See :meth:`array_get_callback`.
+
+        :raises CaChannelException: if timeout error happens
 
         If the request type is omitted the data is returned to the user as the Python type corresponding to the native format.
-        Multi-element data has all the elements returned as items in a list and must be accessed using a numericaltype.
+        Multi-element data has all the elements returned as items in a list and must be accessed using a numerical type.
         Access using non-numerical types is restricted to the first element in the data field.
         DBF_ENUM fields can be read using DBR_ENUM and DBR_STRING types.
         DBR_STRING reads of a field of type DBF_ENUM returns the string corresponding to the current enumerated value.
@@ -857,10 +861,7 @@ class CaChannel:
             ca.get(self.__chid, update_value, req_type, count, keywords.get('use_numpy', USE_NUMPY))
         except ca.error,msg:
             raise CaChannelException(msg)
-        if self.__timeout is None:
-            timeout = CaChannel.ca_timeout
-        else:
-            timeout = self.__timeout
+        timeout = self.getTimeout()
         self.flush_io()
         n = timeout / 0.001
         while n > 0 and not updated[0]:
