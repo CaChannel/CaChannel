@@ -44,7 +44,7 @@ elif UNAME.lower() == "linux":
         HOSTARCH="linux-x86"
     libraries=["ca","Com","readline","rt"]
 else:
-    print "Platform", UNAME, ARCH, " Not Supported"
+    print("Platform", UNAME, ARCH, " Not Supported")
     sys.exit(1)
 
 rev="2.2.2"

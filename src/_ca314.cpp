@@ -59,6 +59,10 @@ int  with_numpy = 0;
 #define PyErr_WarnEx(category, msg, level) PyErr_Warn(category, msg)
 #endif
  
+#if PY_VERSION_HEX >= 0x03000000
+#define PyInt_FromLong PyLong_FromLong
+#define PyString_FromString PyUnicode_FromString
+#endif
 
 //#define DEBUG 1
 #define  DEBUG 0
@@ -188,6 +192,21 @@ static PyMethodDef CA_Methods[]={
 #endif
   {NULL, NULL, 0, NULL}
 };
+
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef CA_Module = {
+  PyModuleDef_HEAD_INIT,
+  "_ca", /* name */
+  "python binding to channel access library", /* doc */
+  -1, /* size */
+  CA_Methods, /* methods */
+  NULL, /* reload */
+  NULL, /* traverse */
+  NULL, /* clear */
+  NULL, /* free */
+};
+#endif
+
 
 /* error objects */
 static PyObject *CaError=NULL;
@@ -390,7 +409,11 @@ static PyObject *Py_ca_task_exit(PyObject *self, PyObject *args)
 #define EPICS_CA_ENABLE_PREEMPTIVE "EPICS_CA_ENABLE_PREEMPTIVE"
 
 extern "C"{
+#if PY_MAJOR_VERSION >= 3
+  PyMODINIT_FUNC PyInit__ca(void){
+#else
   void init_ca(void){
+#endif
     int status;
     PyObject *m, *d, *obj;
     PyObject *caexit, *exitfunc=PySys_GetObject((char *) "exitfunc");
@@ -403,8 +426,12 @@ extern "C"{
       PyErr_WarnEx(NULL, "PyEval_InitThreads should be called in threadmodule.", 1);
       PyEval_InitThreads();
     }
-    
+   
+    #if PY_MAJOR_VERSION >= 3
+    m=PyModule_Create(&CA_Module);
+    #else
     m=Py_InitModule("_ca", CA_Methods);
+    #endif
     d=PyModule_GetDict(m);
     CaError = PyErr_NewException((char *) "_ca.error", NULL, NULL);
     PyDict_SetItemString(d, "calibError", CaError);
@@ -469,6 +496,9 @@ extern "C"{
     } else {
         PyDict_SetItemString(d, "with_numpy", Py_True);
     }
+    #endif
+    #if PY_MAJOR_VERSION >= 3
+    return m;
     #endif
   }
 } //extern 
@@ -1442,7 +1472,7 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args)
     if (status != ECA_NORMAL){
       Py_BEGIN_ALLOW_THREADS{
 	ENTER_CA{
-	  snprintf(errmsg, errmsg_size, ca_message(status));
+	  snprintf(errmsg, errmsg_size, "%s", ca_message(status));
 	}LEAVE_CA;
       }Py_END_ALLOW_THREADS;
       PyErr_SetString(CaError, errmsg);
@@ -1502,7 +1532,11 @@ Py_ca_monitor(PyObject *self, PyObject *args, PyObject *kws){
       }LEAVE_CA;
     } Py_END_ALLOW_THREADS;
     SEVCHK(status, "Py_monitor");
+    #if PY_VERSION_HEX >= 0x03000000
+    rval=PyCapsule_New((void*)pframe, "eid", NULL);
+    #else
     rval=PyCObject_FromVoidPtr(pframe, NULL);
+    #endif
   }
   pframe->unlock();// frame is locked at creation
   return rval;
@@ -1519,7 +1553,11 @@ Py_ca_clear_monitor(PyObject *self, PyObject *args){
     return NULL;
   }
   
+  #if PY_VERSION_HEX >= 0x03000000
+  pframe = (_ca_frame *) PyCapsule_GetPointer(obj, "eid");
+  #else
   pframe = (_ca_frame *) PyCObject_AsVoidPtr(obj);
+  #endif
   if ( pframe== NULL){
     PyErr_SetString(CaError, "NULL callback frame to clear.");
     return NULL;
@@ -1890,10 +1928,6 @@ Py_sg_delete(PyObject *self, PyObject *args){
   if(!PyArg_ParseTuple(args, "l", &gid)){
     return NULL;
   }
-  if(gid < 0){
-    PyErr_SetString(CaError, "Null sync. Group ID as an argument");
-    return NULL;
-  }
 
   Py_BEGIN_ALLOW_THREADS{
     ENTER_CA{
@@ -1921,10 +1955,7 @@ Py_sg_block(PyObject *self, PyObject *args){
   if(!PyArg_ParseTuple(args, "lf", &gid, &tmo)){
     return NULL;
   }
-  if(gid < 0){
-    PyErr_SetString(CaError, "Null sync. Group ID as an argument");
-    return NULL;
-  }
+
   Py_BEGIN_ALLOW_THREADS{
     ENTER_CA{
       status=ca_sg_block(gid, ( (tmo > 0.0) ? tmo : 1.0));
@@ -1951,10 +1982,6 @@ Py_sg_test(PyObject *self, PyObject *args){
   CA_SYNC_GID gid;
 
   if(!PyArg_ParseTuple(args, "l", &gid)){
-    return NULL;
-  }
-  if(gid < 0){
-    PyErr_SetString(CaError, "Null sync. Group ID as an argument");
     return NULL;
   }
 
@@ -1988,11 +2015,6 @@ Py_sg_reset(PyObject *self, PyObject *args){
     return NULL;
   }
 
-  if(gid < 0){
-    PyErr_SetString(CaError, "Null Sync. Group ID as an argument");
-    return NULL;
-  }
-
   ENTER_CA{
     Py_BEGIN_ALLOW_THREADS{
 	status=ca_sg_reset(gid);
@@ -2012,13 +2034,13 @@ Py_sg_reset(PyObject *self, PyObject *args){
 
 static PyObject *
 Py_sg_put(PyObject *self, PyObject *args){
-  unsigned long count;
+  long count;
   int status=-1;
   CA_SYNC_GID gid;
   chid ch_id;
   const char *ca_errmsg=NULL;
   short pyca_field_type=-1;
-  unsigned long  pyca_element_count=0;
+  long  pyca_element_count=0;
 
   size_t size;
   PyObject *value, *rval;
@@ -2029,10 +2051,6 @@ Py_sg_put(PyObject *self, PyObject *args){
     return NULL;
   }
 
-  if(gid < 0){
-    PyErr_SetString(CaError, "Null sync group ID as an argument");
-    return NULL;
-  }
   if( ! PySequence_Check(value) ){
     Py_XDECREF(value);
     return NULL;
