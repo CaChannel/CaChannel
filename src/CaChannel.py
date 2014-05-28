@@ -435,7 +435,7 @@ class CaChannel:
         +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
         | pv_severity     |   int         |   PV alarm severity                |          |       X      |     X         |   X         | X             |
         +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
-        | pv_seconds      |   float       |   timestamp                        |          |              |     X         |   X         | X             |
+        | pv_seconds      |   float       |   timestamp                        |          |              |     X         |             |               |
         +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
         | pv_nostrings    |   int         |   ENUM PV's number of states       |          |              |               |   X         | X             |
         +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
@@ -472,7 +472,7 @@ class CaChannel:
         >>> def getCB(epicsArgs, userArgs):
         ...     for item in sorted(epicsArgs.keys()):
         ...         if item.startswith('pv_'):
-        ...             item,epicsArgs[item]
+        ...             print(item,epicsArgs[item])
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> chan.putw(145)
@@ -483,7 +483,6 @@ class CaChannel:
         pv_lodislim 0.0
         pv_lowarnlim -10.0
         pv_precision 3
-        pv_seconds 0.0
         pv_severity 2
         pv_status 3
         pv_units mm
@@ -498,7 +497,6 @@ class CaChannel:
         >>> chan.array_get_callback(ca.DBR_CTRL_ENUM, 1, getCB)
         >>> status = chan.pend_event(1)
         pv_nostrings 2
-        pv_seconds 0.0
         pv_severity 0
         pv_statestrings ('Done', 'Busy')
         pv_status 0
@@ -952,7 +950,7 @@ class CaChannel:
             epicsArgs['pv_value']   = args[0]
             epicsArgs['pv_severity']= args[1]
             epicsArgs['pv_status']  = args[2]
-        if len(args)>=4:          # DBR_TIME, 0.0 for others
+        if len(args)==4:          # DBR_TIME, 0.0 for others
             epicsArgs['pv_seconds'] = args[3]
         if len(args)==5:
             if len(args[4])==2:   # DBR_CTRL_ENUM
