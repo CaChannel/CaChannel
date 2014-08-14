@@ -6,9 +6,9 @@ It users C module _ca. _ca module basically maps C-API in EPICS ca library into 
 Author: Noboru Yamamoto, KEK, JAPAN. -2007.
 $Revision: 1.1 $
 """
+from __future__ import print_function
 __version__ = "$Revision: 1.1 $"
 # $Source: /cvs/G/EPICS/extensions/src/PythonCA/src/_ca_kek.py,v $
-from __future__ import print_function
 #
 try:
     import signal
@@ -90,7 +90,7 @@ class channel:
     def __init__(self, name, cb=None,noflush=None):
         if (not cb) : cb=self.update_info
         if name == "":
-            raise ValueError, name
+            raise ValueError(name)
         self.name=name
         self.field_type = None
         self.element_count = None
@@ -133,15 +133,15 @@ class channel:
             self.pend_event(dt)
             n=n+1
             if (n > wait ) :
-                raise  ECA_BADCHID,"%s %d"%(self.name,n)
+                raise  ECA_BADCHID("%s %d"%(self.name,n))
                 return -1
         
     def get(self,cb=None,Type=DBR_NATIVE, count=0, type=DBR_NATIVE, type_=DBR_NATIVE):
         try:
             if not self.isConnected():
-                raise ECA_BADCHID,self.name
+                raise ECA_BADCHID(self.name)
         except:
-            raise ECA_BADCHID,self.name
+            raise ECA_BADCHID(self.name)
         if (Type == DBR_NATIVE):
             if not(type == DBR_NATIVE):
                 Type=type
@@ -149,7 +149,7 @@ class channel:
                 Type=type_
         rType=max(Type,type,type_)
         if rType not in self.dbr_types:
-            raise TypeError, rType
+            raise TypeError(rType)
         if not cb: cb=self.update_val
 
         self.cbstate=None
@@ -196,14 +196,14 @@ class channel:
     def monitor(self,callback=None,count=0,evmask=(DBE_VALUE|DBE_ALARM)):
         if(not callback):
             raise PyCa_NoCallback
-        if (self.conn_state <> 2):
+        if (self.conn_state != 2):
             #print self.name,self.get_info()
-            raise ECA_BADCHID,self.name
+            raise ECA_BADCHID(self.name)
 
         self.update_info()
         if (self.field_type == DBR_NATIVE):
             #print self.name,self.get_info()
-            raise ECA_BADTYPE,self.name
+            raise ECA_BADTYPE(self.name)
         self.evid.append(_ca.monitor(self.chid,callback,count,evmask))
         self.__callbacks[self.evid[-1]]=callback
         return self.evid[-1]
@@ -233,7 +233,7 @@ class channel:
         self.flush()
         
     def clearAutoUpdate(self):
-        if self.autoEvid <> None:
+        if self.autoEvid is not None:
             self.clear_monitor(self.autoEvid)
             self.autoEvid=None
         self.flush()
@@ -258,8 +258,8 @@ class channel:
         return v
 
     def update_val(self,valstat=None):
-	if valstat ==None:
-	    raise caError,"No value"
+        if valstat ==None:
+            raise caError("No value")
         #self.__lock.acquire()
         try:
             self.val=valstat[0]
@@ -347,18 +347,18 @@ def __Ch(name,tmo=0.01):
                 ch=channel(name)
                 ch.wait_conn()
             except:
-                raise ECA_BADCHID,name
+                raise ECA_BADCHID(name)
             tmo=20*tmo
             __ca_dict_lock.acquire()
             try:
                 __ca_dict[name]=ch
             finally:
                 __ca_dict_lock.release()
-        if( ch.state() <> 0):
+        if( ch.state() != 0):
             ch.wait_conn(10)
         return ch
     else:
-        raise ECA_BADTYPE,name
+        raise ECA_BADTYPE(name)
 
 def Info(name = "",tmo=0.01):
     """
@@ -388,11 +388,11 @@ def Clear(name= ""):
                 del ch
             else:
                 __ca_dict_lock.release()
-                raise ECA_BADTYPE,name
+                raise ECA_BADTYPE(name)
         finally:
             __ca_dict_lock.release()
     else:
-        raise ECA_BADTYPE,name
+        raise ECA_BADTYPE(name)
 
 def Get(name="",count=0,Type=DBR_NATIVE,tmo=0.01,maxtmo=3):
     """
@@ -407,7 +407,7 @@ def Get(name="",count=0,Type=DBR_NATIVE,tmo=0.01,maxtmo=3):
         time.sleep(tmo)
         maxtmo -=tmo
         if maxtmo <=0:
-            raise caError,"No get response"
+            raise caError("No get response")
     return ch.val
 
 def Put_and_Notify(name,val=None,cb=None):
@@ -457,7 +457,7 @@ def ClearMonitor(name,evid=None):
         ch.clear_monitor(evid)
         return
     except:
-        raise ECA_BADCHID,name
+        raise ECA_BADCHID(name)
 #
 def isIODone():
     if _ca.test_io()== 42:
@@ -524,7 +524,7 @@ class SyncGroup:
                 val=_ca.ca_convert(ch.chid,self.chs[ch])
                 ch.update_val(val[0])
         else:
-            raise "CA_SG time out"
+            raise Exception("CA_SG time out")
 
 # TimeStamp utilities
 # time.gmtime(631152000.0)=(1990, 1, 1, 0, 0, 0, 0, 1, 0)
