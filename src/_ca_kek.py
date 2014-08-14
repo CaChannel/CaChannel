@@ -8,11 +8,12 @@ $Revision: 1.1 $
 """
 __version__ = "$Revision: 1.1 $"
 # $Source: /cvs/G/EPICS/extensions/src/PythonCA/src/_ca_kek.py,v $
+from __future__ import print_function
 #
 try:
     import signal
 except:
-    print "signal module is not avaialble"
+    print("signal module is not avaialble")
     
 import time,thread,gc,sys,atexit
 from exceptions import ValueError
@@ -89,7 +90,7 @@ class channel:
     def __init__(self, name, cb=None,noflush=None):
         if (not cb) : cb=self.update_info
         if name == "":
-            raise exceptions.ValueError, name
+            raise ValueError, name
         self.name=name
         self.field_type = None
         self.element_count = None
@@ -164,7 +165,7 @@ class channel:
         
         """
         if( val == ()):
-            print "No value(s) to put"
+            print("No value(s) to put")
         else:
             if kw.has_key('cb'):
                 cb=kw['cb']
@@ -183,7 +184,7 @@ class channel:
         else:
             cb=None # ca_put_array_callback does not return value.
         if( val == ()):
-            print "No value(s) to put"
+            print("No value(s) to put")
         else:
             #self.__lock.acquire()
             try:
@@ -208,7 +209,7 @@ class channel:
         return self.evid[-1]
     
     def __clear_event(self,evid):
-        if(__debug): print "clearing evid:",evid
+        if(_channel__debug): print("clearing evid:",evid)
         _ca.clear_monitor(evid)
         del self.__callbacks[evid]
          
@@ -441,7 +442,7 @@ def Monitor(name,cb=None,evmask=(DBE_VALUE|DBE_ALARM)):
     ch=__Ch(name,tmo=0.1)
     if not cb:
         def myCB(val,ch=ch):
-            print ch.name,":",val[0],val[1],val[2],TS2Ascii(val[3])
+            print(ch.name,":",val[0],val[1],val[2],TS2Ascii(val[3]))
     else:
         def myCB(val, ch=ch, cb=cb):
             cb(ch,val)
