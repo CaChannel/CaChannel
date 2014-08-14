@@ -26,14 +26,17 @@ except:
     ARCH="Unknown"
 
 lflags=[]
+dlls=[]
 if UNAME.lower() == "windows":
     UNAME="WIN32"
     if ARCH=="64bit":
         HOSTARCH="windows-x64"
     else:
         HOSTARCH="win32-x86"
-    lflags+=['/LTCG', '/NODEFAULTLIB:libcmt.lib',]
-    libraries=["ca","Com","ws2_32","msvcrt","user32", "advapi32"]
+    
+    dlls = [os.path.join(EPICSBASE,"lib",HOSTARCH,"ca.dll"),
+    	    os.path.join(EPICSBASE,"lib",HOSTARCH,"Com.dll")]
+    libraries=["ca","Com","ws2_32"]
 elif UNAME.lower() == "darwin":
     HOSTARCH = 'darwin-x86'
     lflags+=['-stdlib=libstdc++',]
@@ -75,13 +78,14 @@ CA_SOURCE="src/_ca314.cpp" # for threaded version.
 ca_module = Extension("_ca",[CA_SOURCE],
                       include_dirs=include_dirs,
                       define_macros=define_macros,
-                      undef_macros=["_DLL"],
                       extra_link_args = lflags,
                       libraries=libraries,
                       library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),])
 
 if UNAME != "WIN32":
     ca_module.runtime_library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),]
+
+print(os.path.join(EPICSBASE,"lib",HOSTARCH,"ca.dll"))
 
 setup(name="CaChannel",
       version=rev,
@@ -103,4 +107,6 @@ setup(name="CaChannel",
       ],
       package_dir={"": "src"},
       py_modules=["ca", "caError", "cadefs","_ca_kek", "_ca_fnal", "CaChannel"],
-      ext_modules=[ca_module,])
+      ext_modules=[ca_module,],
+      data_files = [('', dlls)]
+)
