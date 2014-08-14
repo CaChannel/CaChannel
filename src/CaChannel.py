@@ -54,7 +54,7 @@ class CaChannel:
     12.3
     """
 
-    ca_timeout = 1.0
+    ca_timeout = 3.0
 
     dbr_d = {}
     dbr_d[ca.DBR_SHORT] = int
