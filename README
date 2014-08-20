@@ -19,6 +19,7 @@ Use pip::
 Or build from source, by which you need to have an appropriate compiler for your platform.
 ::
 
+    $ hg clone https://bitbucket.org/xwang/cachannel
     $ python setup.py build
     $ [sudo] python setup.py install
 
