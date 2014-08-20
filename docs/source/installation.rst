@@ -1,13 +1,15 @@
 Installation
 ============
 
-Download the source tarball, unpack and run::
-
-    $ python setup.py build
-    $ [sudo] python setup.py install
-
 Use ``pip``::
     
     $ [sudo] pip install cachannel
+
+
+Or build from source::
+
+    $ hg clone https://bitbucket.org/xwang/cachannel
+    $ python setup.py build
+    $ [sudo] python setup.py install
 
 
