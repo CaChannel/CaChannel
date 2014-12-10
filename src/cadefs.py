@@ -168,6 +168,11 @@ class AlarmStatus:
 
 # ch_state={cs_never_conn=0, cs_prev_conn, cs_conn, cs_closed}
 
+cs_never_conn= 0
+cs_prev_conn = 1
+cs_conn      = 2
+cs_closed    = 3
+
 class ch_state:
     """
     ch_state class provides constants representing channel connection status.
