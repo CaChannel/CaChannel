@@ -9,7 +9,7 @@ This CaChannel implementation uses PythonCA extension by `Noboru Yamamoto <http:
 
 Installation
 ------------
-EPICS base 3.14.12.3 headers and static libraries are packed under ``epicsbase`` 
+EPICS base 3.14.12.4 headers and static libraries are packed under ``epicsbase`` 
 for OS X (Intel 32/64 bit), Linux (Intel 32/64 bit) and Windows (Intel 32/64 bit).
 
 Use pip::
