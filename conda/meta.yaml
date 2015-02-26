@@ -3,11 +3,17 @@ package:
   version: !!str 2.4.0
 
 source:
-  fn: CaChannel-2.4.0.tar.gz
-  #url: https://pypi.python.org/packages/source/C/CaChannel/CaChannel-2.3.0.tar.gz
-  #md5: dd6a418113448782fa6cdec7f24c8fe5
-  url: file:///Users/wang/Development/cachannel/dist/CaChannel-2.4.0.tar.gz
-  md5: e29165c2de936a8eaa91104c98aaf897
+  # build from PyPI source tarball
+  #fn: CaChannel-2.4.0.tar.gz
+  #url: https://pypi.python.org/packages/source/C/CaChannel/CaChannel-2.4.0.tar.gz
+  
+  # build from source tree (for conda-build > 1.9)
+  #path: ..
+  
+  # build from mercurial repository
+  hg_url: http://bitbucket.org/xwang/cachannel
+  hg_tag: 2.4.0
+
   patches:
    # List any patch files here
    # - fix.patch
