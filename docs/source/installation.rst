@@ -17,5 +17,4 @@ contains the recipe.::
 
     $ conda build conda
 
-By default it gets the source from the mercurial repository,
-but this can modified in file *meta.yaml*.
+By default it gets the source from PyPI, but this can modified in file *meta.yaml*.
