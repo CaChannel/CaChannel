@@ -1,0 +1,64 @@
+package:
+  name: cachannel
+  version: !!str 2.4.0
+
+source:
+  fn: CaChannel-2.4.0.tar.gz
+  #url: https://pypi.python.org/packages/source/C/CaChannel/CaChannel-2.3.0.tar.gz
+  #md5: dd6a418113448782fa6cdec7f24c8fe5
+  url: file:///Users/wang/Development/cachannel/dist/CaChannel-2.4.0.tar.gz
+  md5: e29165c2de936a8eaa91104c98aaf897
+  patches:
+   # List any patch files here
+   # - fix.patch
+# build:
+  # preserve_egg_dir: True
+  # entry_points:
+    # Put any entry points (scripts to be generated automatically) here. The
+    # syntax is module:function.  For example
+    #
+    # - cachannel = cachannel:main
+    #
+    # Would create an entry point called cachannel that calls cachannel.main()
+
+
+  # If this is a new build for the same version, increment the build
+  # number. If you do not include this key, it defaults to 0.
+  # number: 1
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - numpy
+
+  run:
+    - python
+    - setuptools
+
+test:
+  # Python imports
+  imports:
+    - CaChannel
+
+  # commands:
+    # You can put test commands to be run here.  Use this to test that the
+    # entry points work.
+
+
+  # You can also put a file called run_test.py in the recipe that will be run
+  # at test time.
+
+  requires:
+    # Put any additional test requirements here.  For example
+    # - nose
+    - setuptools
+
+about:
+  home: https://pypi.python.org/pypi/CaChannel
+  license: BSD License
+  summary: 'CaChannel Interface to EPICS'
+
+# See
+# http://docs.continuum.io/conda/build.html for
+# more information about meta.yaml
