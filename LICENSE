@@ -1,3 +1,8 @@
+
+3rd party modules which are often combined with CaChannel module:
+  ca_util is copyrighted by Tim Mooney, APS, Argonne National Lab, USA
+  epicsPV and epicsMotor are copyrighted by Mark Rivers, University of Chicago, USA
+
 Copyright (c) Noboru Noboru Yamamoto, KEK, JAPAN
 Copyright (c) Xiaoqiang Wang, Paul Scherrer Institut
 All rights reserved.
