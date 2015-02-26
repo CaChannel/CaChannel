@@ -110,7 +110,8 @@ setup(name="CaChannel",
           'Topic :: Scientific/Engineering',
       ],
       package_dir={"": "src"},
-      py_modules=["ca", "caError", "cadefs","_ca_kek", "_ca_fnal", "CaChannel"],
+      py_modules=["ca", "caError", "cadefs","_ca_kek", "_ca_fnal", "CaChannel",
+          "ca_util", "epicsPV", "epicsMotor"],
       ext_modules=[ca_module,],
       data_files = [('', dlls)]
 )
