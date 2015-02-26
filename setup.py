@@ -42,13 +42,13 @@ if UNAME.lower() == "windows":
 elif UNAME.lower() == "darwin":
     HOSTARCH = 'darwin-x86'
     lflags+=['-stdlib=libstdc++',]
-    libraries=["ca","Com","readline"]
+    libraries=["ca","Com"]
 elif UNAME.lower() == "linux":
     if ARCH=="64bit":
         HOSTARCH="linux-x86_64"
     else:
         HOSTARCH="linux-x86"
-    libraries=["ca","Com","readline","rt"]
+    libraries=["ca","Com","rt"]
 else:
     print("Platform", UNAME, ARCH, " Not Supported")
     sys.exit(1)
