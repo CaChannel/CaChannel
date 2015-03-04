@@ -5,11 +5,9 @@ Author:         Mark Rivers
 Created:        Sept. 16, 2002
 Modifications:
 """
-
 import time
 
 import epicsPV
-import exceptions
 
 class epicsMotor:
    """
@@ -171,13 +169,13 @@ class epicsMotor:
    def check_limits(self):
       limit = self.pvs['lvio'].getw()
       if (limit!=0): 
-         raise epicsMotorException, 'Soft limit violation'
+         raise epicsMotorException('Soft limit violation')
       limit = self.pvs['lls'].getw()
       if (limit!=0): 
-         raise epicsMotorException, 'Low hard limit violation'
+         raise epicsMotorException('Low hard limit violation')
       limit = self.pvs['hls'].getw()
       if (limit!=0): 
-         raise epicsMotorException, 'High hard limit violation'
+         raise epicsMotorException('High hard limit violation')
 
    
    def stop(self):
@@ -337,7 +335,7 @@ class epicsMotor:
       elif (attrname == 'backlash'):        return self.pvs['bdst'].getw()
       elif (attrname == 'offset'):          return self.pvs['off'].getw()
       elif (attrname == 'done_moving'):     return self.pvs['dmov'].getw()
-      else: raise AttributeError, attrname
+      else: raise AttributeError(attrname)
 
    def __setattr__(self, attrname, value):
       if   (attrname == 'pvs'): self.__dict__[attrname]=value
@@ -352,8 +350,8 @@ class epicsMotor:
       elif (attrname == 'dial_low_limit'):  self.pvs['dllm'].putw(value)
       elif (attrname == 'backlash'):        self.pvs['bdst'].putw(value)
       elif (attrname == 'offset'):          self.pvs['off'].putw(value)
-      else: raise AttributeError, attrname
+      else: raise AttributeError(attrname)
 
-class epicsMotorException(exceptions.Exception):
+class epicsMotorException(Exception):
    def __init__(self, args=None):
       self.args=args
