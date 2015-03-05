@@ -2,6 +2,17 @@
 
 $PYTHON setup.py install
 
+case `uname` in
+    Darwin )
+        CAREPEATER=$RECIPE_DIR/caRepeater.Darwin ;;
+    Linux )
+        CAREPEATER=$RECIPE_DIR/caRepater.Linux$ARCH ;;
+    * )
+        echo "Not Supported"
+esac
+
+cp $CAREPEATER ${PREFIX}/bin/caRepeater
+
 # Add more build steps here, if they are necessary.
 
 # See
