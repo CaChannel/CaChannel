@@ -6,7 +6,7 @@ case `uname` in
     Darwin )
         CAREPEATER=$RECIPE_DIR/caRepeater.Darwin ;;
     Linux )
-        CAREPEATER=$RECIPE_DIR/caRepater.Linux$ARCH ;;
+        CAREPEATER=$RECIPE_DIR/caRepeater.Linux$ARCH ;;
     * )
         echo "Not Supported"
 esac
