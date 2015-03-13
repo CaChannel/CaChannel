@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+2.4.1
+-----
+
+- All modules are compatible with Python 2.4+ including Python 3.
+- conda build recipe bundle caRepeater program in the package
+
 2.4.0
 -----
 
