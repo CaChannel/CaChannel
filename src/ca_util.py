@@ -1,6 +1,7 @@
 # ca_util.py - a thin wrapper around CaChannel
 # Tim Mooney 12/05/2008
-
+#
+# Modified by Xiaoqiang Wang to be Python 3 compatible.
 
 """ca_util.py is a wrapper around CaChannel that allows the caller to write,
 e.g.,
@@ -14,10 +15,8 @@ CA disconnections, and it can verify that caput*() operations succeeded.
 """
 
 version = "2.0"
-using_old_CaChannel = 0
 
 import ca
-#from CaChannel import *
 import CaChannel
 import time
 import sys
@@ -37,7 +36,6 @@ import sys
 # we won't be able to see the module attribute, 'CaChannel.__file__'.
 def getCaChannelFileName():
 	""" For internal ca_util use"""
-	import CaChannel
 	return CaChannel.__file__
 
 #######################################################################
@@ -66,15 +64,8 @@ ca_states[ca.cs_never_conn] = "never connected"
 ca_states[ca.cs_prev_conn] = "previously connected"
 ca_states[ca.cs_conn] = "connected"
 ca_states[ca.cs_closed] = "closed"
-# ...from CaChannel.py (only with the patch from 04/29/04):
-try:
-	ca_states[ca.cs_never_search] = "never searched"
-except AttributeError:
-	file = getCaChannelFileName()
-	using_old_CaChannel = 1
-	print "ca_util: You're using an old version of CaChannel (%s)." % getCaChannelFileName()
-	pass
-	
+ca_states[ca.cs_never_search] = "never searched"
+
 
 
 #######################################################################
@@ -230,8 +221,7 @@ def checkName(name, timeout=None, retries=None):
 
 	global cadict, defaultTimeout, defaultRetries
 	if not name:
-		raise ca_utilException, EXCEPTION_NULL_NAME
-		return
+		raise ca_utilException(EXCEPTION_NULL_NAME)
 
 	if ((timeout == None) and (defaultTimeout != None)): timeout = defaultTimeout
 	if (timeout == "NONE"): timeout = None
@@ -240,20 +230,21 @@ def checkName(name, timeout=None, retries=None):
 	if ((retries == None) or (retries == "NONE")): retries = 0
 
 	tries = 0
-	while (not cadict.has_key(name)) and (tries <= retries):
+	while (name not in cadict) and (tries <= retries):
 		# Make a new entry in the PV-name dictionary
 		try:
 			channel = CaChannel.CaChannel()
 			if (timeout != None): channel.setTimeout(timeout)
 			channel.searchw(name)
 			cadict[name] = cadictEntry(channel)
-		except CaChannel.CaChannelException, status:
+		except CaChannel.CaChannelException:
+			status = sys.exc_info()[1]
 			del channel
 			tries += 1
 
-	if (not cadict.has_key(name)):
-		print "ca_util.checkName: Can't connect to '%s'" % name
-		raise CaChannel.CaChannelException, status
+	if (name not in cadict):
+		print("ca_util.checkName: Can't connect to '%s'" % name)
+		raise CaChannel.CaChannelException(status)
 
 #######################################################################
 def castate(name=None, timeout=None, retries=None):
@@ -270,19 +261,19 @@ def castate(name=None, timeout=None, retries=None):
 	# The only reliable way to check the *current* state of a PV is to attempt to use it.
 	try:
 		val = caget(name, timeout=timeout, retries=retries)
-	except CaChannel.CaChannelException, status:
+	except CaChannel.CaChannelException:
 		pass
 
 	try:
 		checkName(name, timeout=timeout)
-	except CaChannel.CaChannelException, status:
+	except CaChannel.CaChannelException:
 		return "not connected"
 	except:
 		return "error"
 
 	try:
 		state = cadict[name].channel.state()
-	except CaChannel.CaChannelException, status:
+	except CaChannel.CaChannelException:
 		return "not connected"
 	except:
 		return "error"
@@ -290,7 +281,7 @@ def castate(name=None, timeout=None, retries=None):
 		try:
 			read_access = cadict[name].channel.read_access()
 			write_access = cadict[name].channel.write_access()
-			if ca_states.has_key(state):
+			if state in ca_states:
 				s = ca_states[state]
 			else:
 				s = "unknown state"
@@ -308,9 +299,8 @@ def caget(name, timeout=None, retries=None, req_type=None, req_count=None):
 	global cadict, defaultTimeout, defaultRetries
 
 	if not name:
-		print "caget: no PV name supplied"
-		raise ca_utilException, EXCEPTION_NULL_NAME
-		return 0
+		print("caget: no PV name supplied")
+		raise ca_utilException(EXCEPTION_NULL_NAME)
 	if ((timeout==None) and (defaultTimeout != None)): timeout = defaultTimeout
 	if (timeout == "NONE"): timeout = None
 	if ((retries==None) and (defaultRetries != None)): retries = defaultRetries
@@ -329,10 +319,9 @@ def caget(name, timeout=None, retries=None, req_type=None, req_count=None):
 			retry -= 1
 			try:
 				checkName(name, timeout=timeout)
-			except CaChannel.CaChannelException, status:
+			except CaChannel.CaChannelException:
 				if retry <= 0:
-					raise CaChannel.CaChannelException, status
-					return 0
+					raise
 			else:
 				checked = 1
 
@@ -347,20 +336,17 @@ def caget(name, timeout=None, retries=None, req_type=None, req_count=None):
 			req_count = entry.element_count
 		req_count = max(0, min(req_count, entry.element_count))
 		try:
-			if (using_old_CaChannel):
-				val = entry.channel.getw(req_type=req_type)
-			else:
-				val = entry.channel.getw(req_type=req_type, count=req_count)
-		except CaChannel.CaChannelException, status:
+			val = entry.channel.getw(req_type=req_type, count=req_count)
+		except CaChannel.CaChannelException:
+			status = sys.exc_info()[1]
 			#print "getw threw an exception (%s)" % status
 			if ((int(status) == ca.ECA_BADTYPE) or (int(status) == ca.ECA_DISCONN)):
 				# Delete dictionary entry.  This clears the CA connection.
-				print "caget: Repairing CA connection to ", name
+				print("caget: Repairing CA connection to ", name)
 				del cadict[name]
 				retry += 1
 			if retry <= 0:
-				raise CaChannel.CaChannelException, status
-				return 0
+				raise
 		else:
 			success = 1
 	return val
@@ -444,9 +430,8 @@ def _caput(function, name, value, wait_timeout=None, timeout=None, req_type=None
 
 	#print function
 	if not name:
-		print "%s: no PV name supplied" % function
-		raise ca_utilException, EXCEPTION_NULL_NAME
-		return
+		print("%s: no PV name supplied" % function)
+		raise ca_utilException(EXCEPTION_NULL_NAME)
 	if ((timeout == None) and (defaultTimeout != None)): timeout = defaultTimeout
 	if ((retries == None) and (defaultRetries != None)): retries = defaultRetries
 	if ((retries == None) or (retries == "NONE")): retries = 0
@@ -467,7 +452,7 @@ def _caput(function, name, value, wait_timeout=None, timeout=None, req_type=None
 		state = castate(name, timeout)
 		#print "%s: state='%s'" % (function, state)
 		if (state != 'connected'):
-			print "%s: Repairing CA connection to '%s'" % (function, name)
+			print("%s: Repairing CA connection to '%s'" % (function, name))
 			del cadict[name]
 			retry += 1
 		else:
@@ -481,15 +466,16 @@ def _caput(function, name, value, wait_timeout=None, timeout=None, req_type=None
 					entry.channel.putw(value, req_type=req_type)
 				else: #caputw
 					retval = entry.channel.array_put_callback(value,req_type,entry.element_count,__ca_util_waitCB,name)
-			except CaChannel.CaChannelException, status:
-				print "put() threw an exception (%s)" % status
+			except CaChannel.CaChannelException:
+				status = sys.exc_info()[1]
+				print("put() threw an exception (%s)" % status)
 				if ((int(status) == ca.ECA_BADTYPE) or (int(status) == ca.ECA_DISCONN)):
 					# Delete dictionary entry.  This clears the CA connection.
-					print "%s: Repairing CA connection to '%s'" % (function, name)
+					print("%s: Repairing CA connection to '%s'" % (function, name))
 					del cadict[name]
 					retry += 1
 				if retry <= 0:
-					raise CaChannel.CaChannelException, status
+					raise
 					entry.callbackReceived = 1
 					return
 			else:
@@ -511,11 +497,11 @@ def _caput(function, name, value, wait_timeout=None, timeout=None, req_type=None
 								success = True
 								#print "%s: Success\n" % (function)
 							else:
-								print "%s: readback '%s' disagrees with the value '%s' we wrote." % (function, readback, value)
-								raise ca_utilException, EXCEPTION_READBACK_DISAGREES
+								print("%s: readback '%s' disagrees with the value '%s' we wrote." % (function, readback, value))
+								raise ca_utilException(EXCEPTION_READBACK_DISAGREES)
 								entry.callbackReceived = 1
-						except CaChannel.CaChannelException, status:
-							print "%s: exception during readback." % (function)
+						except CaChannel.CaChannelException:
+							print("%s: exception during readback." % (function))
 							count += 1
 
 	if success and (function == "caputw"):
@@ -532,7 +518,7 @@ def _caput(function, name, value, wait_timeout=None, timeout=None, req_type=None
 				timed_out = ((time.time()-start_time) > wait_timeout)
 
 		if not entry.callbackReceived:
-			print "Execution not completed by wait_timeout (%d seconds)" % wait_timeout
+			print("Execution not completed by wait_timeout (%d seconds)" % wait_timeout)
 
 #######################################################################
 def camonitor(name, function, user_args=None, timeout=None, retries=None):
@@ -545,13 +531,11 @@ def camonitor(name, function, user_args=None, timeout=None, retries=None):
 	global defaultTimeout, defaultRetries
 
 	if not name:
-		print "camonitor: no PV name supplied"
-		raise ca_utilException, EXCEPTION_NULL_NAME
-		return
+		print("camonitor: no PV name supplied")
+		raise ca_utilException(EXCEPTION_NULL_NAME)
 	if not function:
-		print "camonitor: no callback function supplied"
-		raise ca_utilException, EXCEPTION_NULL_NAME
-		return
+		print("camonitor: no callback function supplied")
+		raise ca_utilException(EXCEPTION_NULL_NAME)
 	if not user_args: user_args = name
 	if ((timeout==None) and (defaultTimeout != None)): timeout = defaultTimeout
 	if ((retries==None) and (defaultRetries != None)): retries = defaultRetries
@@ -567,10 +551,9 @@ def camonitor(name, function, user_args=None, timeout=None, retries=None):
 			retry -= 1
 			try:
 				checkName(name, timeout=timeout)
-			except CaChannel.CaChannelException, status:
+			except CaChannel.CaChannelException:
 				if retry <= 0:
-					raise CaChannel.CaChannelException, status
-					return
+					raise
 			else:
 				checked = 1
 
@@ -578,16 +561,16 @@ def camonitor(name, function, user_args=None, timeout=None, retries=None):
 		if ((timeout != None) and (timeout != "NONE")): entry.channel.setTimeout(timeout)
 		try:
 			entry.channel.add_masked_array_event(entry.field_type,entry.element_count,ca.DBE_VALUE, function, user_args)
-		except CaChannel.CaChannelException, status:
+		except CaChannel.CaChannelException:
+			status = sys.exc_info()[1]
 			#print "add_masked_array_event threw an exception (%s)" % status
 			if ((int(status) == ca.ECA_BADTYPE) or (int(status) == ca.ECA_DISCONN)):
 				# Delete dictionary entry.  This clears the CA connection.
-				print "camonitor: Repairing CA connection to ", name
+				print("camonitor: Repairing CA connection to %s" % name)
 				del cadict[name]
 				retry += 1
 			if retry <= 0:
-				raise CaChannel.CaChannelException, status
-				return 0
+				raise
 		else:
 			success = 1
 
@@ -598,30 +581,29 @@ def caunmonitor(name, timeout=None):
 	global defaultTimeout
 
 	if not name:
-		print "caunmonitor: no PV name supplied"
-		raise ca_utilException, EXCEPTION_NULL_NAME
-		return
+		print("caunmonitor: no PV name supplied")
+		raise ca_utilException(EXCEPTION_NULL_NAME)
 	if ((timeout==None) and (defaultTimeout != None)): timeout = defaultTimeout
 
-	if not cadict.has_key(name):
-		print "ca_util has no connection to '%s'" % name
-		raise ca_utilException, NOCONNECTION
-		return
+	if name not in cadict:
+		print("ca_util has no connection to '%s'" % name)
+		raise ca_utilException(EXCEPTION_NOT_CONNECTED)
 
 	channel = cadict[name].channel
 	if ((timeout != None) and (timeout != "NONE")): channel.setTimeout(timeout)
 	try:
 		channel.clear_event()
-	except CaChannel.CaChannelException, status:
-		print "caunmonitor: CaChannel exception, status=%d (%s)" % (status, ca.message(status))
+	except CaChannel.CaChannelException:
+		status = sys.exc_info()[1]
+		print("caunmonitor: CaChannel exception, status=%d (%s)" % (status, ca.message(status)))
 		return
 
 #######################################################################
 def test_monitor_function(epics_args, user_args):
 	"""Example callback routine for use with camonitor()."""
-	print 'test_monitor_function:'
-	print "...epics_args: ", repr(epics_args)
-	print "...user_args: ", repr(user_args)
+	print('test_monitor_function:')
+	print("...epics_args: %s" % repr(epics_args))
+	print("...user_args: %s" % repr(user_args))
 
 
 
@@ -657,9 +639,9 @@ def printExceptionInfo(maxTBlevel=15):
 	except KeyError:
 		excArgs = "<no args>"
 	excTb = traceback.format_tb(trbk, maxTBlevel)
-	print "Unanticipated exception: %s %s\n" % (excName, excArgs)
+	print("Unanticipated exception: %s %s\n" % (excName, excArgs))
 	if (len(excTb) > 0):
-		print "Traceback:"
+		print("Traceback:")
 		for trace in excTb:
-			print trace,
+			print(trace)
 	return
