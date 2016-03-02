@@ -565,7 +565,7 @@ Py_ca_search(PyObject *self, PyObject *args)
 	return NULL;
       }
     }
-    return Py_BuildValue("l", ch_id);
+    return Py_BuildValue("K", ch_id);
   }
 }
 
@@ -577,7 +577,7 @@ Py_ca_clear(PyObject *self, PyObject *args){
   int pyca_state=0;
   const char * pyca_errmsg=NULL;
 
-  if(!PyArg_ParseTuple(args, "l", &ch_id))
+  if(!PyArg_ParseTuple(args, "K", &ch_id))
     return NULL;
 
   if (!ch_id ) {
@@ -626,7 +626,7 @@ Py_ca_get(PyObject *self, PyObject *args, PyObject *kws){
   PyObject *pcallback, *rval;
   PyThreadState *my_thread_state;
 
-  if(!PyArg_ParseTupleAndKeywords(args, kws, "lOlk|i", kwlist, &ch_id, &pcallback, &type, &ecount, &use_numpy))
+  if(!PyArg_ParseTupleAndKeywords(args, kws, "KOlk|i", kwlist, &ch_id, &pcallback, &type, &ecount, &use_numpy))
     return NULL; 
   //if(!PyArg_ParseTuple(args, "lOll", &ch_id, &pcallback, &type, &ecount))
   //  return NULL;
@@ -858,7 +858,7 @@ _convert_ca_to_Python(chtype type, unsigned long count, void *val, int status){
 	break;
       case DBR_INT:
       case DBR_ENUM:
-	arglist=Py_BuildValue("((ii))", *((short *) val), status);
+	arglist=Py_BuildValue("((ii))", (int)*((short *) val), status);
 	break;
       case DBR_FLOAT:
 	arglist=Py_BuildValue("((fii))", *((float *) val), -1, status);
@@ -1262,7 +1262,7 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args)
   pyca_field_type=-1;
   pcallback=Py_None;
   myval=Py_None;
-  if(!PyArg_ParseTuple(args, "lO|OOh", 
+  if(!PyArg_ParseTuple(args, "KO|OOh", 
 		       &ch_id, &value, &myval, &pcallback, &pyca_field_type))
     return NULL;
   if(!ch_id){
@@ -1500,7 +1500,7 @@ Py_ca_monitor(PyObject *self, PyObject *args, PyObject *kws){
   static char *kwlist[] = {(char*)"ch_id", (char*)"callback", (char*)"count", (char*)"mask", (char*)"type", (char*)"use_numpy",  NULL}; 
   int use_numpy = 0; 
 
-  if(!PyArg_ParseTupleAndKeywords(args, kws, "lOk|kli", kwlist, &ch_id, &pcallback, &ecount, &evmask, &type, &use_numpy))
+  if(!PyArg_ParseTupleAndKeywords(args, kws, "KOk|kli", kwlist, &ch_id, &pcallback, &ecount, &evmask, &type, &use_numpy))
     return NULL; 
 
   //if(!PyArg_ParseTuple(args, "lOl|l", &ch_id, &pcallback, &ecount, &evmask))
@@ -1694,7 +1694,7 @@ Py_ca_status(PyObject *self, PyObject *args){
   chid ch_id;
   int status=-1;
 
-  if(!PyArg_ParseTuple(args, "l", &ch_id))
+  if(!PyArg_ParseTuple(args, "K", &ch_id))
     return NULL;
   if(!ch_id){
     PyErr_SetString(CaError, "Null channel ID as an argument");
@@ -1723,7 +1723,7 @@ static PyObject *Py_ca_channelInfo(PyObject *self, PyObject *args){
   const size_t blen=1024;
   char pbuf[blen];
 
-  if(!PyArg_ParseTuple(args, "l", &ch_id))
+  if(!PyArg_ParseTuple(args, "K", &ch_id))
     return NULL;
 
   if(!ch_id){
@@ -1761,7 +1761,7 @@ static PyObject *Py_ca_name(PyObject *self, PyObject *args){
      chid ch_id;
      PyObject *pobj=NULL;
  
-     if(!PyArg_ParseTuple(args, "l", &ch_id))
+     if(!PyArg_ParseTuple(args, "K", &ch_id))
          return NULL;
      if(!ch_id){
          PyErr_SetString(CaError, "Null channel ID as an argument");
@@ -1811,7 +1811,7 @@ static PyObject *Py_ca_fileno(PyObject *self, PyObject *args){
   chid ch_id;
   int sock;
 
-  if(!PyArg_ParseTuple(args, "l", &ch_id))
+  if(!PyArg_ParseTuple(args, "K", &ch_id))
     return NULL;
   if(!ch_id){
     PyErr_SetString(CaError, "Null channel ID as an argument");
@@ -2047,7 +2047,7 @@ Py_sg_put(PyObject *self, PyObject *args){
   chtype type;
   void *pbuf=NULL;
 
-  if(!PyArg_ParseTuple(args, "illOl", &gid, &ch_id, &pbuf, &value, &type)){
+  if(!PyArg_ParseTuple(args, "iKKOl", &gid, &ch_id, &pbuf, &value, &type)){
     return NULL;
   }
 
@@ -2121,7 +2121,7 @@ Py_sg_put(PyObject *self, PyObject *args){
     return NULL;
   }
   else {
-    rval=Py_BuildValue("l",  pbuf);
+    rval=Py_BuildValue("K",  pbuf);
     return rval;
   }
 }
@@ -2141,7 +2141,7 @@ Py_sg_get(PyObject *self, PyObject *args){
   size_t size;
   PyObject *rval;
 
-  if(!PyArg_ParseTuple(args, "ill", &gid, &ch_id, &pbuf)){
+  if(!PyArg_ParseTuple(args, "iKK", &gid, &ch_id, &pbuf)){
     return NULL;
   }
 
@@ -2216,7 +2216,7 @@ Py_sg_get(PyObject *self, PyObject *args){
     return NULL;
   }
   else {
-    rval=Py_BuildValue("l",  pbuf);
+    rval=Py_BuildValue("K",  pbuf);
     return rval;
   }
 }
@@ -2226,10 +2226,10 @@ Py_ca_convert(PyObject *self, PyObject *args){
   
   int status=-1;
   chid ch_id;
-  void *pbuf;
+  void *pbuf = NULL;
   PyObject *pobj;
 
-  if(!PyArg_ParseTuple(args, "ll", &ch_id, &pbuf)){
+  if(!PyArg_ParseTuple(args, "KK", &ch_id, &pbuf)){
     return NULL;
   }
 
@@ -2315,7 +2315,7 @@ Py_ca_v42_ok(PyObject *self, PyObject *args){
   chid ch_id;
   int v42_ok=0;
 
-  if(!PyArg_ParseTuple(args, "l", &ch_id))
+  if(!PyArg_ParseTuple(args, "K", &ch_id))
     return NULL;
   if(!ch_id){
     PyErr_SetString(CaError, "Null channel ID as an argument");
