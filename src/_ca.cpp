@@ -47,6 +47,9 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args);
 static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args);
 static PyObject *Py_ca_clear_subscription(PyObject *self, PyObject *args);
 
+static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *args);
+static PyObject *Py_ca_add_exception_event(PyObject *self, PyObject *args);
+
 static PyObject *Py_ca_flush_io(PyObject *self, PyObject *args);
 static PyObject *Py_ca_pend_io(PyObject *self, PyObject *args);
 static PyObject *Py_ca_pend_event(PyObject *self, PyObject *args);
@@ -195,6 +198,8 @@ static PyMethodDef CA_Methods[] = {
     {"put",                 Py_ca_put,              METH_VARARGS, "Write a value to PV"},
     {"create_subscription", Py_ca_create_subscription,METH_VARARGS,"Subscribe for state changes"},
     {"clear_subscription",  Py_ca_clear_subscription, METH_VARARGS,"Unsubscribe for state changes"},
+    {"replace_access_rights_event", Py_ca_replace_access_rights_event, METH_VARARGS, "Replace access right event"},
+    {"add_exception_event", Py_ca_add_exception_event, METH_VARARGS, "Replace exception event handler"},
     /* Info */
     {"field_type",      Py_ca_field_type,       METH_VARARGS, "PV's native type"},
     {"element_count",   Py_ca_element_count,    METH_VARARGS, "PV's array element count"},
@@ -520,7 +525,7 @@ static PyObject *Py_ca_show_context(PyObject *self, PyObject *args)
 */
 class ChannelData {
 public:
-    ChannelData(PyObject *pCallback, PyObject *pArgs) {
+    ChannelData(PyObject *pCallback, PyObject *pArgs) : pAccessEventCallback(NULL),pAccessEventArgs(NULL) {
         this->pCallback = pCallback;
         this->pArgs = pArgs;
         Py_XINCREF(pCallback);
@@ -529,11 +534,15 @@ public:
     ~ChannelData() {
         Py_XDECREF(pCallback);
         Py_XDECREF(pArgs);
+        Py_XDECREF(pAccessEventCallback);
+        Py_XDECREF(pAccessEventArgs);
     }
 
     PyObject *pCallback;
     PyObject *pArgs;
     evid eventID;
+    PyObject *pAccessEventCallback;
+    PyObject *pAccessEventArgs;
 };
 
 static void connection_callback(struct connection_handler_args args)
@@ -567,12 +576,12 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args)
     chanId chid = NULL;
     int status;
 
+    ChannelData *pData = new ChannelData(pCallback, pArgs);
     if(PyCallable_Check(pCallback)) {
-        ChannelData *pData = new ChannelData(pCallback, pArgs);
         status = ca_create_channel(pName, &connection_callback, pData, priority, &chid);
         if (status != ECA_NORMAL) delete pData;
     } else {
-        status = ca_create_channel(pName, NULL, NULL, priority, &chid);
+        status = ca_create_channel(pName, NULL, pData, priority, &chid);
     }
 
     if (status == ECA_NORMAL) {
@@ -936,6 +945,106 @@ static PyObject *Py_ca_clear_subscription(PyObject *self, PyObject *args)
     return Py_BuildValue("i", status);
 }
 
+static void access_rights_handler(struct access_rights_handler_args args)
+{
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    ChannelData *pData= (ChannelData *)ca_puser(args.chid);
+
+    if (PyCallable_Check(pData->pAccessEventCallback)) {
+        PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
+        PyObject *pArgs = Py_BuildValue(
+        "({s:O,s:i,s:i}, O)",
+        "chid", pChid,
+        "read_access", args.ar.read_access,
+        "write_access", args.ar.write_access,
+        pData->pArgs
+        );
+        PyObject_CallObject(pData->pAccessEventCallback, pArgs);
+        Py_XDECREF(pChid);
+        Py_XDECREF(pArgs);
+    }
+
+    PyGILState_Release(gstate);
+}
+
+static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *args)
+{
+    PyObject *pChid;
+    PyObject *pCallback = NULL;
+    PyObject *pArgs = NULL;
+    if(!PyArg_ParseTuple(args, "OOO", &pChid,  &pCallback, &pArgs))
+        return NULL;
+
+    chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
+    if (chid == NULL)
+        return NULL;
+
+    /* store the callback and args in channel data */
+    ChannelData *pData= (ChannelData *)ca_puser(chid);
+    pData->pAccessEventCallback = pCallback;
+    pData->pArgs = pArgs;
+    Py_XINCREF(pCallback);
+    Py_XINCREF(pArgs);
+
+    int status;
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_replace_access_rights_event(chid, access_rights_handler);
+    Py_END_ALLOW_THREADS
+
+    return Py_BuildValue("i", status);
+}
+
+static PyObject *pExceptionCallback = NULL;
+
+static void exception_handler(struct exception_handler_args args)
+{
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    if (PyCallable_Check(pExceptionCallback)) {
+        PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
+        PyObject *pExceptionArgs = (PyObject *)args.usr;
+        PyObject *pArgs = Py_BuildValue(
+        "({s:O,s:i,s:i,s:i,s:i,s:s,s:s,s:i}, O)",
+        "chid", pChid,
+        "type", args.type,
+        "count", args.count,
+        "state", args.stat,
+        "op", args.op,
+        "ctx", args.ctx,
+        "file", args.pFile,
+        "lineNo", args.lineNo,
+        pExceptionArgs
+        );
+        PyObject_CallObject(pExceptionCallback, pArgs);
+        Py_XDECREF(pChid);
+        Py_XDECREF(pArgs);
+    }
+
+    PyGILState_Release(gstate);
+}
+
+static PyObject *Py_ca_add_exception_event(PyObject *self, PyObject *args)
+{
+    PyObject *pCallback = NULL;
+    PyObject *pArgs = NULL;
+    if(!PyArg_ParseTuple(args, "OO", &pCallback, &pArgs))
+        return NULL;
+
+    /* release previous callback/args */
+    Py_XDECREF(pExceptionCallback);
+
+    /* store callback/args */
+    Py_XINCREF(pCallback);
+    pExceptionCallback = pCallback;
+
+    int status;
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_add_exception_event(exception_handler, pArgs);
+    Py_END_ALLOW_THREADS
+
+    return Py_BuildValue("i", status);
+}
 
 /*******************************************************
  *               CA Synchronous Group                  *
