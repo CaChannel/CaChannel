@@ -23,6 +23,12 @@ Or build from source, by which you need to have an appropriate compiler for your
     $ python setup.py build
     $ [sudo] python setup.py install
 
+Or build for Anaconda,
+::
+    
+    $ hg clone http://bitbucket.org/xwang/cachannel
+    $ cd conda
+    $ conda build .
 
 Documentation
 -------------
