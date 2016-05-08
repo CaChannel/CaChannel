@@ -18,10 +18,17 @@
 #define osdTimeh
 
 #if ! defined(_MINGW) || ! defined(_TIMESPEC_DEFINED)
-struct timespec {
-	time_t tv_sec; /* seconds since some epoch */
-	long tv_nsec; /* nanoseconds within the second */
-};
+#  if _MSC_VER >= 1900
+#    include <time.h>
+#  else
+
+#define _TIMESPEC_DEFINED 1
+ struct timespec {
+ 	time_t tv_sec; /* seconds since some epoch */
+ 	long tv_nsec; /* nanoseconds within the second */
+ };
+
+#  endif /* _MSC_VER */
 #endif /* ! defined(_MINGW) || ! defined(_TIMESPEC_DEFINED) */
 
 #endif /* ifndef osdTimeh */
