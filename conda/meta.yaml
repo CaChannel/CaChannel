@@ -1,18 +1,18 @@
 package:
   name: cachannel
-  version: !!str 2.4.0
+  version: !!str 2.4.2
 
 source:
   # build from PyPI source tarball
-  fn: CaChannel-2.4.0.tar.gz
-  url: https://pypi.python.org/packages/source/C/CaChannel/CaChannel-2.4.0.tar.gz
+  fn: CaChannel-2.4.2.tar.gz
+  url: https://pypi.python.org/packages/source/C/CaChannel/CaChannel-2.4.2.tar.gz
   
   # build from source tree (for conda-build > 1.9)
   #path: ..
   
   # build from mercurial repository
   #hg_url: http://bitbucket.org/xwang/cachannel
-  #hg_tag: 2.4.0
+  #hg_tag: 2.4.2
 
   patches:
    # List any patch files here
