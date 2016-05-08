@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+2.4.2
+-----
+
+- Fix chid crash on 64bit windows
+- Add epics libs for python 3.5 on windows
+
 2.4.1
 -----
 
