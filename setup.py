@@ -33,10 +33,12 @@ if UNAME.lower() == "windows":
         HOSTARCH="windows-x64"
     else:
         HOSTARCH="win32-x86"
-    if sys.hexversion >= 0x02060000 and sys.hexversion < 0x03030000:
-        HOSTARCH += "-vc9"
+    if sys.hexversion >= 0x03050000:
+        HOSTARCH += "-vc14"
     elif sys.hexversion >= 0x03030000:
         HOSTARCH += "-vc10"
+    elif sys.hexversion >= 0x02060000:
+        HOSTARCH += "-vc9"
     lflags+=['/LTCG', '/NODEFAULTLIB:libcmt.lib',]
     libraries=["ca","Com","ws2_32","msvcrt","user32", "advapi32"]
 elif UNAME.lower() == "darwin":
