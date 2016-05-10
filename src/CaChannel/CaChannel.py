@@ -11,7 +11,7 @@ import sys
 if sys.hexversion >= 0x03000000:
     long = int
 
-import ca
+from . import ca
 
 ca.cs_never_search = 4
 

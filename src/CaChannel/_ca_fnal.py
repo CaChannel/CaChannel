@@ -1,7 +1,7 @@
 
-from _ca import *
-from cadefs import *
-import caError
+from ._ca import *
+from .cadefs import *
+from . import caError
 
 def alarmSeverityString(sevr):
     try:

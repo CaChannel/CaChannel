@@ -36,14 +36,14 @@ __foo_lock.acquire()
 thread.start_new_thread(__foo,()) # __foo release lock
 __foo_lock.acquire() # make sure threading is activated
 
-import _ca
+from . import _ca
 # version from _ca314.cpp
 version=_ca.version
 revision=_ca.release
 
 # some constants for EPICS channel Access library
-from cadefs import *
-from caError import *
+from .cadefs import *
+from .caError import *
 
 # for FNAL version you need to provide _ca_fnal.py and import every thin from them
-from _ca_fnal import *
+from ._ca_fnal import *

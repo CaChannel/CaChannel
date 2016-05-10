@@ -2,7 +2,7 @@ import sys
 if sys.hexversion >= 0x03000000:
     intern = sys.intern
 
-from ca import _ca
+from . import _ca
 class caError(_ca.error):
   """ EPICS ca.py Errors"""
   pass

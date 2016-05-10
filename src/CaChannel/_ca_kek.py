@@ -37,7 +37,7 @@ __foo_lock.acquire()
 thread.start_new_thread(__foo,()) # __foo release lock
 __foo_lock.acquire() # make sure threading is activated
 
-import _ca
+from . import _ca
 # version from _ca314.cpp
 version=_ca.version
 revision=_ca.release
