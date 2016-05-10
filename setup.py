@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Setup file for Ca-Python using distutils package.
-Python2.4 or later should be used.
+Python2.6 or later should be used.
 """
 
 import os
@@ -33,14 +33,9 @@ if UNAME.lower() == "windows":
         HOSTARCH="windows-x64"
     else:
         HOSTARCH="win32-x86"
-    if sys.hexversion >= 0x03050000:
-        HOSTARCH += "-vc14"
-    elif sys.hexversion >= 0x03030000:
-        HOSTARCH += "-vc10"
-    elif sys.hexversion >= 0x02060000:
-        HOSTARCH += "-vc9"
-    lflags+=['/LTCG', '/NODEFAULTLIB:libcmt.lib',]
-    libraries=["ca","Com","ws2_32","msvcrt","user32", "advapi32"]
+    libraries=["ca","Com"]
+    dlls = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'ca.dll'),
+            os.path.join(EPICSBASE, 'lib', HOSTARCH, 'Com.dll')]
 elif UNAME.lower() == "darwin":
     HOSTARCH = 'darwin-x86'
     libraries=["ca","Com"]
@@ -54,7 +49,7 @@ else:
     print("Platform", UNAME, ARCH, " Not Supported")
     sys.exit(1)
 
-rev="2.4.2"
+rev="3.0.0a0"
 
 define_macros = [("PYCA_VERSION",'"\\"%s\\""'%rev), (UNAME, None)]
 include_dirs = [os.path.join(EPICSBASE,"include"),
@@ -77,11 +72,10 @@ if WITH_NUMPY:
     define_macros += [('WITH_NUMPY', None)]
     include_dirs += [numpy_header]
 
-CA_SOURCE="src/_ca314.cpp" # for threaded version.
+CA_SOURCE="src/CaChannel/_ca314.cpp" # for threaded version.
 ca_module = Extension("_ca",[CA_SOURCE],
                       include_dirs=include_dirs,
                       define_macros=define_macros,
-                      undef_macros=["_DLL"],      
                       extra_link_args = lflags,
                       libraries=libraries,
                       library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),])
@@ -110,9 +104,10 @@ setup(name="CaChannel",
           'License :: OSI Approved :: BSD License',
           'Topic :: Scientific/Engineering',
       ],
-      package_dir={"": "src"},
-      py_modules=["ca", "caError", "cadefs","_ca_kek", "_ca_fnal", "CaChannel",
-          "ca_util", "epicsPV", "epicsMotor"],
+      packages=["CaChannel"],
+      package_dir={"" : "src", "CaChannel": "src/CaChannel"},
+      py_modules=["ca_util", "epicsPV", "epicsMotor"],
+      ext_package='CaChannel',
       ext_modules=[ca_module,],
-      data_files = [('', dlls)]
+      data_files = [('CaChannel', dlls)]
 )
