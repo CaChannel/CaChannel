@@ -106,7 +106,7 @@ setup(name="CaChannel",
       ],
       packages=["CaChannel"],
       package_dir={"" : "src", "CaChannel": "src/CaChannel"},
-      py_modules=["ca_util", "epicsPV", "epicsMotor"],
+      py_modules=["ca", "ca_util", "epicsPV", "epicsMotor"],
       ext_package='CaChannel',
       ext_modules=[ca_module,],
       data_files = [('CaChannel', dlls)]
