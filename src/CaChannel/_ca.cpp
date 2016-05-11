@@ -853,9 +853,11 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args)
         {
             pbuf = calloc(count, sizeof(dbr_string_t));
             dbr_string_t *ptr = (dbr_string_t *) pbuf;
-            for(int i=0; i<=PySequence_Length(pValue); i++) {
+            for(int i=0; i<count; i++) {
                 PyObject *item = PySequence_GetItem(pValue, i);
-                PyArg_Parse(item, "z", &ptr[i]);
+                char *str = NULL;
+	            PyArg_Parse(item, "z", &str);
+	            strncpy((char *)&(ptr[i]), str, sizeof(dbr_string_t));
                 Py_XDECREF(item);
             }
         }
