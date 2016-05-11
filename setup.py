@@ -49,7 +49,7 @@ else:
     print("Platform", UNAME, ARCH, " Not Supported")
     sys.exit(1)
 
-rev="3.0.0a0"
+rev="3.0.0a2"
 
 define_macros = [("PYCA_VERSION",'"\\"%s\\""'%rev), (UNAME, None)]
 include_dirs = [os.path.join(EPICSBASE,"include"),
@@ -72,7 +72,7 @@ if WITH_NUMPY:
     define_macros += [('WITH_NUMPY', None)]
     include_dirs += [numpy_header]
 
-CA_SOURCE="src/CaChannel/_ca314.cpp" # for threaded version.
+CA_SOURCE="src/CaChannel/_ca.cpp" # for threaded version.
 ca_module = Extension("_ca",[CA_SOURCE],
                       include_dirs=include_dirs,
                       define_macros=define_macros,
