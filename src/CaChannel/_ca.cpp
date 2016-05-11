@@ -127,7 +127,6 @@ static PyObject *DBRValue_get(DBRValueObject *self)
         return NULL;
     }
     PyObject *value = CBufferToPythonDict(self->dbrtype, self->count, self->dbr, self->use_numpy);
-    Py_XDECREF(value);
 
     return value;
 }
