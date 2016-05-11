@@ -1,2 +1,2 @@
-from .CaChannel import CaChannel
+from .CaChannel import CaChannel, CaChannelException
 from . import ca
