@@ -25,6 +25,9 @@ class CaChannelException(Exception):
     def __init__(self, status):
         self.status = status
 
+    def __int__(self):
+        return self.status
+
     def __str__(self):
         return ca.message(self.status)
 
