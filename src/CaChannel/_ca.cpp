@@ -531,21 +531,17 @@ static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kw
 */
 class ChannelData {
 public:
-    ChannelData(PyObject *pCallback, PyObject *pArgs) : pAccessEventCallback(NULL),pAccessEventArgs(NULL) {
+    ChannelData(PyObject *pCallback) : pAccessEventCallback(NULL),pAccessEventArgs(NULL) {
         this->pCallback = pCallback;
-        this->pArgs = pArgs;
         Py_XINCREF(pCallback);
-        Py_XINCREF(pArgs);
     }
     ~ChannelData() {
         Py_XDECREF(pCallback);
-        Py_XDECREF(pArgs);
         Py_XDECREF(pAccessEventCallback);
         Py_XDECREF(pAccessEventArgs);
     }
 
     PyObject *pCallback;
-    PyObject *pArgs;
     evid eventID;
     PyObject *pAccessEventCallback;
     PyObject *pAccessEventArgs;
@@ -559,7 +555,7 @@ static void connection_callback(struct connection_handler_args args)
 
     if(PyCallable_Check(pData->pCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
-        PyObject *pArgs = Py_BuildValue("({s:O,s:i},O)", "chid", pChid, "op", args.op, pData->pArgs);
+        PyObject *pArgs = Py_BuildValue("({s:O,s:i})", "chid", pChid, "op", args.op);
 
         PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
         if (ret == NULL) {
@@ -577,15 +573,14 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args)
 {
     char *pName;
     PyObject *pCallback = NULL;
-    PyObject *pArgs = NULL;
     int priority = 0;
-    if(!PyArg_ParseTuple(args, "z|OOi", &pName, &pCallback, &pArgs, &priority))
+    if(!PyArg_ParseTuple(args, "z|Oi", &pName, &pCallback, &priority))
         return NULL;
 
     chanId chid = NULL;
     int status;
 
-    ChannelData *pData = new ChannelData(pCallback, pArgs);
+    ChannelData *pData = new ChannelData(pCallback);
     if(PyCallable_Check(pCallback)) {
         status = ca_create_channel(pName, &connection_callback, pData, priority, &chid);
         if (status != ECA_NORMAL) delete pData;
@@ -644,13 +639,12 @@ static void get_callback(struct event_handler_args args)
                     args.dbr,
                     false);
         PyObject *pArgs = Py_BuildValue(
-        "({s:O,s:i,s:i,s:i,s:O}, O)",
-        "chid", pChid,
-        "type", args.type,
-        "count", args.count,
-        "status", args.status,
-        "value", pValue,
-        pData->pArgs
+            "({s:O,s:i,s:i,s:i,s:O})",
+            "chid", pChid,
+            "type", args.type,
+            "count", args.count,
+            "status", args.status,
+            "value", pValue
         );
         PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
         if (ret == NULL) {
@@ -680,13 +674,12 @@ static void event_callback(struct event_handler_args args)
                     args.dbr,
                     false);
         PyObject *pArgs = Py_BuildValue(
-        "({s:O,s:i,s:i,s:i,s:O}, O)",
-        "chid", pChid,
-        "type", args.type,
-        "count", args.count,
-        "status", args.status,
-        "value", pValue,
-        pData->pArgs
+            "({s:O,s:i,s:i,s:i,s:O})",
+            "chid", pChid,
+            "type", args.type,
+            "count", args.count,
+            "status", args.status,
+            "value", pValue
         );
         PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
         if (ret == NULL) {
@@ -708,8 +701,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args)
     chtype dbrtype = -1;
     unsigned long count = 0;
     PyObject *pCallback = NULL;
-    PyObject *pArgs = NULL;
-    if(!PyArg_ParseTuple(args, "O|lkOO", &pChid, &dbrtype, &count, &pCallback, &pArgs))
+    if(!PyArg_ParseTuple(args, "O|lkO", &pChid, &dbrtype, &count, &pCallback))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -723,7 +715,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args)
         count = ca_element_count(chid);
 
     if (PyCallable_Check(pCallback)) {
-        ChannelData *pData = new ChannelData(pCallback, pArgs);
+        ChannelData *pData = new ChannelData(pCallback);
         int status = ca_array_get_callback(dbrtype, count, chid, get_callback, pData);
         if (status != ECA_NORMAL) {
             delete pData;
@@ -767,12 +759,11 @@ static void put_callback(struct event_handler_args args)
     if (PyCallable_Check(pData->pCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
         PyObject *pArgs = Py_BuildValue(
-        "({s:O,s:i,s:i,s:i}, O)",
-        "chid", pChid,
-        "type", args.type,
-        "count", args.count,
-        "status", args.status,
-        pData->pArgs
+            "({s:O,s:i,s:i,s:i})",
+            "chid", pChid,
+            "type", args.type,
+            "count", args.count,
+            "status", args.status
         );
         PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
         if (ret == NULL) {
@@ -796,11 +787,10 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args)
     chtype dbrtype;
     unsigned long count = 1;
     PyObject *pCallback = NULL;
-    PyObject *pArgs = NULL;
     int status;
 
 
-    if(!PyArg_ParseTuple(args, "OO|OO", &pChid, &pValue, &pCallback, &pArgs))
+    if(!PyArg_ParseTuple(args, "OO|O", &pChid, &pValue, &pCallback))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -855,7 +845,7 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args)
         break;
         }
         if (PyCallable_Check(pCallback)) {
-            ChannelData *pData = new ChannelData(pCallback, pArgs);
+            ChannelData *pData = new ChannelData(pCallback);
             status = ca_put_callback(dbrtype, chid, &v, put_callback, pData);
             if (status != ECA_NORMAL)
                 delete pData;
@@ -900,7 +890,7 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args)
         break;
         }
         if (PyCallable_Check(pCallback)) {
-            ChannelData *pData = new ChannelData(pCallback, pArgs);
+            ChannelData *pData = new ChannelData(pCallback);
             status = ca_array_put_callback(dbrtype, count, chid, pbuf, put_callback, pData);
             if (status != ECA_NORMAL)
                 delete pData;
@@ -919,11 +909,10 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args)
 {
     PyObject *pChid;
     PyObject *pCallback = NULL;
-    PyObject *pArgs = NULL;
     chtype dbrtype = -1;
     unsigned long count = 0;
     unsigned long mask = DBE_VALUE | DBE_ALARM;
-    if(!PyArg_ParseTuple(args, "OOO|lkk", &pChid,  &pCallback, &pArgs, &dbrtype, &count, &mask))
+    if(!PyArg_ParseTuple(args, "OO|lkk", &pChid,  &pCallback, &dbrtype, &count, &mask))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -933,7 +922,7 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args)
     if (!dbr_type_is_valid(dbrtype))
         dbrtype = dbf_type_to_DBR(ca_field_type(chid));
 
-    ChannelData *pData = new ChannelData(pCallback, pArgs);
+    ChannelData *pData = new ChannelData(pCallback);
 
     evid eventID;
     int status;
@@ -983,11 +972,10 @@ static void access_rights_handler(struct access_rights_handler_args args)
     if (PyCallable_Check(pData->pAccessEventCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
         PyObject *pArgs = Py_BuildValue(
-        "({s:O,s:i,s:i}, O)",
-        "chid", pChid,
-        "read_access", args.ar.read_access,
-        "write_access", args.ar.write_access,
-        pData->pArgs
+            "({s:O,s:i,s:i})",
+            "chid", pChid,
+            "read_access", args.ar.read_access,
+            "write_access", args.ar.write_access
         );
         PyObject *ret = PyObject_CallObject(pData->pAccessEventCallback, pArgs);
         if (ret == NULL) {
@@ -1005,8 +993,7 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
 {
     PyObject *pChid;
     PyObject *pCallback = NULL;
-    PyObject *pArgs = NULL;
-    if(!PyArg_ParseTuple(args, "OOO", &pChid,  &pCallback, &pArgs))
+    if(!PyArg_ParseTuple(args, "OO", &pChid,  &pCallback))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -1016,9 +1003,7 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
     /* store the callback and args in channel data */
     ChannelData *pData= (ChannelData *)ca_puser(chid);
     pData->pAccessEventCallback = pCallback;
-    pData->pArgs = pArgs;
     Py_XINCREF(pCallback);
-    Py_XINCREF(pArgs);
 
     int status;
     Py_BEGIN_ALLOW_THREADS
@@ -1029,7 +1014,6 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
 }
 
 static PyObject *pExceptionCallback = NULL;
-static PyObject *pExceptionArgs = NULL;
 
 static void exception_handler(struct exception_handler_args args)
 {
@@ -1038,16 +1022,15 @@ static void exception_handler(struct exception_handler_args args)
     if (PyCallable_Check(pExceptionCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
         PyObject *pArgs = Py_BuildValue(
-        "({s:O,s:i,s:i,s:i,s:i,s:s,s:s,s:i}, O)",
-        "chid", pChid,
-        "type", args.type,
-        "count", args.count,
-        "state", args.stat,
-        "op", args.op,
-        "ctx", args.ctx,
-        "file", args.pFile,
-        "lineNo", args.lineNo,
-        pExceptionArgs
+            "({s:O,s:i,s:i,s:i,s:i,s:s,s:s,s:i})",
+            "chid", pChid,
+            "type", args.type,
+            "count", args.count,
+            "state", args.stat,
+            "op", args.op,
+            "ctx", args.ctx,
+            "file", args.pFile,
+            "lineNo", args.lineNo
         );
         PyObject *ret = PyObject_CallObject(pExceptionCallback, pArgs);
         if (ret == NULL) {
@@ -1064,19 +1047,15 @@ static void exception_handler(struct exception_handler_args args)
 static PyObject *Py_ca_add_exception_event(PyObject *self, PyObject *args)
 {
     PyObject *pCallback = NULL;
-    PyObject *pArgs = NULL;
-    if(!PyArg_ParseTuple(args, "OO", &pCallback, &pArgs))
+    if(!PyArg_ParseTuple(args, "O", &pCallback))
         return NULL;
 
     /* release previous callback/args */
     Py_XDECREF(pExceptionCallback);
-    Py_XDECREF(pExceptionArgs);
 
     /* store callback/args */
     Py_XINCREF(pCallback);
-    Py_XINCREF(pArgs);
     pExceptionCallback = pCallback;
-    pExceptionArgs = pArgs;
 
     int status;
     Py_BEGIN_ALLOW_THREADS

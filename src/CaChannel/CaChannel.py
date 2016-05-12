@@ -311,7 +311,7 @@ class CaChannel:
         >>> status = chan.pend_event(1)
         cawavec put completed
         """
-        status = ca.put(self._chid, value, callback, user_args)
+        status = ca.put(self._chid, value, lambda epics_args: callback(epics_args, user_args))
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 #
@@ -500,7 +500,7 @@ class CaChannel:
             count = ca.element_count(self._chid)
 
         self._callbacks['getCB']=(callback, user_args, use_numpy)
-        status, self.val = ca.get(self._chid, req_type, count, self._get_callback)
+        status, _ = ca.get(self._chid, req_type, count, self._get_callback)
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
@@ -575,7 +575,7 @@ class CaChannel:
         use_numpy = keywords.get('use_numpy', USE_NUMPY)
         self._callbacks['eventCB']=(callback, user_args, use_numpy)
 
-        status, self._evid = ca.create_subscription(self._chid, self._event_callback, (), req_type, count, mask)
+        status, self._evid = ca.create_subscription(self._chid, self._event_callback, req_type, count, mask)
 
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
@@ -861,21 +861,19 @@ class CaChannel:
 #
 # These functions hook user supplied callback functions to CA extension
 
-    def _conn_callback(self, epicsArgs, userArgs):
+    def _conn_callback(self, epicsArgs):
         callback = self._callbacks.get('connCB')
         if callback is None:
             return
         callbackFunc, userArgs = callback
-        if epicsArgs['up']: OP = 6
-        else: OP = 7
-        epicsArgs = (self._chid, OP)
+        epicsArgs = (epicsArgs['chid'], epicsArgs['op'])
         try:
             callbackFunc(epicsArgs, userArgs)
         except:
             pass
 
 
-    def _put_callback(self, epicsArgs, userArgs):
+    def _put_callback(self, epicsArgs):
         callback = self._callbacks.get('putCB')
         if callback is None:
             return
@@ -886,7 +884,7 @@ class CaChannel:
             pass
 
 
-    def _get_callback(self, epicsArgs, userArgs):
+    def _get_callback(self, epicsArgs):
         callback = self._callbacks.get('getCB')
         if callback is None:
             return
@@ -898,7 +896,7 @@ class CaChannel:
             pass
 
 
-    def _event_callback(self, epicsArgs, userArgs):
+    def _event_callback(self, epicsArgs):
         callback = self._callbacks.get('eventCB')
         if callback is None:
             return
