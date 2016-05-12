@@ -556,10 +556,13 @@ static void connection_callback(struct connection_handler_args args)
 
     if(PyCallable_Check(pData->pCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
-        PyObject *pArgs = Py_BuildValue("({s:O,s:i}O)", "chid", pChid, "op", args.op, pData->pArgs);
+        PyObject *pArgs = Py_BuildValue("({s:O,s:i},O)", "chid", pChid, "op", args.op, pData->pArgs);
 
-        PyObject_CallObject(pData->pCallback, pArgs);
-
+        PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
+        if (ret == NULL) {
+            PyErr_Print();
+        }
+        Py_XDECREF(ret);
 	    Py_XDECREF(pArgs);
 	    Py_XDECREF(pChid);
     }
@@ -646,7 +649,11 @@ static void get_callback(struct event_handler_args args)
         "value", pValue,
         pData->pArgs
         );
-        PyObject_CallObject(pData->pCallback, pArgs);
+        PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
+        if (ret == NULL) {
+            PyErr_Print();
+        }
+        Py_XDECREF(ret);
         Py_XDECREF(pValue);
         Py_XDECREF(pChid);
         Py_XDECREF(pArgs);
@@ -678,7 +685,11 @@ static void event_callback(struct event_handler_args args)
         "value", pValue,
         pData->pArgs
         );
-        PyObject_CallObject(pData->pCallback, pArgs);
+        PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
+        if (ret == NULL) {
+            PyErr_Print();
+        }
+        Py_XDECREF(ret);
         Py_XDECREF(pValue);
         Py_XDECREF(pChid);
         Py_XDECREF(pArgs);
@@ -760,7 +771,11 @@ static void put_callback(struct event_handler_args args)
         "status", args.status,
         pData->pArgs
         );
-        PyObject_CallObject(pData->pCallback, pArgs);
+        PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
+        if (ret == NULL) {
+            PyErr_Print();
+        }
+        Py_XDECREF(ret);
         Py_XDECREF(pChid);
         Py_XDECREF(pArgs);
     }
@@ -971,7 +986,11 @@ static void access_rights_handler(struct access_rights_handler_args args)
         "write_access", args.ar.write_access,
         pData->pArgs
         );
-        PyObject_CallObject(pData->pAccessEventCallback, pArgs);
+        PyObject *ret = PyObject_CallObject(pData->pAccessEventCallback, pArgs);
+        if (ret == NULL) {
+            PyErr_Print();
+        }
+        Py_XDECREF(ret);
         Py_XDECREF(pChid);
         Py_XDECREF(pArgs);
     }
@@ -1027,7 +1046,11 @@ static void exception_handler(struct exception_handler_args args)
         "lineNo", args.lineNo,
         pExceptionArgs
         );
-        PyObject_CallObject(pExceptionCallback, pArgs);
+        PyObject *ret = PyObject_CallObject(pExceptionCallback, pArgs);
+        if (ret == NULL) {
+            PyErr_Print();
+        }
+        Py_XDECREF(ret);
         Py_XDECREF(pChid);
         Py_XDECREF(pArgs);
     }
@@ -1074,7 +1097,11 @@ int printf_handler(const char *pFormat, va_list args)
         "(s)",
         message
         );
-        PyObject_CallObject(pPrintfHandler, pArgs);
+        PyObject *ret = PyObject_CallObject(pPrintfHandler, pArgs);
+        if (ret == NULL) {
+            PyErr_Print();
+        }
+        Py_XDECREF(ret);
         Py_XDECREF(pArgs);
     }
 
