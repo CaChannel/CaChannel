@@ -494,6 +494,11 @@ class CaChannel:
         pv_value 0
         """
         use_numpy = keywords.get('use_numpy', USE_NUMPY)
+        if req_type is None:
+            req_type = ca.field_type(self._chid)
+        if count is None:
+            count = ca.element_count(self._chid)
+
         self._callbacks['getCB']=(callback, user_args, use_numpy)
         status, self.val = ca.get(self._chid, req_type, count, self._get_callback)
         if status != ca.ECA_NORMAL:
