@@ -255,6 +255,8 @@ class CaChannel:
         >>> chan.getw(count=4)
         [49, 50, 51, 0]
         """
+        if isinstance(value, basestring) and self.field_type() == ca.DBF_CHAR:
+            value = [ord(v) for v in value] + [0]
         status = ca.put(self._chid, value)
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
@@ -311,6 +313,8 @@ class CaChannel:
         >>> status = chan.pend_event(1)
         cawavec put completed
         """
+        if isinstance(value, basestring) and self.field_type() == ca.DBF_CHAR:
+            value = [ord(v) for v in value] + [0]
         status = ca.put(self._chid, value, lambda epics_args: callback(epics_args, user_args))
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
