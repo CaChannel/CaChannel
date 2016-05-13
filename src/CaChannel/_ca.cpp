@@ -826,7 +826,7 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args)
             PyArg_Parse(pValue, "f", &v.fltval);
         break;
         case DBR_CHAR:
-            PyArg_Parse(pValue, "v", &v.charval);
+            PyArg_Parse(pValue, "b", &v.charval);
         break;
         case DBR_ENUM:
             PyArg_Parse(pValue, "h", &v.enmval);
@@ -2188,7 +2188,7 @@ PyObject * CBufferToPythonDict(chtype type,
         for(i=0; i< nstr;i++){
             PyTuple_SET_ITEM(ptup,i,PyString_FromString((*strs)[i]));
         }
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:i,s:O)",
+        arglist=Py_BuildValue("{s:O,s:i,s:i,s:i,s:O}",
                 "value",    value,
                 "severity", cval->severity,
                 "status",   cval->status,
@@ -2278,7 +2278,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STSACK_STRING:
     {
         struct dbr_stsack_string  *cval=(struct dbr_stsack_string *)val;
-        arglist = Py_BuildValue("s:i,s:i,s:i,s:i,s:s",
+        arglist = Py_BuildValue("{s:i,s:i,s:i,s:i,s:s}",
                 "status",   cval->status,
                 "severity", cval->severity,
                 "ackt",     cval->ackt,
