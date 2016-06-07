@@ -195,7 +195,6 @@ class CaChannel:
         else:
             self._pvname = pvName
 
-        ca.attach_context(CONTEXT)
         status, self._chid = ca.create_channel(pvName)
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
@@ -636,7 +635,6 @@ class CaChannel:
 
         .. note:: It is an alias to ``pend_event(1e-12)``.
         """
-        ca.attach_context(CONTEXT)
         status = ca.poll()
         # status is always ECA_TIMEOUT
         return status
