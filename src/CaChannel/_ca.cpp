@@ -45,8 +45,8 @@ static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kw
 
 static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args);
 static PyObject *Py_ca_clear_channel(PyObject *self, PyObject *args);
-static PyObject *Py_ca_get(PyObject *self, PyObject *args);
-static PyObject *Py_ca_put(PyObject *self, PyObject *args);
+static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws);
+static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args);
 static PyObject *Py_ca_clear_subscription(PyObject *self, PyObject *args);
 
@@ -196,8 +196,8 @@ static PyMethodDef CA_Methods[] = {
     /* Channel creation */
     {"create_channel",      Py_ca_create_channel,   METH_VARARGS, "Create a CA channel connection"},
     {"clear_channel",       Py_ca_clear_channel,    METH_VARARGS, "Shutdown a CA channel connection"},
-    {"get",                 Py_ca_get,              METH_VARARGS, "Read PV's value"},
-    {"put",                 Py_ca_put,              METH_VARARGS, "Write a value to PV"},
+    {"get",          (PyCFunction)Py_ca_get,              METH_VARARGS|METH_KEYWORDS, "Read PV's value"},
+    {"put",          (PyCFunction)Py_ca_put,              METH_VARARGS|METH_KEYWORDS, "Write a value to PV"},
     {"create_subscription", Py_ca_create_subscription,METH_VARARGS,"Subscribe for state changes"},
     {"clear_subscription",  Py_ca_clear_subscription, METH_VARARGS,"Unsubscribe for state changes"},
     {"replace_access_rights_event", Py_ca_replace_access_rights_event, METH_VARARGS, "Replace access right event"},
@@ -695,24 +695,33 @@ static void event_callback(struct event_handler_args args)
 }
 
 
-static PyObject *Py_ca_get(PyObject *self, PyObject *args)
+static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
 {
     PyObject *pChid;
+    PyObject *pType = Py_None;
     chtype dbrtype = -1;
+    PyObject *pCount = Py_None;
     unsigned long count = 0;
     PyObject *pCallback = NULL;
-    if(!PyArg_ParseTuple(args, "O|lkO", &pChid, &dbrtype, &count, &pCallback))
+
+    static char *kwlist[] = {(char*)"chid", (char*)"type", (char*)"count", (char*)"callback", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO", kwlist, &pChid, &pType, &pCount, &pCallback))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
     if (chid == NULL)
         return NULL;
 
-    if (!dbr_type_is_valid(dbrtype))
+    if (pType == Py_None)
         dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+    else
+        dbrtype = PyLong_AsLong(pType);
 
-    if (count == 0)
+    if (pCount == Py_None)
         count = ca_element_count(chid);
+    else
+        count = (unsigned long)PyLong_AsUnsignedLong(pCount);
 
     if (PyCallable_Check(pCallback)) {
         ChannelData *pData = new ChannelData(pCallback);
@@ -780,36 +789,45 @@ static void put_callback(struct event_handler_args args)
 }
 
 
-static PyObject *Py_ca_put(PyObject *self, PyObject *args)
+static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
 {
     PyObject *pChid;
     PyObject *pValue;
-    chtype dbrtype;
+    PyObject *pType;
+    PyObject *pCount;
+    chtype dbrtype = -1;
     unsigned long count = 1;
     PyObject *pCallback = NULL;
     int status;
 
+    static char *kwlist[] = {(char*)"chid", (char*)"value", (char*)"type", (char*)"count", (char*)"callback", NULL};
 
-    if(!PyArg_ParseTuple(args, "OO|O", &pChid, &pValue, &pCallback))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "OO|OOO", kwlist, &pChid, &pValue, &pType, &pCount, &pCallback))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
     if (chid == NULL)
         return NULL;
 
-    dbrtype = ca_field_type(chid);
+    if (pType == Py_None)
+        dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+    else
+        dbrtype = PyLong_AsLong(pType);
 
     if (PySequence_Check(pValue)) {
+        unsigned long value_count = PySequence_Length(pValue);
+        if (pCount != Py_None)
+            value_count = MIN(value_count, PyLong_AsLong(pCount));
         // string input can be written as char array or string
         if (PyBytes_Check(pValue)) {
             count = 1;
             if (dbrtype == DBF_CHAR) {
-                count = PySequence_Length(pValue);
+                count = value_count;
             } else if (dbrtype == DBF_ENUM) {
                 dbrtype = DBR_STRING;
             }
         } else {
-            count = MIN(ca_element_count(chid), PySequence_Length(pValue));
+            count = MIN(ca_element_count(chid), value_count);
         }
     }
 
