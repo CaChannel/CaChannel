@@ -131,6 +131,30 @@ static PyObject *DBRValue_get(DBRValueObject *self)
     return value;
 }
 
+static PyObject* DBRValue_getattro(DBRValueObject *self, PyObject* name)
+{
+    PyObject *pResult = NULL;
+	char* attr = PyString_AsString(name);
+    if (strcmp(attr, "use_numpy") == 0) {
+        pResult = Py_BuildValue("i", self->use_numpy);
+    } else {
+		pResult = PyObject_GenericGetAttr((PyObject*)self, name);
+    }
+    return pResult;
+}
+
+static int DBRValue_setattro(DBRValueObject *self, PyObject* name, PyObject* value)
+{
+    int error = 0;
+	char* attr = PyString_AsString(name);
+    if (strcmp(attr, "use_numpy") == 0) {
+        self->use_numpy = PyLong_AsLong(value);
+    } else {
+		error = PyObject_GenericSetAttr((PyObject*)self, name, value);
+    }
+    return error;
+}
+
 static PyMethodDef DBRValue_methods[] = {
     {"get", (PyCFunction)DBRValue_get, METH_NOARGS, "Get as python object"},
     {NULL, NULL, 0, NULL}
@@ -153,8 +177,8 @@ static PyTypeObject DBRValueType = {
     0,                         /*tp_hash */
     0,                         /*tp_call*/
     0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
+    (getattrofunc)DBRValue_getattro,/*tp_getattro*/
+    (setattrofunc)DBRValue_setattro,/*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
     "DBRValue object",         /* tp_doc */
@@ -287,6 +311,7 @@ MOD_INIT(_ca) {
         PyErr_Clear();
     }
     #endif
+    PyModule_AddIntConstant(pModule, "with_numpy", with_numpy);
 
     PyModule_AddIntMacro(pModule, DBF_STRING);
     PyModule_AddIntMacro(pModule, DBF_SHORT);
@@ -531,20 +556,19 @@ static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kw
 */
 class ChannelData {
 public:
-    ChannelData(PyObject *pCallback) : pAccessEventCallback(NULL),pAccessEventArgs(NULL) {
+    ChannelData(PyObject *pCallback) : pAccessEventCallback(NULL), use_numpy(false) {
         this->pCallback = pCallback;
         Py_XINCREF(pCallback);
     }
     ~ChannelData() {
         Py_XDECREF(pCallback);
         Py_XDECREF(pAccessEventCallback);
-        Py_XDECREF(pAccessEventArgs);
     }
 
     PyObject *pCallback;
     evid eventID;
     PyObject *pAccessEventCallback;
-    PyObject *pAccessEventArgs;
+    bool use_numpy;
 };
 
 static void connection_callback(struct connection_handler_args args)
@@ -703,10 +727,11 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
     PyObject *pCount = Py_None;
     unsigned long count = 0;
     PyObject *pCallback = NULL;
+    bool use_numpy = false;
 
-    static char *kwlist[] = {(char*)"chid", (char*)"type", (char*)"count", (char*)"callback", NULL};
+    static char *kwlist[] = {(char*)"chid", (char*)"type", (char*)"count", (char*)"callback", (char*)"use_numpy", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO", kwlist, &pChid, &pType, &pCount, &pCallback))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOOi", kwlist, &pChid, &pType, &pCount, &pCallback, &use_numpy))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -725,6 +750,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
 
     if (PyCallable_Check(pCallback)) {
         ChannelData *pData = new ChannelData(pCallback);
+        pData->use_numpy = use_numpy;
         int status = ca_array_get_callback(dbrtype, count, chid, get_callback, pData);
         if (status != ECA_NORMAL) {
             delete pData;
@@ -735,7 +761,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         void * pValue = malloc(dbr_size_n(dbrtype, count));
         int status = ca_array_get(dbrtype, count, chid, pValue);
         if (status == ECA_NORMAL) {
-            PyObject *dbr = DBRValue_New(dbrtype, count, pValue, false);
+            PyObject *dbr = DBRValue_New(dbrtype, count, pValue, use_numpy);
             PyObject *pRes = Py_BuildValue("(iO)", status, dbr);
             Py_XDECREF(dbr);
             return pRes;

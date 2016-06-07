@@ -334,7 +334,7 @@ class CaChannel:
         else:
             value = dbrvalue
 
-        if True: #not self.val.use_numpy:
+        if not self.val.use_numpy:
             if isinstance(value, dict):
                 if hasattr(value['pv_value'], 'tolist'):
                    value['pv_value'] = value['pv_value'].tolist()
@@ -376,7 +376,7 @@ class CaChannel:
         123.0
         """
         use_numpy = keywords.get('use_numpy', USE_NUMPY)
-        status, self.val = ca.get(self._chid, req_type, count)
+        status, self.val = ca.get(self._chid, req_type, count, None, use_numpy)
         #self.val.use_numpy = use_numpy
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
@@ -494,7 +494,7 @@ class CaChannel:
         """
         use_numpy = keywords.get('use_numpy', USE_NUMPY)
         self._callbacks['getCB']=(callback, user_args, use_numpy)
-        status, _ = ca.get(self._chid, req_type, count, self._get_callback)
+        status, _ = ca.get(self._chid, req_type, count, self._get_callback, use_numpy)
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
