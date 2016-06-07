@@ -7,6 +7,7 @@ Python2.6 or later should be used.
 import os
 import sys
 import platform
+import shutil
 
 # Use setuptools to include build_sphinx, upload/sphinx commands
 try:
@@ -34,8 +35,11 @@ if UNAME.lower() == "windows":
     else:
         HOSTARCH="win32-x86"
     libraries=["ca","Com"]
-    dlls = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'ca.dll'),
-            os.path.join(EPICSBASE, 'lib', HOSTARCH, 'Com.dll')]
+    dlls = ['Com.dll', 'ca.dll']
+    for dll in dlls:
+        shutil.copy(os.path.join(EPICSBASE, 'lib', HOSTARCH, dll),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'CaChannel'))
+
 elif UNAME.lower() == "darwin":
     HOSTARCH = 'darwin-x86'
     libraries=["ca","Com"]
@@ -109,5 +113,5 @@ setup(name="CaChannel",
       py_modules=["ca", "ca_util", "epicsPV", "epicsMotor"],
       ext_package='CaChannel',
       ext_modules=[ca_module,],
-      data_files = [('CaChannel', dlls)]
+      package_data = {'CaChannel': dlls}
 )
