@@ -726,12 +726,12 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
     chtype dbrtype = -1;
     PyObject *pCount = Py_None;
     unsigned long count = 0;
-    PyObject *pCallback = NULL;
+    PyObject *pCallback = Py_None;
     bool use_numpy = false;
 
     static char *kwlist[] = {(char*)"chid", (char*)"type", (char*)"count", (char*)"callback", (char*)"use_numpy", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOOi", kwlist, &pChid, &pType, &pCount, &pCallback, &use_numpy))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOOb", kwlist, &pChid, &pType, &pCount, &pCallback, &use_numpy))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
