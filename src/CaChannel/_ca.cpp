@@ -819,11 +819,11 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
 {
     PyObject *pChid;
     PyObject *pValue;
-    PyObject *pType;
-    PyObject *pCount;
+    PyObject *pType = Py_None;
+    PyObject *pCount = Py_None;
     chtype dbrtype = -1;
     unsigned long count = 1;
-    PyObject *pCallback = NULL;
+    PyObject *pCallback = Py_None;
     int status;
 
     static char *kwlist[] = {(char*)"chid", (char*)"value", (char*)"type", (char*)"count", (char*)"callback", NULL};
