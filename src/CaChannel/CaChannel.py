@@ -260,7 +260,7 @@ class CaChannel:
         """
         if isinstance(value, basestring) and self.field_type() == ca.DBF_CHAR:
             value = [ord(v) for v in value] + [0]
-        status = ca.put(self._chid, value)
+        status = ca.put(self._chid, value, req_type, count)
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
@@ -318,7 +318,7 @@ class CaChannel:
         """
         if isinstance(value, basestring) and self.field_type() == ca.DBF_CHAR:
             value = [ord(v) for v in value] + [0]
-        status = ca.put(self._chid, value, lambda epics_args: callback(epics_args, user_args))
+        status = ca.put(self._chid, value, req_type, count, lambda epics_args: callback(epics_args, user_args))
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 #
