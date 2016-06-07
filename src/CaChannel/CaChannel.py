@@ -258,8 +258,6 @@ class CaChannel:
         >>> chan.getw(count=4)
         [49, 50, 51, 0]
         """
-        if isinstance(value, basestring) and self.field_type() == ca.DBF_CHAR:
-            value = [ord(v) for v in value] + [0]
         status = ca.put(self._chid, value, req_type, count)
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
@@ -316,8 +314,6 @@ class CaChannel:
         >>> status = chan.pend_event(1)
         cawavec put completed
         """
-        if isinstance(value, basestring) and self.field_type() == ca.DBF_CHAR:
-            value = [ord(v) for v in value] + [0]
         status = ca.put(self._chid, value, req_type, count, lambda epics_args: callback(epics_args, user_args))
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
@@ -380,10 +376,6 @@ class CaChannel:
         123.0
         """
         use_numpy = keywords.get('use_numpy', USE_NUMPY)
-        if req_type is None:
-            req_type = ca.field_type(self._chid)
-        if count is None:
-            count = ca.element_count(self._chid)
         status, self.val = ca.get(self._chid, req_type, count)
         #self.val.use_numpy = use_numpy
         if status != ca.ECA_NORMAL:
@@ -501,11 +493,6 @@ class CaChannel:
         pv_value 0
         """
         use_numpy = keywords.get('use_numpy', USE_NUMPY)
-        if req_type is None:
-            req_type = ca.field_type(self._chid)
-        if count is None:
-            count = ca.element_count(self._chid)
-
         self._callbacks['getCB']=(callback, user_args, use_numpy)
         status, _ = ca.get(self._chid, req_type, count, self._get_callback)
         if status != ca.ECA_NORMAL:
