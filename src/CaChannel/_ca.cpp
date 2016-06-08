@@ -23,7 +23,7 @@ int  with_numpy = 0;
     #define PyInt_FromLong PyLong_FromLong
     #define PyString_Check PyUnicode_Check
     #define PyString_FromString PyUnicode_FromString
-    #define PyString_AsString PyUnicode_AsString
+    #define PyString_AsString PyUnicode_AsUTF8
     #define CAPSULE_BUILD(ptr,name, destr) PyCapsule_New(ptr, name, destr)
     #define CAPSULE_CHECK(obj) PyCapsule_CheckExact(obj)
     #define CAPSULE_EXTRACT(obj,name) PyCapsule_GetPointer(obj, name)
@@ -848,7 +848,13 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
         if (PyBytes_Check(pValue)) {
             count = 1;
             if (dbrtype == DBF_CHAR) {
-                count = value_count;
+                const char *pBuff = PyBytes_AsString(pValue);
+                size_t buff_size = strlen(pBuff);
+                pValue = PyList_New(buff_size);
+                for(int i=0; i<buff_size; i++) {
+                    PyList_SetItem(pValue, i, PyLong_FromLong(pBuff[i]));
+                }
+                count = value_buff_size;
             } else if (dbrtype == DBF_ENUM) {
                 dbrtype = DBR_STRING;
             }
