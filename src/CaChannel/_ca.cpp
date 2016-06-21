@@ -842,25 +842,16 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
 
     if (PySequence_Check(pValue)) {
         unsigned long value_count = PySequence_Length(pValue);
+
+        // string can be written to enum type
+        if ((PyUnicode_Check(pValue) || PyBytes_Check(pValue)) && dbrtype == DBR_ENUM) {
+            dbrtype = DBR_STRING;
+            value_count = 1;
+        }
         if (pCount != Py_None)
             value_count = MIN(value_count, PyLong_AsLong(pCount));
-        // string input can be written as char array or string
-        if (PyBytes_Check(pValue)) {
-            count = 1;
-            if (dbrtype == DBF_CHAR) {
-                const char *pBuff = PyBytes_AsString(pValue);
-                size_t buff_size = strlen(pBuff);
-                pValue = PyList_New(buff_size);
-                for(int i=0; i<buff_size; i++) {
-                    PyList_SetItem(pValue, i, PyLong_FromLong(pBuff[i]));
-                }
-                count = value_buff_size;
-            } else if (dbrtype == DBF_ENUM) {
-                dbrtype = DBR_STRING;
-            }
-        } else {
-            count = MIN(ca_element_count(chid), value_count);
-        }
+
+        count = MIN(ca_element_count(chid), value_count);
     }
 
     if (count == 1) {
@@ -876,7 +867,18 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
             PyArg_Parse(pValue, "f", &v.fltval);
         break;
         case DBR_CHAR:
-            PyArg_Parse(pValue, "b", &v.charval);
+        {
+            if (PyUnicode_Check(pValue) || PyBytes_Check(pValue)) {
+                char * pBuff = NULL;
+                size_t buff_size = 0;
+                PyArg_Parse(pValue, "z#", &pBuff, &buff_size);
+                if (pBuff != NULL) {
+                    v.charval = pBuff[0];
+                }
+            } else {
+                PyArg_Parse(pValue, "b", &v.charval);
+            }
+        }
         break;
         case DBR_ENUM:
             PyArg_Parse(pValue, "h", &v.enmval);
@@ -930,7 +932,20 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
             PythonValueToCBuffer(dbr_enum_t, "h");
         break;
         case DBR_CHAR:
-            PythonValueToCBuffer(dbr_char_t, "b");
+        {
+            if (PyUnicode_Check(pValue) || PyBytes_Check(pValue)) {
+                char * pBuff = NULL;
+                size_t buff_size = 0;
+                PyArg_Parse(pValue, "z#", &pBuff, &buff_size);
+                if (pBuff != NULL) {
+                    count = buff_size;
+                    pbuf = calloc(count, sizeof(dbr_char_t));
+                    memcpy(pbuf, pBuff, count * sizeof(dbr_char_t));
+                }
+            } else {
+                PythonValueToCBuffer(dbr_char_t, "b");
+            }
+        }
         break;
         case DBR_LONG:
             PythonValueToCBuffer(dbr_long_t, "i");
