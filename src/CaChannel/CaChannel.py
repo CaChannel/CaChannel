@@ -329,7 +329,7 @@ class CaChannel:
         dbrvalue = self.val.get()
         if isinstance(dbrvalue, dict):
             value = {}
-            self._format_value(dbrvalue, value)
+            self._format_value(dbrvalue, value, self.val.use_numpy)
         else:
             value = dbrvalue
 
