@@ -20,12 +20,11 @@
 # method.  If pend_io() returns an error status then all values read
 # during processing are not guaranteed to be correct.
 #
-
 from CaChannel import *
 
 def getCallback(epicsArgs, userArgs):
     data=epicsArgs['pv_value']
-    print 'In callback', data
+    print('In callback', data)
 
 def main():
     try:
@@ -41,13 +40,13 @@ def main():
         #cawave.pend_io()
         
         cawave.putw(l)
-        print cawave.getw()
+        print(cawave.getw())
         
         cawave.add_masked_array_event(None, None, ca.DBE_VALUE, getCallback, 0)
         cawave.pend_event()
         #cawave.clear_event()
 
-    except CaChannelException, status:
-        print ca.message(status)
+    except CaChannelException as status:
+        print(ca.message(status))
     
 main()
