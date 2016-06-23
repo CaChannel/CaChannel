@@ -4,6 +4,7 @@
 #include <cadef.h>
 
 #ifdef WITH_NUMPY
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 int with_numpy = 1;
 #else
@@ -1184,11 +1185,13 @@ static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args, PyObject *kws)
 static PyObject *Py_ca_sg_reset(PyObject *self, PyObject *args)
 {
     CA_SYNC_GID gid;
+    int status;
+
     if(!PyArg_ParseTuple(args, "ld", &gid))
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
-    int status = ca_sg_reset(gid);
+    status = ca_sg_reset(gid);
     Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
@@ -1198,11 +1201,13 @@ static PyObject *Py_ca_sg_block(PyObject *self, PyObject *args)
 {
     CA_SYNC_GID gid;
     double timeout;
+    int status;
+
     if(!PyArg_ParseTuple(args, "ld", &gid, &timeout))
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
-    int status = ca_sg_block(gid, timeout);
+    status = ca_sg_block(gid, timeout);
     Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
@@ -1211,11 +1216,13 @@ static PyObject *Py_ca_sg_block(PyObject *self, PyObject *args)
 static PyObject *Py_ca_sg_test(PyObject *self, PyObject *args)
 {
     CA_SYNC_GID gid;
+    int status;
+
     if(!PyArg_ParseTuple(args, "l", &gid))
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
-    int status = ca_sg_test(gid);
+    status = ca_sg_test(gid);
     Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
@@ -1649,7 +1656,7 @@ typedef dbr_char_t *dbr_char_t_ptr ;
         else{\
             npy_intp ndims[]  = {COUNT};\
             value =  PyArray_SimpleNew(1, ndims, NPTYPE); \
-            memcpy(PyArray_DATA(value), VAL, COUNT*sizeof(PYTYPE)); \
+            memcpy(PyArray_DATA((PyArrayObject*)value), VAL, COUNT*sizeof(PYTYPE)); \
         }\
     }
 #define FormatDBRtoValueArray(COUNT, VP, PYTYPE, FORMAT,  NPTYPE) \
@@ -1659,7 +1666,7 @@ typedef dbr_char_t *dbr_char_t_ptr ;
         else{\
             npy_intp ndims[]  = {COUNT};\
             value =  PyArray_SimpleNew(1, ndims, NPTYPE); \
-            memcpy(PyArray_DATA(value), VP, COUNT*sizeof(PYTYPE)); \
+            memcpy(PyArray_DATA((PyArrayObject*)value), VP, COUNT*sizeof(PYTYPE)); \
         }\
     }
 
