@@ -472,6 +472,33 @@ MOD_INIT(_ca) {
     PyModule_AddIntMacro(pModule, cs_conn);
     PyModule_AddIntMacro(pModule, cs_closed);
 
+    PyModule_AddIntMacro(pModule, NO_ALARM);
+    PyModule_AddIntMacro(pModule, MINOR_ALARM);
+    PyModule_AddIntMacro(pModule, MAJOR_ALARM);
+    PyModule_AddIntMacro(pModule, INVALID_ALARM);
+
+    PyModule_AddIntMacro(pModule, READ_ALARM);
+    PyModule_AddIntMacro(pModule, WRITE_ALARM);
+    PyModule_AddIntMacro(pModule, HIHI_ALARM);
+    PyModule_AddIntMacro(pModule, HIGH_ALARM);
+    PyModule_AddIntMacro(pModule, LOLO_ALARM);
+    PyModule_AddIntMacro(pModule, LOW_ALARM);
+    PyModule_AddIntMacro(pModule, STATE_ALARM);
+    PyModule_AddIntMacro(pModule, COS_ALARM);
+    PyModule_AddIntMacro(pModule, COMM_ALARM);
+    PyModule_AddIntMacro(pModule, TIMEOUT_ALARM);
+    PyModule_AddIntMacro(pModule, HW_LIMIT_ALARM);
+    PyModule_AddIntMacro(pModule, CALC_ALARM);
+    PyModule_AddIntMacro(pModule, SCAN_ALARM);
+    PyModule_AddIntMacro(pModule, LINK_ALARM);
+    PyModule_AddIntMacro(pModule, SOFT_ALARM);
+    PyModule_AddIntMacro(pModule, BAD_SUB_ALARM);
+    PyModule_AddIntMacro(pModule, UDF_ALARM);
+    PyModule_AddIntMacro(pModule, DISABLE_ALARM);
+    PyModule_AddIntMacro(pModule, SIMM_ALARM);
+    PyModule_AddIntMacro(pModule, READ_ACCESS_ALARM);
+    PyModule_AddIntMacro(pModule, WRITE_ACCESS_ALARM);
+
     #if PY_MAJOR_VERSION >= 3
     return pModule;
     #endif
