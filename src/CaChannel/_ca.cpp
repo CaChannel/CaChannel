@@ -43,11 +43,11 @@ static PyObject *Py_ca_detach_context(PyObject *self, PyObject *args);
 static PyObject *Py_ca_current_context(PyObject *self, PyObject *args);
 static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kws);
 
-static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args);
+static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_clear_channel(PyObject *self, PyObject *args);
 static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws);
-static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args);
+static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_clear_subscription(PyObject *self, PyObject *args);
 
 static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *args);
@@ -70,8 +70,8 @@ static PyObject *Py_ca_write_access(PyObject *self, PyObject *args);
 
 static PyObject *Py_ca_sg_create(PyObject *self, PyObject *args);
 static PyObject *Py_ca_sg_delete(PyObject *self, PyObject *args);
-static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args);
-static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args);
+static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws);
+static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_sg_test(PyObject *self, PyObject *args);
 static PyObject *Py_ca_sg_reset(PyObject *self, PyObject *args);
 static PyObject *Py_ca_sg_block(PyObject *self, PyObject *args);
@@ -88,13 +88,21 @@ static PyObject *Py_dbr_type_is_STS(PyObject *self, PyObject *args);
 static PyObject *Py_dbr_type_is_TIME(PyObject *self, PyObject *args);
 static PyObject *Py_dbr_type_is_GR(PyObject *self, PyObject *args);
 static PyObject *Py_dbr_type_is_CTRL(PyObject *self, PyObject *args);
+static PyObject *Py_dbr_type_is_STRING(PyObject *self, PyObject *args);
+static PyObject *Py_dbr_type_is_SHORT(PyObject *self, PyObject *args);
+static PyObject *Py_dbr_type_is_FLOAT(PyObject *self, PyObject *args);
+static PyObject *Py_dbr_type_is_ENUM(PyObject *self, PyObject *args);
+static PyObject *Py_dbr_type_is_CHAR(PyObject *self, PyObject *args);
+static PyObject *Py_dbr_type_is_LONG(PyObject *self, PyObject *args);
+static PyObject *Py_dbr_type_is_DOUBLE(PyObject *self, PyObject *args);
 
 static PyObject *Py_dbf_text(PyObject *self, PyObject *args);
 static PyObject *Py_dbr_text(PyObject *self, PyObject *args);
 static PyObject *Py_ca_message(PyObject *self, PyObject *args);
 
 static PyObject *CBufferToPythonDict(chtype type, unsigned long count, const void *val, int use_numpy);
-
+static void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount,
+                       chtype &dbrtype, unsigned long &count);
 
 /********************************************
  *          DBRValue object type            *
@@ -218,11 +226,11 @@ static PyMethodDef CA_Methods[] = {
     {"current_context",     Py_ca_current_context,  METH_VARARGS, "Get the current CA context"},
     {"show_context", (PyCFunction)Py_ca_show_context,     METH_VARARGS|METH_KEYWORDS, "Show the CA context information"},
     /* Channel creation */
-    {"create_channel",      Py_ca_create_channel,   METH_VARARGS, "Create a CA channel connection"},
+    {"create_channel", (PyCFunction)Py_ca_create_channel,   METH_VARARGS|METH_KEYWORDS, "Create a CA channel connection"},
     {"clear_channel",       Py_ca_clear_channel,    METH_VARARGS, "Shutdown a CA channel connection"},
     {"get",          (PyCFunction)Py_ca_get,              METH_VARARGS|METH_KEYWORDS, "Read PV's value"},
     {"put",          (PyCFunction)Py_ca_put,              METH_VARARGS|METH_KEYWORDS, "Write a value to PV"},
-    {"create_subscription", Py_ca_create_subscription,METH_VARARGS,"Subscribe for state changes"},
+    {"create_subscription", (PyCFunction)Py_ca_create_subscription,METH_VARARGS|METH_KEYWORDS,"Subscribe for state changes"},
     {"clear_subscription",  Py_ca_clear_subscription, METH_VARARGS,"Unsubscribe for state changes"},
     {"replace_access_rights_event", Py_ca_replace_access_rights_event, METH_VARARGS, "Replace access right event"},
     {"add_exception_event", Py_ca_add_exception_event, METH_VARARGS, "Replace exception event handler"},
@@ -243,8 +251,8 @@ static PyMethodDef CA_Methods[] = {
     {"test_io",     Py_ca_test_io,      METH_VARARGS, "check pending connection and get"},
     {"sg_create",   Py_ca_sg_create,    METH_VARARGS, "Create a synchronous group"},
     {"sg_delete",   Py_ca_sg_delete,    METH_VARARGS, "Delete a synchronous group"},
-    {"sg_get",      Py_ca_sg_get,       METH_VARARGS, "Read PV's value"},
-    {"sg_put",      Py_ca_sg_put,       METH_VARARGS, "Write a value to PV"},
+    {"sg_get", (PyCFunction)Py_ca_sg_get,  METH_VARARGS|METH_KEYWORDS, "Read PV's value"},
+    {"sg_put", (PyCFunction)Py_ca_sg_put,  METH_VARARGS|METH_KEYWORDS, "Write a value to PV"},
     {"sg_reset",    Py_ca_sg_reset,     METH_VARARGS, "Reset outstanding requests"},
     {"sg_block",    Py_ca_sg_block,     METH_VARARGS, "wait pending get"},
     {"sg_test",     Py_ca_sg_test,      METH_VARARGS, "check pending get"},
@@ -264,7 +272,13 @@ static PyMethodDef CA_Methods[] = {
     {"dbr_type_is_TIME",    Py_dbr_type_is_TIME,    METH_VARARGS, "dbr_type_is_TIME"},
     {"dbr_type_is_GR",      Py_dbr_type_is_GR,      METH_VARARGS, "dbr_type_is_GR"},
     {"dbr_type_is_CTRL",    Py_dbr_type_is_CTRL,    METH_VARARGS, "dbr_type_is_CTRL"},
-
+    {"dbr_type_is_STRING",  Py_dbr_type_is_STRING,  METH_VARARGS, "dbr_type_is_STRING"},
+    {"dbr_type_is_SHORT",   Py_dbr_type_is_SHORT,   METH_VARARGS, "dbr_type_is_SHORT"},
+    {"dbr_type_is_FLOAT",   Py_dbr_type_is_FLOAT,   METH_VARARGS, "dbr_type_is_FLOAT"},
+    {"dbr_type_is_ENUM",    Py_dbr_type_is_ENUM,    METH_VARARGS, "dbr_type_is_ENUM"},
+    {"dbr_type_is_CHAR",    Py_dbr_type_is_CHAR,    METH_VARARGS, "dbr_type_is_CHAR"},
+    {"dbr_type_is_LONG",    Py_dbr_type_is_LONG,    METH_VARARGS, "dbr_type_is_LONG"},
+    {"dbr_type_is_DOUBLE",  Py_dbr_type_is_DOUBLE,  METH_VARARGS, "dbr_type_is_DOUBLE"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -593,12 +607,14 @@ static void connection_callback(struct connection_handler_args args)
     PyGILState_Release(gstate);
 }
 
-static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args)
+static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *kws)
 {
     char *pName;
     PyObject *pCallback = NULL;
     int priority = 0;
-    if(!PyArg_ParseTuple(args, "z|Oi", &pName, &pCallback, &priority))
+    static char *kwlist[] = {(char *)"name", (char*)"callback", (char*)"priority",  NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "z|Oi", kwlist, &pName, &pCallback, &priority))
         return NULL;
 
     chanId chid = NULL;
@@ -661,7 +677,7 @@ static void get_callback(struct event_handler_args args)
         PyObject *pValue = CBufferToPythonDict(args.type,
                     args.count,
                     args.dbr,
-                    false);
+                    pData->use_numpy);
         PyObject *pArgs = Py_BuildValue(
             "({s:O,s:i,s:i,s:i,s:O})",
             "chid", pChid,
@@ -696,7 +712,7 @@ static void event_callback(struct event_handler_args args)
         PyObject *pValue = CBufferToPythonDict(args.type,
                     args.count,
                     args.dbr,
-                    false);
+                    pData->use_numpy);
         PyObject *pArgs = Py_BuildValue(
             "({s:O,s:i,s:i,s:i,s:O})",
             "chid", pChid,
@@ -729,7 +745,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
     PyObject *pCallback = Py_None;
     bool use_numpy = false;
 
-    static char *kwlist[] = {(char*)"chid", (char*)"type", (char*)"count", (char*)"callback", (char*)"use_numpy", NULL};
+    static char *kwlist[] = {(char*)"chid", (char*)"chtype", (char*)"count", (char*)"callback", (char*)"use_numpy", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOOb", kwlist, &pChid, &pType, &pCount, &pCallback, &use_numpy))
         return NULL;
@@ -746,7 +762,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
     if (pCount == Py_None)
         count = ca_element_count(chid);
     else
-        count = (unsigned long)PyLong_AsUnsignedLong(pCount);
+        count = MIN(ca_element_count(chid), PyLong_AsUnsignedLong(pCount));
 
     if (PyCallable_Check(pCallback)) {
         ChannelData *pData = new ChannelData(pCallback);
@@ -758,32 +774,16 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         return Py_BuildValue("(iO)", status, Py_None);
     } else {
         // prepare the storage
-        void * pValue = malloc(dbr_size_n(dbrtype, count));
+        void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > ca_element_count(chid)) ? ca_element_count(chid) : count));
         int status = ca_array_get(dbrtype, count, chid, pValue);
         if (status == ECA_NORMAL) {
-            PyObject *dbr = DBRValue_New(dbrtype, count, pValue, use_numpy);
-            PyObject *pRes = Py_BuildValue("(iO)", status, dbr);
-            Py_XDECREF(dbr);
-            return pRes;
+            return Py_BuildValue("(iN)", status, DBRValue_New(dbrtype, count, pValue, use_numpy));
         } else {
             free(pValue);
             return Py_BuildValue("(iO)", status, Py_None);
         }
     }
 }
-
-#define PythonValueToCBuffer(DBRTYPE, FORMAT) \
-      pbuf = calloc(count, sizeof(DBRTYPE)); \
-      {\
-        DBRTYPE *ptr = (DBRTYPE *) pbuf;\
-        DBRTYPE value;\
-        for(int i=0; i<count; i++){\
-          PyObject *item = PySequence_GetItem(pValue, i);\
-          PyArg_Parse(item, FORMAT, &value);\
-          ptr[i] = (DBRTYPE) value;\
-          Py_XDECREF(item);\
-        }\
-      }
 
 static void put_callback(struct event_handler_args args)
 {
@@ -824,11 +824,51 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
     chtype dbrtype = -1;
     unsigned long count = 1;
     PyObject *pCallback = Py_None;
+    void *pbuf = NULL;
     int status;
 
-    static char *kwlist[] = {(char*)"chid", (char*)"value", (char*)"type", (char*)"count", (char*)"callback", NULL};
+    static char *kwlist[] = {(char*)"chid", (char*)"value", (char*)"chtype", (char*)"count", (char*)"callback", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kws, "OO|OOO", kwlist, &pChid, &pValue, &pType, &pCount, &pCallback))
+        return NULL;
+
+    chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
+    if (chid == NULL)
+        return NULL;
+
+    pbuf = setup_put(chid, pValue, pType, pCount, dbrtype, count);
+    if (pbuf == NULL)
+        return NULL;
+
+    if (PyCallable_Check(pCallback)) {
+        ChannelData *pData = new ChannelData(pCallback);
+        status = ca_array_put_callback(dbrtype, count, chid, pbuf, put_callback, pData);
+        if (status != ECA_NORMAL)
+            delete pData;
+    } else {
+        status = ca_array_put(dbrtype, count, chid, pbuf);
+    }
+
+    free(pbuf);
+
+    return Py_BuildValue("i", status);
+}
+
+
+static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObject *kws)
+{
+    PyObject *pChid;
+    PyObject *pCallback = NULL;
+    PyObject *pType = Py_None;
+    PyObject *pCount = Py_None;
+    PyObject *pMask = Py_None;
+    chtype dbrtype = -1;
+    unsigned long count = 0;
+    unsigned long mask = DBE_VALUE | DBE_ALARM;
+    bool use_numpy = false;
+    static char *kwlist[] = {(char*)"chid", (char*)"callback", (char*)"chtype", (char*)"count", (char*)"mask", (char*)"use_numpy", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "OO|OOOb", kwlist, &pChid,  &pCallback, &pType, &pCount, &pMask, &use_numpy))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -840,154 +880,18 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
     else
         dbrtype = PyLong_AsLong(pType);
 
-    if (PySequence_Check(pValue)) {
-        unsigned long value_count = PySequence_Length(pValue);
+    if (pCount == Py_None)
+        count = ca_element_count(chid);
+    else
+        count = PyLong_AsUnsignedLong(pCount);
 
-        // string can be written to enum type
-        if ((PyUnicode_Check(pValue) || PyBytes_Check(pValue)) && dbrtype == DBR_ENUM) {
-            dbrtype = DBR_STRING;
-            value_count = 1;
-        }
-        if (pCount != Py_None)
-            value_count = MIN(value_count, PyLong_AsLong(pCount));
-
-        count = MIN(ca_element_count(chid), value_count);
-    }
-
-    if (count == 1) {
-        db_access_val v;
-        switch (dbrtype) {
-        case DBR_STRING:
-            strncpy(v.strval, PyBytes_AsString(pValue), sizeof(dbr_string_t));
-        break;
-        case DBR_INT:
-            PyArg_Parse(pValue, "h", &v.intval);
-        break;
-        case DBR_FLOAT:
-            PyArg_Parse(pValue, "f", &v.fltval);
-        break;
-        case DBR_CHAR:
-        {
-            if (PyUnicode_Check(pValue) || PyBytes_Check(pValue)) {
-                char * pBuff = NULL;
-                size_t buff_size = 0;
-                PyArg_Parse(pValue, "z#", &pBuff, &buff_size);
-                if (pBuff != NULL) {
-                    v.charval = pBuff[0];
-                }
-            } else {
-                PyArg_Parse(pValue, "b", &v.charval);
-            }
-        }
-        break;
-        case DBR_ENUM:
-            PyArg_Parse(pValue, "h", &v.enmval);
-        break;
-        case DBR_LONG:
-            PyArg_Parse(pValue, "i", &v.longval);
-        break;
-        case DBR_DOUBLE:
-            PyArg_Parse(pValue, "d", &v.doubleval);
-        break;
-        case DBR_PUT_ACKT:
-            PyArg_Parse(pValue, "h", &v.putackt);
-        break;
-        case DBR_PUT_ACKS:
-            PyArg_Parse(pValue, "h", &v.putacks);
-        break;
-        }
-        if (PyCallable_Check(pCallback)) {
-            ChannelData *pData = new ChannelData(pCallback);
-            status = ca_put_callback(dbrtype, chid, &v, put_callback, pData);
-            if (status != ECA_NORMAL)
-                delete pData;
-        }
-        else
-            status = ca_put(dbrtype, chid, &v);
-
-    } else {
-        void *pbuf = NULL;
-
-        switch (dbrtype) {
-        case DBR_STRING:
-        {
-            pbuf = calloc(count, sizeof(dbr_string_t));
-            dbr_string_t *ptr = (dbr_string_t *) pbuf;
-            for(int i=0; i<count; i++) {
-                PyObject *item = PySequence_GetItem(pValue, i);
-                char *str = NULL;
-	            PyArg_Parse(item, "z", &str);
-	            strncpy((char *)&(ptr[i]), str, sizeof(dbr_string_t));
-                Py_XDECREF(item);
-            }
-        }
-        break;
-        case DBR_INT:
-            PythonValueToCBuffer(dbr_int_t, "h");
-        break;
-        case DBR_FLOAT:
-            PythonValueToCBuffer(dbr_float_t, "f");
-        break;
-        case DBR_ENUM:
-            PythonValueToCBuffer(dbr_enum_t, "h");
-        break;
-        case DBR_CHAR:
-        {
-            if (PyUnicode_Check(pValue) || PyBytes_Check(pValue)) {
-                char * pBuff = NULL;
-                size_t buff_size = 0;
-                PyArg_Parse(pValue, "z#", &pBuff, &buff_size);
-                if (pBuff != NULL) {
-                    count = buff_size;
-                    pbuf = calloc(count, sizeof(dbr_char_t));
-                    memcpy(pbuf, pBuff, count * sizeof(dbr_char_t));
-                }
-            } else {
-                PythonValueToCBuffer(dbr_char_t, "b");
-            }
-        }
-        break;
-        case DBR_LONG:
-            PythonValueToCBuffer(dbr_long_t, "i");
-        break;
-        case DBR_DOUBLE:
-            PythonValueToCBuffer(dbr_double_t, "d");
-        break;
-        }
-        if (PyCallable_Check(pCallback)) {
-            ChannelData *pData = new ChannelData(pCallback);
-            status = ca_array_put_callback(dbrtype, count, chid, pbuf, put_callback, pData);
-            if (status != ECA_NORMAL)
-                delete pData;
-        } else
-            status = ca_array_put(dbrtype, count, chid, pbuf);
-
-        if (pbuf)
-            free(pbuf);
-    }
-
-    return Py_BuildValue("i", status);
-}
-
-
-static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args)
-{
-    PyObject *pChid;
-    PyObject *pCallback = NULL;
-    chtype dbrtype = -1;
-    unsigned long count = 0;
-    unsigned long mask = DBE_VALUE | DBE_ALARM;
-    if(!PyArg_ParseTuple(args, "OO|lkk", &pChid,  &pCallback, &dbrtype, &count, &mask))
-        return NULL;
-
-    chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
-    if (chid == NULL)
-        return NULL;
-
-    if (!dbr_type_is_valid(dbrtype))
-        dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+    if (pMask == Py_None)
+        mask = DBE_VALUE | DBE_ALARM;
+    else
+        mask = PyLong_AsLong(pMask);
 
     ChannelData *pData = new ChannelData(pCallback);
+    pData->use_numpy = use_numpy;
 
     evid eventID;
     int status;
@@ -997,9 +901,7 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args)
 
     if (status == ECA_NORMAL) {
         pData->eventID = eventID;
-        PyObject *pEventID = CAPSULE_BUILD(pData, "evid", NULL);
-        PyObject *pRes = Py_BuildValue("(iO)", status, pEventID);
-        Py_XDECREF(pEventID);
+        PyObject *pRes = Py_BuildValue("(iN)", status, CAPSULE_BUILD(pData, "evid", NULL));
         return pRes;
     } else {
         delete pData;
@@ -1206,135 +1108,75 @@ static PyObject *Py_ca_sg_delete(PyObject *self, PyObject *args)
     return Py_BuildValue("i", status);
 }
 
-static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args)
+static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
 {
     CA_SYNC_GID gid;
     PyObject *pChid;
+    PyObject *pType = Py_None;
+    PyObject *pCount = Py_None;
     chtype dbrtype = -1;
     unsigned long count = 0;
-    if(!PyArg_ParseTuple(args, "lO|lk", &gid, &pChid, dbrtype, count))
+    bool use_numpy = false;
+
+    static char *kwlist[] = {(char*)"gid", (char*)"chid", (char*)"chtype", (char*)"count", (char*)"use_numpy", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "lO|OOb", kwlist, &gid, &pChid, &pType, &pCount, &use_numpy))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
     if (chid == NULL)
         return NULL;
 
-    if (!dbr_type_is_valid(dbrtype))
+    if (pType == Py_None)
         dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+    else
+        dbrtype = PyLong_AsLong(pType);
 
-    if (count == 0)
+    if (pCount == Py_None)
         count = ca_element_count(chid);
+    else
+        count = (unsigned long)PyLong_AsUnsignedLong(pCount);
 
     // prepare the storage
     void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > ca_element_count(chid)) ? ca_element_count(chid) : count));
-
     int status = ca_sg_array_get(gid, dbrtype, count, chid, pValue);
 
     if (status == ECA_NORMAL) {
-        PyObject *dbr = DBRValue_New(dbrtype, count, pValue, false);
-        PyObject *pRes = Py_BuildValue("(iO)", status, dbr);
-        Py_XDECREF(dbr);
-        return pRes;
+        return Py_BuildValue("(iN)", status, DBRValue_New(dbrtype, count, pValue, use_numpy));
     } else {
         free(pValue);
-        return Py_BuildValue("(i,O)", status, Py_None);
+        return Py_BuildValue("(iO)", status, Py_None);
     }
 }
 
-static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args)
+static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args, PyObject *kws)
 {
     CA_SYNC_GID gid;
     PyObject *pChid;
     PyObject *pValue;
+    PyObject *pType = Py_None;
+    PyObject *pCount = Py_None;
+    void *pbuf = NULL;
+    chtype dbrtype = -1;
     unsigned long count = 1;
-    if(!PyArg_ParseTuple(args, "lOO", &gid, &pChid, &pValue))
+    int status;
+
+    static char *kwlist[] = {(char*)"gid", (char*)"chid", (char*)"value", (char*)"chtype", (char*)"count", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "lOO|OO", kwlist, &gid, &pChid, &pValue, &pType, &pCount))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
     if (chid == NULL)
         return NULL;
 
-    chtype dbrtype = ca_field_type(chid);
+    pbuf = setup_put(chid, pValue, pType, pCount, dbrtype, count);
+    if (pbuf == NULL)
+        return NULL;
 
-    if (PySequence_Check(pValue)) {
-        // string input can be written as char array or string
-        if (PyBytes_Check(pValue)) {
-            count = 1;
-            if (dbrtype == DBF_CHAR) {
-                count = PySequence_Length(pValue);
-            } else if (dbrtype == DBF_ENUM) {
-                dbrtype = DBR_STRING;
-            }
-        } else {
-            count = MIN(ca_element_count(chid), PySequence_Length(pValue));
-        }
-    }
+    status = ca_sg_array_put(gid, dbrtype, count, chid, pbuf);
 
-    int status;
-    if (count == 1) {
-        db_access_val v;
-        switch (dbrtype) {
-        case DBR_STRING:
-            strncpy(v.strval, PyBytes_AsString(pValue), sizeof(dbr_string_t));
-        break;
-        case DBR_INT:
-            PyArg_Parse(pValue, "h", &v.intval);
-        break;
-        case DBR_FLOAT:
-            PyArg_Parse(pValue, "f", &v.fltval);
-        break;
-        case DBR_CHAR:
-            PyArg_Parse(pValue, "v", &v.charval);
-        break;
-        case DBR_ENUM:
-            PyArg_Parse(pValue, "h", &v.enmval);
-        break;
-        case DBR_LONG:
-            PyArg_Parse(pValue, "i", &v.longval);
-        break;
-        case DBR_DOUBLE:
-            PyArg_Parse(pValue, "d", &v.doubleval);
-        break;
-        }
-        status = ca_sg_array_put(gid, dbrtype, count, chid, &v);
-    } else {
-        void *pbuf = NULL;
-
-        switch (dbrtype) {
-        case DBR_STRING:
-        {
-            pbuf = calloc(count, sizeof(dbr_string_t));
-            dbr_string_t *ptr = (dbr_string_t *) pbuf;
-            for(int i=0; i<=PySequence_Length(pValue); i++) {
-                PyObject *item = PySequence_GetItem(pValue, i);
-                PyArg_Parse(item, "z", &ptr[i]);
-                Py_XDECREF(item);
-            }
-        }
-        break;
-        case DBR_INT:
-            PythonValueToCBuffer(dbr_int_t, "h");
-        break;
-        case DBR_FLOAT:
-            PythonValueToCBuffer(dbr_float_t, "f");
-        break;
-        case DBR_ENUM:
-            PythonValueToCBuffer(dbr_enum_t, "h");
-        break;
-        case DBR_CHAR:
-            PythonValueToCBuffer(dbr_char_t, "b");
-        break;
-        case DBR_LONG:
-            PythonValueToCBuffer(dbr_long_t, "i");
-        break;
-        case DBR_DOUBLE:
-            PythonValueToCBuffer(dbr_double_t, "d");
-        break;
-        }
-        status = ca_sg_array_put(gid, dbrtype, count, chid, pbuf);
-        if (pbuf)
-            free(pbuf);
-    }
+    free(pbuf);
 
     return Py_BuildValue("i", status);
 }
@@ -1486,7 +1328,7 @@ static PyObject *Py_ca_name(PyObject *self, PyObject *args)
     if (chid == NULL)
         return NULL;
 
-    return PyBytes_FromString(ca_name(chid));
+    return PyString_FromString(ca_name(chid));
 }
 
 static PyObject *Py_ca_state(PyObject *self, PyObject *args)
@@ -1511,7 +1353,7 @@ static PyObject *Py_ca_host_name(PyObject *self, PyObject *args)
     if (chid == NULL)
         return NULL;
 
-    return PyBytes_FromString(ca_host_name(chid));
+    return PyString_FromString(ca_host_name(chid));
 }
 
 static PyObject *Py_ca_read_access(PyObject *self, PyObject *args)
@@ -1552,7 +1394,7 @@ static PyObject *Py_dbf_text(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "l", &field_type))
         return NULL;
 
-    return PyBytes_FromString(dbf_type_to_text(field_type));
+    return PyString_FromString(dbf_type_to_text(field_type));
 }
 
 static PyObject *Py_dbr_text(PyObject *self, PyObject *args)
@@ -1562,7 +1404,7 @@ static PyObject *Py_dbr_text(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "l", &req_type))
          return NULL;
 
-    return PyBytes_FromString(dbr_type_to_text(req_type));
+    return PyString_FromString(dbr_type_to_text(req_type));
 }
 
 static PyObject *Py_ca_message(PyObject *self, PyObject *args)
@@ -1572,7 +1414,7 @@ static PyObject *Py_ca_message(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &status))
          return NULL;
 
-    return PyBytes_FromString(ca_message(status));
+    return PyString_FromString(ca_message(status));
 }
 
 static PyObject *Py_dbf_type_to_DBR(PyObject *self, PyObject *args)
@@ -1685,6 +1527,75 @@ static PyObject *Py_dbr_type_is_CTRL(PyObject *self, PyObject *args)
     return PyInt_FromLong(dbr_type_is_CTRL(dbrtype));
 }
 
+static PyObject *Py_dbr_type_is_STRING(PyObject *self, PyObject *args)
+{
+    int dbrtype;
+
+    if(!PyArg_ParseTuple(args, "i", &dbrtype))
+         return NULL;
+
+    return PyInt_FromLong(dbr_type_is_STRING(dbrtype));
+}
+
+static PyObject *Py_dbr_type_is_SHORT(PyObject *self, PyObject *args)
+{
+    int dbrtype;
+
+    if(!PyArg_ParseTuple(args, "i", &dbrtype))
+         return NULL;
+
+    return PyInt_FromLong(dbr_type_is_SHORT(dbrtype));
+}
+
+static PyObject *Py_dbr_type_is_FLOAT(PyObject *self, PyObject *args)
+{
+    int dbrtype;
+
+    if(!PyArg_ParseTuple(args, "i", &dbrtype))
+         return NULL;
+
+    return PyInt_FromLong(dbr_type_is_FLOAT(dbrtype));
+}
+
+static PyObject *Py_dbr_type_is_ENUM(PyObject *self, PyObject *args)
+{
+    int dbrtype;
+
+    if(!PyArg_ParseTuple(args, "i", &dbrtype))
+         return NULL;
+
+    return PyInt_FromLong(dbr_type_is_ENUM(dbrtype));
+}
+
+static PyObject *Py_dbr_type_is_CHAR(PyObject *self, PyObject *args)
+{
+    int dbrtype;
+
+    if(!PyArg_ParseTuple(args, "i", &dbrtype))
+         return NULL;
+
+    return PyInt_FromLong(dbr_type_is_CHAR(dbrtype));
+}
+
+static PyObject *Py_dbr_type_is_LONG(PyObject *self, PyObject *args)
+{
+    int dbrtype;
+
+    if(!PyArg_ParseTuple(args, "i", &dbrtype))
+         return NULL;
+
+    return PyInt_FromLong(dbr_type_is_LONG(dbrtype));
+}
+
+static PyObject *Py_dbr_type_is_DOUBLE(PyObject *self, PyObject *args)
+{
+    int dbrtype;
+
+    if(!PyArg_ParseTuple(args, "i", &dbrtype))
+         return NULL;
+
+    return PyInt_FromLong(dbr_type_is_DOUBLE(dbrtype));
+}
 
 /*******************************************************
  *                DBR value conversion routine         *
@@ -2361,4 +2272,128 @@ PyObject * CBufferToPythonDict(chtype type,
     }
     Py_XDECREF(value);
     return arglist;
+}
+
+#define PythonValueToCBuffer(DBRTYPE, COUNT, FORMAT) \
+      {\
+        DBRTYPE *ptr = (DBRTYPE *) pbuf;\
+        if (count == 1) \
+            PyArg_Parse(pValue, FORMAT, ptr);\
+        else {\
+            for(int i=0; i<count; i++) {\
+                PyObject *item = PySequence_GetItem(pValue, i);\
+                PyArg_Parse(item, FORMAT, ptr+i);\
+                Py_XDECREF(item);\
+            }\
+        }\
+      }
+
+void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount,
+                                chtype &dbrtype, unsigned long &count)
+{
+    void *pbuf = NULL;
+
+    if (pType == Py_None)
+        dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+    else
+        dbrtype = PyLong_AsLong(pType);
+
+    // incr refcnt and we will decr at the end
+    Py_XINCREF(pValue);
+
+    // sequence object (including string/bytes)
+    if (PySequence_Check(pValue)) {
+        unsigned long value_count = PySequence_Length(pValue);
+
+        if (PyUnicode_Check(pValue) || PyBytes_Check(pValue)) {
+            // string can be written to enum or string type and the count is 1
+            if (dbrtype == DBR_ENUM || dbrtype == DBR_STRING) {
+                dbrtype = DBR_STRING;
+                value_count = 1;
+            } else {
+                // for other numeric types, convert string/bytes to list of integers with 0 appended.
+                // equivalent to [ord(x) for x in value] + [0]
+                char * pBuff = NULL;
+                size_t buff_size = 0;
+                PyArg_Parse(pValue, "z#", &pBuff, &buff_size);
+
+                value_count = buff_size + 1;
+                PyObject *pCharList = PyList_New(value_count);
+                for(int i=0; i<buff_size && pBuff!=NULL; i++) {
+                    PyList_SetItem(pCharList, i, PyInt_FromLong(pBuff[i]));
+                }
+                PyList_SetItem(pCharList, buff_size, PyInt_FromLong(0));
+                // the new list replaces string/bytes object
+                Py_XDECREF(pValue);
+                pValue = pCharList;
+            }
+        }
+        if (pCount != Py_None)
+            value_count = MIN(value_count, PyLong_AsUnsignedLong(pCount));
+
+        count = MIN(ca_element_count(chid), value_count);
+
+
+        if (count == 1 && dbrtype != DBR_STRING) {
+            PyObject *item = PySequence_GetItem(pValue, 0);
+            Py_XDECREF(pValue);
+            pValue = item;
+        }
+    }
+
+    pbuf = calloc(count, dbr_value_size[dbrtype]);
+    switch (dbrtype) {
+    case DBR_STRING:
+    {
+        dbr_string_t *ptr = (dbr_string_t *) pbuf;
+        if (count == 1) {
+            char *str = NULL;
+	        PyArg_Parse(pValue, "z", &str);
+	        if (str != NULL)
+	            strncpy(ptr[0], str, sizeof(dbr_string_t));
+        } else {
+            for(int i=0; i<count; i++) {
+                PyObject *item = PySequence_GetItem(pValue, i);
+                char *str = NULL;
+	            PyArg_Parse(item, "z", &str);
+	            if (str != NULL)
+	                strncpy(ptr[i], str, sizeof(dbr_string_t));
+                Py_XDECREF(item);
+            }
+        }
+    }
+    break;
+    case DBR_SHORT:
+        PythonValueToCBuffer(dbr_short_t,    count, "h");
+    break;
+    case DBR_FLOAT:
+        PythonValueToCBuffer(dbr_float_t,    count, "f");
+    break;
+    case DBR_CHAR:
+        PythonValueToCBuffer(dbr_char_t,     count, "b");
+    break;
+    case DBR_ENUM:
+        PythonValueToCBuffer(dbr_enum_t,     count, "h");
+    break;
+    case DBR_LONG:
+        PythonValueToCBuffer(dbr_long_t,     count, "i");
+    break;
+    case DBR_DOUBLE:
+        PythonValueToCBuffer(dbr_double_t,   count, "d");
+    break;
+    case DBR_PUT_ACKT:
+        PythonValueToCBuffer(dbr_put_ackt_t, count, "h");
+    break;
+    case DBR_PUT_ACKS:
+        PythonValueToCBuffer(dbr_put_acks_t, count, "h");
+    break;
+    default:
+        free(pbuf);
+        pbuf = NULL;
+    }
+
+    Py_XDECREF(pValue);
+
+    // caller must free the memory
+    return pbuf;
 }
