@@ -568,7 +568,7 @@ class CaChannel:
         use_numpy = keywords.get('use_numpy', USE_NUMPY)
         self._callbacks['eventCB']=(callback, user_args, use_numpy)
 
-        status, self._evid = ca.create_subscription(self._chid, self._event_callback, req_type, count, mask)
+        status, self._evid = ca.create_subscription(self._chid, self._event_callback, req_type, count, mask, use_numpy)
 
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
