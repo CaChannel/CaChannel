@@ -49,11 +49,12 @@ record(waveform, "cawave")
     field(DESC, "numeric array")
     field(NELM, "20")
     field(FTVL, "DOUBLE")
+    field(PREC, "3")
 }
 record(waveform,"cawavec")
 {
     field(DESC, "char array")
-    field(NELM, "512")
+    field(NELM, "5")
     field(FTVL, "CHAR")
 }
 record(waveform,"cawaveuc")
