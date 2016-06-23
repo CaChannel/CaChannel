@@ -78,7 +78,7 @@ class CaGetTest(CaTest):
 
         status, value = ca.get(self.chid, callback=getCB, chtype=self.dbrType, use_numpy=self.use_numpy)
         self.assertNormal(status)
-        self.assertIsNone(value)
+        self.assertTrue(value is None)
         while not done[0]:
             ca.pend_event(0.05)
         self.assertNormal(epicsArgs['status'])
