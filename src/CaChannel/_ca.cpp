@@ -1,6 +1,9 @@
 
 #include <Python.h>
 
+#define epicsAlarmGLOBAL
+#include <alarm.h>
+#undef epicsAlarmGLOBAL
 #include <cadef.h>
 
 #ifdef WITH_NUMPY
@@ -100,6 +103,8 @@ static PyObject *Py_dbr_type_is_DOUBLE(PyObject *self, PyObject *args);
 static PyObject *Py_dbf_text(PyObject *self, PyObject *args);
 static PyObject *Py_dbr_text(PyObject *self, PyObject *args);
 static PyObject *Py_ca_message(PyObject *self, PyObject *args);
+static PyObject *Py_alarmSeverityString(PyObject *self, PyObject *args);
+static PyObject *Py_alarmStatusString(PyObject *self, PyObject *args);
 
 static PyObject *CBufferToPythonDict(chtype type, unsigned long count, const void *val, int use_numpy);
 static void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount,
@@ -259,6 +264,8 @@ static PyMethodDef CA_Methods[] = {
     {"sg_test",     Py_ca_sg_test,      METH_VARARGS, "check pending get"},
 
     /* Utility */
+    {"alarmSeverityString",    Py_alarmSeverityString,    METH_VARARGS, "alarm severity message"},
+    {"alarmStatusString",      Py_alarmStatusString,      METH_VARARGS, "alarm status message"},
     {"dbf_text",    Py_dbf_text,    METH_VARARGS, "field type name"},
     {"dbr_text",    Py_dbr_text,    METH_VARARGS, "request type name"},
     {"message",     Py_ca_message,  METH_VARARGS, "status error message"},
@@ -1399,6 +1406,26 @@ static PyObject *Py_ca_write_access(PyObject *self, PyObject *args)
 /*******************************************************
  *                    Utility                          *
  *******************************************************/
+
+static PyObject *Py_alarmStatusString(PyObject *self, PyObject *args)
+{
+    int status;
+
+    if(!PyArg_ParseTuple(args, "i", &status))
+         return NULL;
+
+    return PyString_FromString(alarmStatusString[status]);
+}
+
+static PyObject *Py_alarmSeverityString(PyObject *self, PyObject *args)
+{
+    int severity;
+
+    if(!PyArg_ParseTuple(args, "i", &severity))
+         return NULL;
+
+    return PyString_FromString(alarmSeverityString[severity]);
+}
 
 static PyObject *Py_dbf_text(PyObject *self, PyObject *args)
 {
