@@ -9,10 +9,12 @@
 #ifdef WITH_NUMPY
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
-int with_numpy = 1;
+#define WITH_NUMPY 1
 #else
-int  with_numpy = 0;
+#define WITH_NUMPY 0
 #endif
+
+static bool has_numpy = false;
 
 #ifndef MIN
      #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
@@ -329,11 +331,13 @@ MOD_INIT(_ca) {
 
     #ifdef WITH_NUMPY
     if (_import_array() < 0) {
-        with_numpy = 0;
         PyErr_Clear();
+    } else {
+        has_numpy = true;
     }
     #endif
-    PyModule_AddIntConstant(pModule, "with_numpy", with_numpy);
+    PyModule_AddIntMacro(pModule, WITH_NUMPY);
+    PyModule_AddIntConstant(pModule, "HAS_NUMPY", has_numpy);
 
     PyModule_AddIntMacro(pModule, DBF_STRING);
     PyModule_AddIntMacro(pModule, DBF_SHORT);
@@ -498,6 +502,8 @@ MOD_INIT(_ca) {
     PyModule_AddIntMacro(pModule, SIMM_ALARM);
     PyModule_AddIntMacro(pModule, READ_ACCESS_ALARM);
     PyModule_AddIntMacro(pModule, WRITE_ACCESS_ALARM);
+
+    PyModule_AddIntMacro(pModule, POSIX_TIME_AT_EPICS_EPOCH);
 
     #if PY_MAJOR_VERSION >= 3
     return pModule;
@@ -1756,7 +1762,7 @@ PyObject * CBufferToPythonDict(chtype type,
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_SHORT:
-        if(use_numpy == 0 || with_numpy == 0)
+        if(use_numpy == 0 || has_numpy == 0)
             FormatPlaintoValue(count, val, dbr_short_t,  PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1765,7 +1771,7 @@ PyObject * CBufferToPythonDict(chtype type,
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_FLOAT:
-        if(use_numpy == 0 || with_numpy == 0)
+        if(use_numpy == 0 || has_numpy == 0)
             FormatPlaintoValue(count, val, dbr_float_t,  PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
@@ -1774,7 +1780,7 @@ PyObject * CBufferToPythonDict(chtype type,
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_ENUM:
-        if(use_numpy == 0 || with_numpy == 0)
+        if(use_numpy == 0 || has_numpy == 0)
             FormatPlaintoValue(count, val, dbr_enum_t,   PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1783,7 +1789,7 @@ PyObject * CBufferToPythonDict(chtype type,
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_CHAR:
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatPlaintoValue(count, val, dbr_char_t,   PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1792,7 +1798,7 @@ PyObject * CBufferToPythonDict(chtype type,
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_LONG:
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatPlaintoValue(count, val, dbr_long_t,   PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1801,7 +1807,7 @@ PyObject * CBufferToPythonDict(chtype type,
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_DOUBLE:
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatPlaintoValue(count, val, dbr_double_t, PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
@@ -1825,7 +1831,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_SHORT:
     {
         struct dbr_sts_short  *cval=(struct dbr_sts_short  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, short, &(cval->value), dbr_short_t,   PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1840,7 +1846,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_FLOAT:
     {
         struct dbr_sts_float  *cval=(struct dbr_sts_float  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, float, &(cval->value), dbr_float_t, PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
@@ -1855,7 +1861,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_ENUM:
     {
         struct dbr_sts_enum  *cval=(struct dbr_sts_enum  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, enum, &(cval->value),  dbr_enum_t,     PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1870,7 +1876,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_CHAR:
     {
         struct dbr_sts_char  *cval=(struct dbr_sts_char  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, char, &(cval->value), dbr_char_t,     PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1885,7 +1891,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_LONG:
     {
         struct dbr_sts_long  *cval=(struct dbr_sts_long  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, long, &(cval->value), dbr_long_t,     PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1900,7 +1906,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_DOUBLE:
     {
         struct dbr_sts_double  *cval=(struct dbr_sts_double  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, double, &(cval->value), dbr_double_t, PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
@@ -1927,7 +1933,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_SHORT:
     {
         struct dbr_time_short  *cval=(struct dbr_time_short  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, short, &(cval->value), dbr_short_t,      PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1943,7 +1949,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_FLOAT:
     {
         struct dbr_time_float  *cval=(struct dbr_time_float  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, float, &(cval->value), dbr_float_t,      PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
@@ -1959,7 +1965,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_ENUM:
     {
         struct dbr_time_enum  *cval=(struct dbr_time_enum  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, enum, &(cval->value), dbr_enum_t,        PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1975,7 +1981,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_CHAR:
     {
         struct dbr_time_char  *cval=(struct dbr_time_char  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, char, &(cval->value), dbr_char_t,        PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -1991,7 +1997,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_LONG:
     {
         struct dbr_time_long  *cval=(struct dbr_time_long  *)val;
-        if (use_numpy == 0  || with_numpy == 0)
+        if (use_numpy == 0  || has_numpy == 0)
             FormatDBRtoValue(count, long, &(cval->value), dbr_long_t,        PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -2007,7 +2013,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_DOUBLE:
     {
         struct dbr_time_double  *cval=(struct dbr_time_double  *)val;
-        if (use_numpy == 0  || with_numpy == 0)
+        if (use_numpy == 0  || has_numpy == 0)
             FormatDBRtoValue(count, double, &(cval->value), dbr_double_t,    PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
@@ -2024,7 +2030,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_SHORT:
     {
         struct dbr_gr_short  *cval=(struct dbr_gr_short  *)val;
-        if (use_numpy == 0  || with_numpy == 0)
+        if (use_numpy == 0  || has_numpy == 0)
             FormatDBRtoValue(count, short,  &(cval->value), dbr_short_t,     PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -2047,7 +2053,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_FLOAT:
     {
         struct dbr_gr_float  *cval=(struct dbr_gr_float  *)val;
-        if (use_numpy == 0  || with_numpy == 0)
+        if (use_numpy == 0  || has_numpy == 0)
             FormatDBRtoValue(count, float,  &(cval->value), dbr_float_t,     PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
@@ -2071,7 +2077,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_ENUM:
     {
         struct dbr_gr_enum  *cval=(struct dbr_gr_enum  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, enum,  &(cval->value), dbr_enum_t,       PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -2096,7 +2102,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_CHAR:
     {
         struct dbr_gr_char  *cval=(struct dbr_gr_char  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, char,  &(cval->value), dbr_char_t,        PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -2119,7 +2125,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_LONG:
     {
         struct dbr_gr_long  *cval=(struct dbr_gr_long  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, long,  &(cval->value), dbr_long_t,       PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -2143,7 +2149,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_DOUBLE:
     {
         struct dbr_gr_double  *cval=(struct dbr_gr_double  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, double,  &(cval->value), dbr_double_t,    PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
@@ -2168,7 +2174,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_SHORT:
     {
         struct dbr_ctrl_short  *cval=(struct dbr_ctrl_short  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, short,  &(cval->value), dbr_short_t,      PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -2193,7 +2199,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_FLOAT:
     {
         struct dbr_ctrl_float  *cval=(struct dbr_ctrl_float  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, float,  &(cval->value), dbr_float_t,      PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
@@ -2219,7 +2225,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_ENUM:
     {
         struct dbr_ctrl_enum  *cval=(struct dbr_ctrl_enum  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, enum,  &(cval->value), dbr_enum_t,        PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -2244,7 +2250,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_CHAR:
     {
         struct dbr_ctrl_char  *cval=(struct dbr_ctrl_char  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, char,  &(cval->value), dbr_char_t,        PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -2269,7 +2275,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_LONG:
     {
         struct dbr_ctrl_long  *cval=(struct dbr_ctrl_long  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, long,  &(cval->value), dbr_long_t,        PyInt_FromLong)
         #ifdef WITH_NUMPY
         else
@@ -2295,7 +2301,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_DOUBLE:
     {
         struct dbr_ctrl_double  *cval=(struct dbr_ctrl_double  *)val;
-        if (use_numpy == 0 || with_numpy == 0)
+        if (use_numpy == 0 || has_numpy == 0)
             FormatDBRtoValue(count, double,  &(cval->value), dbr_double_t,    PyFloat_FromDouble)
         #ifdef WITH_NUMPY
         else
