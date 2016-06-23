@@ -1187,7 +1187,9 @@ static PyObject *Py_ca_sg_reset(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "ld", &gid))
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
     int status = ca_sg_reset(gid);
+    Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
 }
@@ -1199,7 +1201,9 @@ static PyObject *Py_ca_sg_block(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "ld", &gid, &timeout))
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
     int status = ca_sg_block(gid, timeout);
+    Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
 }
@@ -1210,7 +1214,9 @@ static PyObject *Py_ca_sg_test(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "l", &gid))
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
     int status = ca_sg_test(gid);
+    Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
 }
