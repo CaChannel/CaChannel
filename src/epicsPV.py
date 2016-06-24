@@ -160,7 +160,7 @@ class epicsPV(CaChannel.CaChannel):
          while(self.callBack.newMonitor == 0):
             self.pend_event(poll)
 
-   def array_get(self, req_type=None, count=None):
+   def array_get(self, req_type=None, count=None, **keywords):
       """
       If setMonitor() has not been called then this function simply calls
       CaChannel.array_get().  If setMonitor has been called then it calls
@@ -174,9 +174,9 @@ class epicsPV(CaChannel.CaChannel):
          self.callBack.newMonitor = 0
          return self.callBack.pv_value
       else:
-         return CaChannel.CaChannel.array_get(self, req_type, count)
+         return CaChannel.CaChannel.array_get(self, req_type, count, **keywords)
 
-   def getw(self, req_type=None, count=None):
+   def getw(self, req_type=None, count=None, **keywords):
       """
       If setMonitor() has not been called then this function simply calls
       CaChannel.getw().  If setMonitor has been called then it calls
@@ -193,7 +193,7 @@ class epicsPV(CaChannel.CaChannel):
          else:
             return self.callBack.pv_value[0:count]
       else:
-         return CaChannel.CaChannel.getw(self, req_type, count)
+         return CaChannel.CaChannel.getw(self, req_type, count, **keywords)
 
    def getValue(self):
       """
