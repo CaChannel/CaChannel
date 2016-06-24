@@ -2,10 +2,12 @@ CaChannel - EPICS Channel Access in Python
 ==========================================
 
 CaChannel is a Python interface to Channel Access. 
-It was orginally developed by Geoff Savage usign `caPython extension <http://d0server1.fnal.gov/users/savage/www/caPython/caPython.html>`_
+It was originally developed by Geoff Savage using `caPython extension <http://d0server1.fnal.gov/users/savage/www/caPython/caPython.html>`_
 
-This CaChannel implementation uses PythonCA extension by `Noboru Yamamoto <http://www-acc.kek.jp/EPICS_Gr/products.html>`_.
-
+Before version 3.0, this CaChannel implementation uses module ``ca`` PythonCA extension by `Noboru Yamamoto <http://www-acc.kek.jp/EPICS_Gr/products.html>`_.
+From version 3.0, the underlying ``_ca`` module has been rewritten from scratch using Python/C API. In addition,
+it is also possible to use module ``caffi.ca`` as backend, by setting environment variable ``CACHANNEL_BACKEND=caffi``.
+This is also the fallback backend when ``_ca`` extension is not available.
 
 Installation
 ------------
@@ -19,17 +21,17 @@ Use pip::
 Or build from source, by which you need to have an appropriate compiler for your platform.
 ::
 
-    $ hg clone https://bitbucket.org/xwang/cachannel
+    $ git clone https://github.com/xiaoqiangwang/cachannel
     $ python setup.py build
     $ [sudo] python setup.py install
 
 Or build for Anaconda,
 ::
     
-    $ hg clone http://bitbucket.org/xwang/cachannel
+    $ hg clone http://github.com/xiaoqiangwang/cachannel
     $ cd conda
     $ conda build .
 
 Documentation
 -------------
-Hosted at `Read the Docs <http://cachannel.readthedocs.org>`_
+Hosted at `Read the Docs <http://cachannel.readthedocs.io>`_
