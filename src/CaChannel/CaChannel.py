@@ -7,6 +7,7 @@ from __future__ import print_function
 from functools import wraps
 import math
 
+import CaChannel as PACKAGE
 from . import ca
 
 
@@ -15,9 +16,6 @@ ca.create_context(True)
 CONTEXT = ca.current_context()
 
 cs_never_search = 4
-
-# retrieve numeric waveforms as numpy arrays, default No
-USE_NUMPY = False
 
 
 class CaChannelException(Exception):
@@ -373,7 +371,7 @@ class CaChannel:
         >>> chan.getValue()
         123.0
         """
-        use_numpy = keywords.get('use_numpy', USE_NUMPY)
+        use_numpy = keywords.get('use_numpy', PACKAGE.USE_NUMPY)
         status, self.val = ca.get(self._chid, req_type, count, None, use_numpy)
         #self.val.use_numpy = use_numpy
         if status != ca.ECA_NORMAL:
@@ -490,7 +488,7 @@ class CaChannel:
         pv_status 0
         pv_value 0
         """
-        use_numpy = keywords.get('use_numpy', USE_NUMPY)
+        use_numpy = keywords.get('use_numpy', PACKAGE.USE_NUMPY)
         self._callbacks['getCB']=(callback, user_args, use_numpy)
         status, _ = ca.get(self._chid, req_type, count, self._get_callback, use_numpy)
         if status != ca.ECA_NORMAL:
@@ -564,7 +562,7 @@ class CaChannel:
         if count is None:
             count = self.element_count()
 
-        use_numpy = keywords.get('use_numpy', USE_NUMPY)
+        use_numpy = keywords.get('use_numpy', PACKAGE.USE_NUMPY)
         self._callbacks['eventCB']=(callback, user_args, use_numpy)
 
         status, self._evid = ca.create_subscription(self._chid, self._event_callback, req_type, count, mask, use_numpy)
