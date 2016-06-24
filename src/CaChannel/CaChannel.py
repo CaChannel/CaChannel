@@ -3,7 +3,7 @@ CaChannel class having identical API as of caPython/CaChannel class,
 based on caffi
 """
 # python 2 -> 3 compatible layer
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 from functools import wraps
 import math
 
