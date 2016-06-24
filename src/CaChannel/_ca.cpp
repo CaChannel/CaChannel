@@ -164,7 +164,7 @@ static int DBRValue_setattro(DBRValueObject *self, PyObject* name, PyObject* val
     int error = 0;
 	char* attr = PyString_AsString(name);
     if (strcmp(attr, "use_numpy") == 0) {
-        self->use_numpy = PyLong_AsLong(value);
+        self->use_numpy = (PyLong_AsLong(value) != 0);
     } else {
 		error = PyObject_GenericSetAttr((PyObject*)self, name, value);
     }
@@ -2353,7 +2353,7 @@ PyObject * CBufferToPythonDict(chtype type,
         if (count == 1) \
             PyArg_Parse(pValue, FORMAT, ptr);\
         else {\
-            for(int i=0; i<count; i++) {\
+            for(unsigned long i=0; i<count; i++) {\
                 PyObject *item = PySequence_GetItem(pValue, i);\
                 PyArg_Parse(item, FORMAT, ptr+i);\
                 Py_XDECREF(item);\
@@ -2376,7 +2376,7 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
 
     // sequence object (including string/bytes)
     if (PySequence_Check(pValue)) {
-        unsigned long value_count = PySequence_Length(pValue);
+        unsigned long value_count = (unsigned long)PySequence_Length(pValue);
 
         if (PyUnicode_Check(pValue) || PyBytes_Check(pValue)) {
             // string can be written to enum or string type and the count is 1
@@ -2387,10 +2387,10 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
                 // for other numeric types, convert string/bytes to list of integers with 0 appended.
                 // equivalent to [ord(x) for x in value] + [0]
                 char * pBuff = NULL;
-                size_t buff_size = 0;
+                Py_ssize_t buff_size = 0;
                 PyArg_Parse(pValue, "z#", &pBuff, &buff_size);
 
-                value_count = buff_size + 1;
+                value_count = (unsigned long)(buff_size + 1);
                 PyObject *pCharList = PyList_New(value_count);
                 for(int i=0; i<buff_size && pBuff!=NULL; i++) {
                     PyList_SetItem(pCharList, i, PyInt_FromLong(pBuff[i]));
@@ -2425,7 +2425,7 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
 	        if (str != NULL)
 	            strncpy(ptr[0], str, sizeof(dbr_string_t));
         } else {
-            for(int i=0; i<count; i++) {
+            for(unsigned long i=0; i<count; i++) {
                 PyObject *item = PySequence_GetItem(pValue, i);
                 char *str = NULL;
 	            PyArg_Parse(item, "z", &str);
