@@ -5,8 +5,7 @@ based on caffi
 # python 2 -> 3 compatible layer
 from __future__ import print_function
 from functools import wraps
-import time
-import sys
+import math
 
 from . import ca
 
@@ -943,11 +942,9 @@ class CaChannel:
                 epicsArgs['pv_severity'] = int(epicsArgs['pv_severity'])
             # convert stamp(datetime) to seconds and nano seconds
             if 'pv_stamp' in epicsArgs:
-                stamp = epicsArgs['pv_stamp']
-                seconds = int(time.mktime(stamp.timetuple()))
-                nseconds = int(stamp.microsecond * 1e3)
-                epicsArgs['pv_seconds'] = seconds
-                epicsArgs['pv_nseconds'] = nseconds
+                fraction, integer = math.modf(epicsArgs['pv_stamp'])
+                epicsArgs['pv_seconds'] = int(integer) - ca.POSIX_TIME_AT_EPICS_EPOCH
+                epicsArgs['pv_nseconds'] = int(fraction * 1e9)
                 del epicsArgs['pv_stamp']
         else:
             epicsArgs['pv_value'] = value

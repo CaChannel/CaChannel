@@ -1745,7 +1745,7 @@ typedef dbr_char_t *dbr_char_t_ptr ;
         }\
     }
 
-#define TS2secs(ts) ((double)ts.secPastEpoch + (double) ts.nsec*1.0e-9)
+#define TS2secs(ts) ((double)ts.secPastEpoch + POSIX_TIME_AT_EPICS_EPOCH + (double) ts.nsec*1.0e-9)
 
 PyObject * CBufferToPythonDict(chtype type,
                     unsigned long count,
