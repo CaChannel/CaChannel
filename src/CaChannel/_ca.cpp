@@ -82,6 +82,7 @@ static PyObject *Py_ca_sg_test(PyObject *self, PyObject *args);
 static PyObject *Py_ca_sg_reset(PyObject *self, PyObject *args);
 static PyObject *Py_ca_sg_block(PyObject *self, PyObject *args);
 
+static PyObject *Py_dbf_type_is_valid(PyObject *self, PyObject *args);
 static PyObject *Py_dbf_type_to_DBR(PyObject *self, PyObject *args);
 static PyObject *Py_dbf_type_to_DBR_STS(PyObject *self, PyObject *args);
 static PyObject *Py_dbf_type_to_DBR_TIME(PyObject *self, PyObject *args);
@@ -104,6 +105,8 @@ static PyObject *Py_dbr_type_is_DOUBLE(PyObject *self, PyObject *args);
 
 static PyObject *Py_dbf_text(PyObject *self, PyObject *args);
 static PyObject *Py_dbr_text(PyObject *self, PyObject *args);
+static PyObject *Py_dbf_text_to_type(PyObject *self, PyObject *args);
+static PyObject *Py_dbr_text_to_type(PyObject *self, PyObject *args);
 static PyObject *Py_ca_message(PyObject *self, PyObject *args);
 static PyObject *Py_alarmSeverityString(PyObject *self, PyObject *args);
 static PyObject *Py_alarmStatusString(PyObject *self, PyObject *args);
@@ -268,9 +271,14 @@ static PyMethodDef CA_Methods[] = {
     /* Utility */
     {"alarmSeverityString",    Py_alarmSeverityString,    METH_VARARGS, "alarm severity message"},
     {"alarmStatusString",      Py_alarmStatusString,      METH_VARARGS, "alarm status message"},
-    {"dbf_text",    Py_dbf_text,    METH_VARARGS, "field type name"},
-    {"dbr_text",    Py_dbr_text,    METH_VARARGS, "request type name"},
+    {"dbf_type_to_text",    Py_dbf_text,    METH_VARARGS, "field type name"},
+    {"dbf_text",            Py_dbf_text,    METH_VARARGS, "field type name"},
+    {"dbf_text_to_type",    Py_dbf_text_to_type,    METH_VARARGS, "field type name to type"},
+    {"dbr_type_to_text",    Py_dbr_text,    METH_VARARGS, "request type name"},
+    {"dbr_text",            Py_dbr_text,    METH_VARARGS, "request type name"},
+    {"dbr_text_to_type",    Py_dbr_text_to_type,    METH_VARARGS, "request type name to type"},
     {"message",     Py_ca_message,  METH_VARARGS, "status error message"},
+    {"dbf_type_is_valid",   Py_dbf_type_is_valid,   METH_VARARGS, "dbf_type_is_valid"},
     {"dbf_type_to_DBR",     Py_dbf_type_to_DBR,     METH_VARARGS, "dbf_type_to_DBR"},
     {"dbf_type_to_DBR_STS", Py_dbf_type_to_DBR_STS, METH_VARARGS, "dbf_type_to_DBR_STS"},
     {"dbf_type_to_DBR_TIME",Py_dbf_type_to_DBR_TIME,METH_VARARGS, "dbf_type_to_DBR_TIME"},
@@ -1479,6 +1487,18 @@ static PyObject *Py_dbf_text(PyObject *self, PyObject *args)
     return PyString_FromString(dbf_type_to_text(field_type));
 }
 
+static PyObject *Py_dbf_text_to_type(PyObject *self, PyObject *args)
+{
+    char *text = NULL;
+    int field_type;
+
+    if(!PyArg_ParseTuple(args, "z", &text))
+        return NULL;
+
+    dbf_text_to_type(text, field_type);
+    return PyInt_FromLong(field_type);
+}
+
 static PyObject *Py_dbr_text(PyObject *self, PyObject *args)
 {
     chtype req_type;
@@ -1489,6 +1509,18 @@ static PyObject *Py_dbr_text(PyObject *self, PyObject *args)
     return PyString_FromString(dbr_type_to_text(req_type));
 }
 
+static PyObject *Py_dbr_text_to_type(PyObject *self, PyObject *args)
+{
+    char *text = NULL;
+    int req_type;
+
+    if(!PyArg_ParseTuple(args, "z", &text))
+        return NULL;
+
+    dbr_text_to_type(text, req_type);
+    return PyInt_FromLong(req_type);
+}
+
 static PyObject *Py_ca_message(PyObject *self, PyObject *args)
 {
     int status;
@@ -1497,6 +1529,16 @@ static PyObject *Py_ca_message(PyObject *self, PyObject *args)
          return NULL;
 
     return PyString_FromString(ca_message(status));
+}
+
+static PyObject *Py_dbf_type_is_valid(PyObject *self, PyObject *args)
+{
+    int dbftype;
+
+    if(!PyArg_ParseTuple(args, "i", &dbftype))
+         return NULL;
+
+    return PyInt_FromLong(dbf_type_is_valid(dbftype));
 }
 
 static PyObject *Py_dbf_type_to_DBR(PyObject *self, PyObject *args)
