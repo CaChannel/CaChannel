@@ -1447,6 +1447,10 @@ static PyObject *Py_alarmStatusString(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &status))
          return NULL;
 
+    if (status >= ALARM_NSTATUS) {
+        PyErr_SetString(PyExc_IndexError, "Alarm status code out of range");
+        return NULL;
+    }
     return PyString_FromString(alarmStatusString[status]);
 }
 
@@ -1456,6 +1460,11 @@ static PyObject *Py_alarmSeverityString(PyObject *self, PyObject *args)
 
     if(!PyArg_ParseTuple(args, "i", &severity))
          return NULL;
+
+    if (severity >= ALARM_NSEV) {
+        PyErr_SetString(PyExc_IndexError, "Alarm severity code out of range");
+        return NULL;
+    }
 
     return PyString_FromString(alarmSeverityString[severity]);
 }
