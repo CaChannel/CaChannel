@@ -1,5 +1,8 @@
 This folder includes the EPICS base header files and static libraries built under host arch, linux-x86, linux-x86_64, win32-x86, windows-x64, darwin-x86.
 
+Build Notes:
+1. On Scientific Linux 6, EPICS base is built without readline support.
+
 These libraries are themselves licensed under EPICS Open License.
 ================================================================================
 Copyright (c) 1991-2011 UChicago Argonne LLC.
