@@ -11,7 +11,7 @@ case `uname` in
         echo "Not Supported"
 esac
 
-cp $CAREPEATER ${PREFIX}/bin/caRepeater
+[[ -f ${PREFIX}/bin/caRepeater ]] || cp $CAREPEATER ${PREFIX}/bin/caRepeater
 
 # Add more build steps here, if they are necessary.
 
