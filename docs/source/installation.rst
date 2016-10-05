@@ -8,7 +8,7 @@ Use ``pip``::
 
 Build from source::
 
-    $ hg clone https://bitbucket.org/xwang/cachannel
+    $ git clone https://github.com/CaChannel/CaChannel.git
     $ python setup.py build
     $ [sudo] python setup.py install
 
@@ -17,4 +17,4 @@ contains the recipe.::
 
     $ conda build conda
 
-By default it gets the source from PyPI, but this can modified in file *meta.yaml*.
+By default it gets the source from current directory, but this can modified in file *meta.yaml*.
