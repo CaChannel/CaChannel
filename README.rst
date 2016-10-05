@@ -21,14 +21,14 @@ Use pip::
 Or build from source, by which you need to have an appropriate compiler for your platform.
 ::
 
-    $ git clone https://github.com/xiaoqiangwang/cachannel
+    $ git clone https://github.com/CaChannel/CaChannel.git
     $ python setup.py build
     $ [sudo] python setup.py install
 
 Or build for Anaconda,
 ::
     
-    $ hg clone http://github.com/xiaoqiangwang/cachannel
+    $ git clone https://github.com/CaChannel/CaChannel.git
     $ cd conda
     $ conda build .
 
