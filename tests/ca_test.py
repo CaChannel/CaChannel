@@ -101,6 +101,7 @@ class CaGetTest(CaTest):
         self.checkValue(epicsArgs['value'])
         status = ca.clear_subscription(evid)
         self.assertNormal(status)
+        ca.pend_event(0.05)
 
     def checkValue(self, value):
         if ca.dbr_type_is_plain(self.dbrType):
@@ -162,7 +163,7 @@ class CaPutTest(CaTest):
     def test_put(self):
         status = ca.put(self.chid, self.value, chtype=self.dbrType, count=self.count)
         self.assertNormal(status)
-        status = ca.pend_io(1)
+        status = ca.flush_io()
         self.assertNormal(status)
 
         status, dbrValue = ca.get(self.chid, chtype=self.dbrType, count=self.count)
@@ -215,14 +216,14 @@ class CaGroupTest(CaTest):
 
     def test_group(self):
         for chid, chanName, dbrType, value, _ in self.channels:
-            status = ca.sg_put(self.gid, chid, value, chtype=dbrType)
+            status = ca.sg_put(self.gid, chid, value, dbrType)
             self.assertNormal(status)
         while ca.sg_test(self.gid)  != ca.ECA_IODONE:
             ca.sg_block(self.gid, 0.05)
 
         for channel in self.channels:
             chid, chanName, dbrType, value, _ = channel
-            status, dbrValue = ca.sg_get(self.gid, chid, chtype=dbrType)
+            status, dbrValue = ca.sg_get(self.gid, chid, dbrType)
             self.assertNormal(status)
             channel[-1] = dbrValue
 
