@@ -9,9 +9,6 @@
 #ifdef WITH_NUMPY
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
-#define WITH_NUMPY 1
-#else
-#define WITH_NUMPY 0
 #endif
 
 static bool has_numpy = false;
@@ -343,8 +340,10 @@ MOD_INIT(_ca) {
     } else {
         has_numpy = true;
     }
+    PyModule_AddIntConstant(pModule, "WITH_NUMPY", 1);
+    #else
+    PyModule_AddIntConstant(pModule, "WITH_NUMPY", 0);
     #endif
-    PyModule_AddIntMacro(pModule, WITH_NUMPY);
     PyModule_AddIntConstant(pModule, "HAS_NUMPY", has_numpy);
 
     PyModule_AddIntMacro(pModule, DBF_STRING);
