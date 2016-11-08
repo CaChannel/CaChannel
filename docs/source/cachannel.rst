@@ -26,7 +26,7 @@ However these macros defined in *cadef.h* and *db_access.h* are guaranteed.
 Data Types
 ^^^^^^^^^^
 
-Each PV has a native EPICS type. The natives type are then onverted to Python types.
+Each PV has a native EPICS type. The native types are then converted to Python types.
 
 This table also lists the EPICS request types.
 Users can request that the type of the read or write value be changed internally by EPICS.
