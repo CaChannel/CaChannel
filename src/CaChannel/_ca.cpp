@@ -589,9 +589,9 @@ static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kw
     PyObject *pObject = NULL;
     int level = 0;
 
-    static char *kwlist[] = {(char*)"context", (char*)"level",  NULL};
+    const char *kwlist[] = {"context", "level",  NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "|Oi", kwlist, &pObject, &level))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "|Oi", (char **)kwlist, &pObject, &level))
         return NULL;
 
     struct ca_client_context *pContext = NULL;
@@ -660,9 +660,9 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *
     char *pName;
     PyObject *pCallback = NULL;
     int priority = 0;
-    static char *kwlist[] = {(char *)"name", (char*)"callback", (char*)"priority",  NULL};
+    const char *kwlist[] = {"name", "callback", "priority",  NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "z|Oi", kwlist, &pName, &pCallback, &priority))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "z|Oi", (char **)kwlist, &pName, &pCallback, &priority))
         return NULL;
 
     chanId chid = NULL;
@@ -793,9 +793,9 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
     PyObject *pCallback = Py_None;
     bool use_numpy = false;
 
-    static char *kwlist[] = {(char*)"chid", (char*)"chtype", (char*)"count", (char*)"callback", (char*)"use_numpy", NULL};
+    const char *kwlist[] = {"chid", "chtype", "count", "callback", "use_numpy", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOOb", kwlist, &pChid, &pType, &pCount, &pCallback, &use_numpy))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "O|OOOb", (char **)kwlist, &pChid, &pType, &pCount, &pCallback, &use_numpy))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -875,9 +875,9 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
     void *pbuf = NULL;
     int status;
 
-    static char *kwlist[] = {(char*)"chid", (char*)"value", (char*)"chtype", (char*)"count", (char*)"callback", NULL};
+    const char *kwlist[] = {"chid", "value", "chtype", "count", "callback", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "OO|OOO", kwlist, &pChid, &pValue, &pType, &pCount, &pCallback))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "OO|OOO", (char **)kwlist, &pChid, &pValue, &pType, &pCount, &pCallback))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -914,9 +914,9 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObj
     unsigned long count = 0;
     unsigned long mask = DBE_VALUE | DBE_ALARM;
     bool use_numpy = false;
-    static char *kwlist[] = {(char*)"chid", (char*)"callback", (char*)"chtype", (char*)"count", (char*)"mask", (char*)"use_numpy", NULL};
+    const char *kwlist[] = {"chid", "callback", "chtype", "count", "mask", "use_numpy", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "OO|OOOb", kwlist, &pChid,  &pCallback, &pType, &pCount, &pMask, &use_numpy))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "OO|OOOb", (char **)kwlist, &pChid,  &pCallback, &pType, &pCount, &pMask, &use_numpy))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -1166,9 +1166,9 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
     unsigned long count = 0;
     bool use_numpy = false;
 
-    static char *kwlist[] = {(char*)"gid", (char*)"chid", (char*)"chtype", (char*)"count", (char*)"use_numpy", NULL};
+    const char *kwlist[] = {"gid", "chid", "chtype", "count", "use_numpy", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "lO|OOb", kwlist, &gid, &pChid, &pType, &pCount, &use_numpy))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "lO|OOb", (char **)kwlist, &gid, &pChid, &pType, &pCount, &use_numpy))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -1209,9 +1209,9 @@ static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args, PyObject *kws)
     unsigned long count = 1;
     int status;
 
-    static char *kwlist[] = {(char*)"gid", (char*)"chid", (char*)"value", (char*)"chtype", (char*)"count", NULL};
+    const char *kwlist[] = {"gid", "chid", "value", "chtype", "count", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "lOO|OO", kwlist, &gid, &pChid, &pValue, &pType, &pCount))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "lOO|OO", (char **)kwlist, &gid, &pChid, &pValue, &pType, &pCount))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
