@@ -1,33 +1,11 @@
 package:
   name: cachannel
-  version: !!str 3.0.0a3
+  version: 3.0.0a3
 
 source:
-  # build from PyPI source tarball
-  #fn: CaChannel-2.4.2.tar.gz
-  #url: https://pypi.python.org/packages/source/C/CaChannel/CaChannel-2.4.2.tar.gz
-  
   # build from source tree (for conda-build > 1.9)
   path: ..
   
-  # build from mercurial repository
-  #hg_url: http://bitbucket.org/xwang/cachannel
-  #hg_tag: 2.4.2
-
-  patches:
-   # List any patch files here
-   # - fix.patch
-# build:
-  # preserve_egg_dir: True
-  # entry_points:
-    # Put any entry points (scripts to be generated automatically) here. The
-    # syntax is module:function.  For example
-    #
-    # - cachannel = cachannel:main
-    #
-    # Would create an entry point called cachannel that calls cachannel.main()
-
-
   # If this is a new build for the same version, increment the build
   # number. If you do not include this key, it defaults to 0.
   # number: 1
