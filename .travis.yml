@@ -1,0 +1,78 @@
+sudo: required
+
+services:
+  - docker
+
+language: cpp
+
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      env: CONDA_PY=2.7
+    - os: linux
+      dist: trusty
+      env: CONDA_PY=3.5
+    - os: linux
+      dist: trusty
+      env: CONDA_PY=3.6
+    - os: osx
+      env: CONDA_PY=2.7
+    - os: osx
+      env: CONDA_PY=3.5
+    - os: osx
+      env: CONDA_PY=3.6
+
+install:
+  # Set the anaconda environment
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      if [[ "$CONDA_PY" == "2.7" ]]; then
+        curl https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -o miniconda.sh;
+      else
+        curl https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o miniconda.sh;
+      fi;
+      bash miniconda.sh -b -p $HOME/miniconda;
+      export PATH="$HOME/miniconda/bin:$PATH";
+      hash -r;
+      conda config --set always_yes yes --set changeps1 no;
+      conda update -q --all;
+      conda config --add channels defaults;
+      conda config --add channels ${CONDA_CHANNEL};
+      conda install conda-build numpy pip anaconda-client;
+    else
+      curl https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -o miniconda.sh;
+      bash miniconda.sh -b -p $HOME/miniconda;
+      export PATH="$HOME/miniconda/bin:$PATH";
+      conda config --set always_yes yes --set changeps1 no;
+      conda install pip anaconda-client;
+      docker pull continuumio/anaconda-build-linux-64:latest;
+      mkdir -m 0777 -p $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64;
+    fi
+
+script:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      conda build conda-recipe;
+    else
+       ./conda_build_in_docker.sh `pwd` $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64 ${CONDA_CHANNEL};
+    fi
+
+after_success:
+    - if [[ ! -z "$TRAVIS_TAG" ]]; then
+        anaconda -t $CONDA_TOKEN upload --force $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64/*.tar.bz2;
+        echo [distutils]                > ~/.pypirc;
+        echo index-servers = mypypi    >> ~/.pypirc;
+        echo [mypypi]                  >> ~/.pypirc;
+        echo repository=$PYPI_URL      >> ~/.pypirc;
+        echo username=$PYPI_USER       >> ~/.pypirc;
+        echo password=$PYPI_PASSWORD   >> ~/.pypirc;
+        pip install twine;
+        if [[ $TRAVIS_OS_NAME == "linux" && $CONDA_PY == "2.7" ]]; then
+            twine upload -r mypypi $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64/CaChannel-*.tar.gz;
+        fi;
+        if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+            twine upload -r mypypi $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64/CaChannel-*.egg;
+        fi;
+        if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+            twine upload -r mypypi $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64/CaChannel-*.whl;
+        fi;
+      fi
