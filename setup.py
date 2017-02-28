@@ -7,6 +7,7 @@ Python2.6 or later should be used.
 import os
 import sys
 import platform
+import imp
 import shutil
 
 # Use setuptools to include build_sphinx, upload/sphinx commands
@@ -53,9 +54,9 @@ else:
     print("Platform", UNAME, ARCH, " Not Supported")
     sys.exit(1)
 
-rev="3.0.0b1"
+_version = imp.load_source('_version','src/CaChannel/_version.py')
 
-define_macros = [("PYCA_VERSION",'"\\"%s\\""'%rev), (UNAME, None)]
+define_macros = []
 include_dirs = [os.path.join(EPICSBASE,"include"),
                 os.path.join(EPICSBASE,"include", "os",UNAME),
                 os.path.join(EPICSBASE,"include", "os"),
@@ -88,7 +89,7 @@ if UNAME != "WIN32":
     ca_module.runtime_library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),]
 
 setup(name="CaChannel",
-      version=rev,
+      version=_version.__version__,
       author="Xiaoqiang Wang",
       author_email = "xiaoqiang.wang AT psi DOT ch",
       description="CaChannel Interface to EPICS",
