@@ -22,7 +22,7 @@ class CaCreateTest(CaTest):
     def test_create(self):
         status, chid = ca.create_channel(self.chanName)
         self.assertNormal(status)
-        status = ca.pend_io(3)
+        status = ca.pend_io(10)
         self.assertNormal(status)
         self.assertTrue(ca.state(chid) == ca.cs_conn)
         status = ca.clear_channel(chid)
@@ -54,7 +54,7 @@ class CaGetTest(CaTest):
     def setUp(self):
         status, chid = ca.create_channel(self.chanName)
         self.assertNormal(status)
-        status = ca.pend_io(3)
+        status = ca.pend_io(10)
         self.assertNormal(status)
         self.assertTrue(ca.state(chid) == ca.cs_conn)
         self.chid = chid
@@ -62,7 +62,7 @@ class CaGetTest(CaTest):
     def test_get(self):
         status, dbrValue = ca.get(self.chid, chtype=self.dbrType, use_numpy=self.use_numpy)
         self.assertNormal(status)
-        status = ca.pend_io(1)
+        status = ca.pend_io(10)
         self.assertNormal(status)
         value = dbrValue.get()
         self.checkValue(value)
@@ -155,7 +155,7 @@ class CaPutTest(CaTest):
     def setUp(self):
         status, chid = ca.create_channel(self.chanName)
         self.assertNormal(status)
-        status = ca.pend_io(3)
+        status = ca.pend_io(10)
         self.assertNormal(status)
         self.assertTrue(ca.state(chid) == ca.cs_conn)
         self.chid = chid
@@ -168,7 +168,7 @@ class CaPutTest(CaTest):
 
         status, dbrValue = ca.get(self.chid, chtype=self.dbrType, count=self.count)
         self.assertNormal(status)
-        status = ca.pend_io(1)
+        status = ca.pend_io(10)
         self.assertNormal(status)
         value = dbrValue.get()
         self.assertValueEqual(value, self.readback)
@@ -208,7 +208,7 @@ class CaGroupTest(CaTest):
             self.assertNormal(status)
             channel[0] = chid
 
-        status = ca.pend_io(3)
+        status = ca.pend_io(30)
         self.assertNormal(status)
 
         status, self.gid = ca.sg_create()
@@ -240,6 +240,8 @@ class CaGroupTest(CaTest):
         ca.flush_io()
 
 if __name__ == '__main__':
+    ca.add_exception_event(lambda _: None)
+
     suit = unittest.TestSuite()
     suit.addTest(CaCreateTest("test_create", "catest"))
     suit.addTest(CaCreateTest("test_create_callback", "catest"))
