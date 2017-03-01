@@ -36,8 +36,11 @@ else:
 
 ip = socket.gethostbyname(socket.gethostname())
 
+for k,v in os.environ.items():
+   print(k, v)
+
 softIoc = subprocess.Popen(['softIoc', '-d', 'tests/test.db'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, 
-        env = {'PATH': os.path.join(os.environ['CONDA_PREFIX'], 'epics', 'bin', HOSTARCH),
+        env = {'PATH': os.path.join(os.environ['PREFIX'], 'epics', 'bin', HOSTARCH),
             'EPICS_CA_AUTO_ADDR_LIST': 'NO',
             'EPICS_CAS_BEACON_ADDR_LIST': re.sub('.\d+$', '.255', ip)
             }
