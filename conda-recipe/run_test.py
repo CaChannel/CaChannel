@@ -35,9 +35,7 @@ else:
     sys.exit(1)
 
 ip = socket.gethostbyname(socket.gethostname())
-
-for k,v in os.environ.items():
-   print(k, v)
+print("IP Address is %s"%ip)
 
 softIoc = subprocess.Popen(['softIoc', '-D', os.path.join(os.environ['PREFIX'], 'epics', 'dbd', 'softIoc.dbd') ,'-d', 'tests/test.db'],
         shell = True,
@@ -45,7 +43,7 @@ softIoc = subprocess.Popen(['softIoc', '-D', os.path.join(os.environ['PREFIX'], 
         stdout = subprocess.PIPE,
         env = {'PATH': os.path.join(os.environ['PREFIX'], 'epics', 'bin', HOSTARCH),
             'EPICS_CA_AUTO_ADDR_LIST': 'NO',
-            'EPICS_CAS_BEACON_ADDR_LIST': re.sub('.\d+$', '.255', ip)
+            'EPICS_CA_ADDR_LIST': ip,
             }
         )
 
