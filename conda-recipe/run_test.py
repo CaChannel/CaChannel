@@ -41,7 +41,9 @@ class TestCa(unittest.TestCase):
         environ = os.environ.copy()
         environ['PATH'] += os.pathsep + EPICS_BIN
 
-        self.softIoc = subprocess.Popen(['softIoc', '-D', os.path.join(EPICS_DBD, 'softIoc.dbd'), '-d', 'tests/test.db'],
+        self.softIoc = subprocess.Popen([os.path.join(EPICS_BIN, 'softIoc'),
+                    '-D', os.path.join(EPICS_DBD, 'softIoc.dbd'),
+                    '-d', 'tests/test.db'],
                 stdin = subprocess.PIPE,
                 stdout = subprocess.PIPE,
                 env = environ
