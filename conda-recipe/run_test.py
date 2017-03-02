@@ -23,6 +23,8 @@ if UNAME.lower() == "windows":
         HOSTARCH="windows-x64"
     else:
         HOSTARCH="win32-x86"
+    print("Test on windows has been disabled for the moment.")
+    sys.exit(0)
 elif UNAME.lower() == "darwin":
     HOSTARCH = 'darwin-x86'
 elif UNAME.lower() == "linux":
