@@ -240,6 +240,8 @@ class CaGroupTest(CaTest):
         ca.flush_io()
 
 if __name__ == '__main__':
+    ca.add_exception_event(lambda _: None)
+
     suit = unittest.TestSuite()
     suit.addTest(CaCreateTest("test_create", "catest"))
     suit.addTest(CaCreateTest("test_create_callback", "catest"))
