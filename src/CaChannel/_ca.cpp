@@ -837,7 +837,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         pData->use_numpy = use_numpy;
         Py_BEGIN_ALLOW_THREADS
         status = ca_array_get_callback(dbrtype, count, chid, get_callback, pData);
-        Py_BEGIN_END_THREADS
+        Py_END_ALLOW_THREADS
         if (status != ECA_NORMAL) {
             delete pData;
         }
@@ -1051,8 +1051,9 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
         return NULL;
 
     int status;
+    ChannelData *pData;
     Py_BEGIN_ALLOW_THREADS
-    ChannelData *pData= (ChannelData *)ca_puser(chid);
+    pData= (ChannelData *)ca_puser(chid);
     status = ca_replace_access_rights_event(chid, access_rights_handler);
     Py_END_ALLOW_THREADS
 
