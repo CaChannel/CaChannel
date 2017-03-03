@@ -45,7 +45,7 @@ class TestCa(unittest.TestCase):
                     '-D', EPICS_DBD,
                     '-S',
                     '-d', 'tests/test.db'],
-                stdout = subprocess.PIPE,
+                #stdout = subprocess.PIPE,
                 env = environ
         )
         time.sleep(2)
