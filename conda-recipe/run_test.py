@@ -20,11 +20,13 @@ class TestCa(unittest.TestCase):
             UNAME="Unknown"
             ARCH="Unknown"
 
+        pflags = 0
         if UNAME.lower() == "windows":
             if ARCH=="64bit":
                 HOSTARCH="windows-x64"
             else:
                 HOSTARCH="win32-x86"
+            pflags |= 0x00000008 #DETACHED_PROCESS
         elif UNAME.lower() == "darwin":
             HOSTARCH = 'darwin-x86'
         elif UNAME.lower() == "linux":
@@ -46,7 +48,8 @@ class TestCa(unittest.TestCase):
                     '-S',
                     '-d', 'tests/test.db'],
                 #stdout = subprocess.PIPE,
-                env = environ
+                env = environ,
+                creationflags = pflags,
         )
         time.sleep(2)
 
