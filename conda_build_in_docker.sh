@@ -52,7 +52,7 @@ do
     conda config --add channels "$element"
 done
 conda info
-conda build /recipe
+conda build /recipe/conda-recipe
 cp `conda info --root`/conda-bld/linux-64/* /output
 #chown $HOST_GID:$HOST_UID /output/*
 EOF
