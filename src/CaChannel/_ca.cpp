@@ -576,7 +576,10 @@ static PyObject *Py_ca_detach_context(PyObject *self, PyObject *args)
 
 static PyObject *Py_ca_current_context(PyObject *self, PyObject *args)
 {
-    struct ca_client_context *pContext = ca_current_context();
+    struct ca_client_context *pContext;
+    Py_BEGIN_ALLOW_THREADS
+    pContext = ca_current_context();
+    Py_END_ALLOW_THREADS
 
     if (pContext == NULL)
         Py_RETURN_NONE;
@@ -595,13 +598,19 @@ static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kw
         return NULL;
 
     struct ca_client_context *pContext = NULL;
-    if(pObject == NULL)
+    if(pObject == NULL) {
+        Py_BEGIN_ALLOW_THREADS
         pContext = ca_current_context();
+        Py_END_ALLOW_THREADS
+    }
     else
         pContext = (struct ca_client_context *)CAPSULE_EXTRACT(pObject, "ca_client_context");
 
-    if (pContext != NULL)
+    if (pContext != NULL) {
+        Py_BEGIN_ALLOW_THREADS
         ca_context_status(pContext, level);
+        Py_END_ALLOW_THREADS
+    }
 
     Py_RETURN_NONE;
 }
@@ -668,6 +677,7 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *
     chanId chid = NULL;
     int status;
 
+    Py_BEGIN_ALLOW_THREADS
     ChannelData *pData = new ChannelData(pCallback);
     if(PyCallable_Check(pCallback)) {
         status = ca_create_channel(pName, &connection_callback, pData, priority, &chid);
@@ -675,6 +685,7 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *
     } else {
         status = ca_create_channel(pName, NULL, pData, priority, &chid);
     }
+    Py_END_ALLOW_THREADS
 
     if (status == ECA_NORMAL) {
         PyObject *pChid = CAPSULE_BUILD(chid, "chid", NULL);
@@ -696,15 +707,14 @@ static PyObject *Py_ca_clear_channel(PyObject *self, PyObject *args)
     if (chid == NULL)
         return NULL;
 
-    ChannelData *pData = (ChannelData *) ca_puser(chid);
 
     int status;
 
     Py_BEGIN_ALLOW_THREADS
+    ChannelData *pData = (ChannelData *) ca_puser(chid);
     status = ca_clear_channel(chid);
-    Py_END_ALLOW_THREADS
-
     delete pData;
+    Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
 }
@@ -1016,12 +1026,12 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
         return NULL;
 
     /* store the callback and args in channel data */
-    ChannelData *pData= (ChannelData *)ca_puser(chid);
-    pData->pAccessEventCallback = pCallback;
     Py_XINCREF(pCallback);
 
     int status;
     Py_BEGIN_ALLOW_THREADS
+    ChannelData *pData= (ChannelData *)ca_puser(chid);
+    pData->pAccessEventCallback = pCallback;
     status = ca_replace_access_rights_event(chid, access_rights_handler);
     Py_END_ALLOW_THREADS
 
@@ -1035,7 +1045,9 @@ static void exception_handler(struct exception_handler_args args)
     PyGILState_STATE gstate = PyGILState_Ensure();
 
     if (PyCallable_Check(pExceptionCallback)) {
-        PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
+        PyObject *pChid = Py_None;
+        if (args.chid)
+            pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
         PyObject *pArgs = Py_BuildValue(
             "({s:O,s:i,s:i,s:i,s:i,s:s,s:s,s:i})",
             "chid", pChid,
@@ -1047,6 +1059,8 @@ static void exception_handler(struct exception_handler_args args)
             "file", args.pFile,
             "lineNo", args.lineNo
         );
+        if (pArgs == NULL)
+            PyErr_Print();
         PyObject *ret = PyObject_CallObject(pExceptionCallback, pArgs);
         if (ret == NULL) {
             PyErr_Print();
@@ -1065,16 +1079,22 @@ static PyObject *Py_ca_add_exception_event(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "O", &pCallback))
         return NULL;
 
-    /* release previous callback/args */
+    /* release previous callback */
     Py_XDECREF(pExceptionCallback);
+    pExceptionCallback = NULL;
 
-    /* store callback/args */
-    Py_XINCREF(pCallback);
-    pExceptionCallback = pCallback;
+    caExceptionHandler *handler = NULL;
+    if (PyCallable_Check(pCallback)) {
+        /* store callback */
+        Py_XINCREF(pCallback);
+        pExceptionCallback = pCallback;
+
+        handler = exception_handler; 
+    }
 
     int status;
     Py_BEGIN_ALLOW_THREADS
-    status = ca_add_exception_event(exception_handler, NULL);
+    status = ca_add_exception_event(handler, NULL);
     Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
@@ -1140,7 +1160,11 @@ static PyObject *Py_ca_replace_printf_handler(PyObject *self, PyObject *args)
 static PyObject *Py_ca_sg_create(PyObject *self, PyObject *args)
 {
     CA_SYNC_GID gid;
-    int status = ca_sg_create(&gid);
+    int status;
+    
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_sg_create(&gid);
+    Py_END_ALLOW_THREADS
 
     return Py_BuildValue("(il)", status, gid);
 }
@@ -1151,7 +1175,10 @@ static PyObject *Py_ca_sg_delete(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "l", &gid))
         return NULL;
 
-    int status = ca_sg_delete(gid);
+    int status;
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_sg_delete(gid);
+    Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
 }
@@ -1187,7 +1214,10 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
 
     // prepare the storage
     void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > ca_element_count(chid)) ? ca_element_count(chid) : count));
-    int status = ca_sg_array_get(gid, dbrtype, count, chid, pValue);
+    int status;
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_sg_array_get(gid, dbrtype, count, chid, pValue);
+    Py_END_ALLOW_THREADS
 
     if (status == ECA_NORMAL) {
         return Py_BuildValue("(iN)", status, DBRValue_New(dbrtype, count, pValue, use_numpy));
@@ -1222,7 +1252,9 @@ static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args, PyObject *kws)
     if (pbuf == NULL)
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
     status = ca_sg_array_put(gid, dbrtype, count, chid, pbuf);
+    Py_END_ALLOW_THREADS
 
     free(pbuf);
 
@@ -1358,7 +1390,10 @@ static PyObject *Py_ca_field_type(PyObject *self, PyObject *args)
     if (chid == NULL)
         return NULL;
 
-    chtype field_type = ca_field_type(chid);
+    chtype field_type;
+    Py_BEGIN_ALLOW_THREADS
+    field_type = ca_field_type(chid);
+    Py_END_ALLOW_THREADS
 
     return Py_BuildValue("l", field_type);
 }
@@ -1373,7 +1408,10 @@ static PyObject *Py_ca_element_count(PyObject *self, PyObject *args)
     if (chid == NULL)
         return NULL;
 
-    unsigned long element_count = ca_element_count(chid);
+    unsigned long element_count;
+    Py_BEGIN_ALLOW_THREADS
+    element_count = ca_element_count(chid);
+    Py_END_ALLOW_THREADS
 
     return Py_BuildValue("k", element_count);
 }
@@ -1388,7 +1426,12 @@ static PyObject *Py_ca_name(PyObject *self, PyObject *args)
     if (chid == NULL)
         return NULL;
 
-    return PyString_FromString(ca_name(chid));
+    const char *name;
+    Py_BEGIN_ALLOW_THREADS
+    name = ca_name(chid);
+    Py_END_ALLOW_THREADS
+
+    return PyString_FromString(name);
 }
 
 static PyObject *Py_ca_state(PyObject *self, PyObject *args)
@@ -1401,7 +1444,12 @@ static PyObject *Py_ca_state(PyObject *self, PyObject *args)
     if (chid == NULL)
         return NULL;
 
-    return Py_BuildValue("i", ca_state(chid));
+    int state;
+    Py_BEGIN_ALLOW_THREADS
+    state = ca_state(chid); 
+    Py_END_ALLOW_THREADS
+
+    return Py_BuildValue("i", state);
 }
 static PyObject *Py_ca_host_name(PyObject *self, PyObject *args)
 {
@@ -1413,7 +1461,12 @@ static PyObject *Py_ca_host_name(PyObject *self, PyObject *args)
     if (chid == NULL)
         return NULL;
 
-    return PyString_FromString(ca_host_name(chid));
+    const char *host;
+    Py_BEGIN_ALLOW_THREADS
+    host = ca_host_name(chid);
+    Py_END_ALLOW_THREADS
+
+    return PyString_FromString(host);
 }
 
 static PyObject *Py_ca_read_access(PyObject *self, PyObject *args)
@@ -1426,7 +1479,12 @@ static PyObject *Py_ca_read_access(PyObject *self, PyObject *args)
     if (chid == NULL)
         return NULL;
 
-    return Py_BuildValue("i", ca_read_access(chid));
+    int access;
+    Py_BEGIN_ALLOW_THREADS
+    access = ca_read_access(chid);
+    Py_END_ALLOW_THREADS
+
+    return Py_BuildValue("i", access);
 }
 
 static PyObject *Py_ca_write_access(PyObject *self, PyObject *args)
@@ -1438,8 +1496,13 @@ static PyObject *Py_ca_write_access(PyObject *self, PyObject *args)
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
     if (chid == NULL)
         return NULL;
+    
+    int access;
+    Py_BEGIN_ALLOW_THREADS
+    access = ca_write_access(chid);
+    Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", ca_write_access(chid));
+    return Py_BuildValue("i", access);
 }
 
 
