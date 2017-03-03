@@ -677,15 +677,17 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *
     chanId chid = NULL;
     int status;
 
-    Py_BEGIN_ALLOW_THREADS
     ChannelData *pData = new ChannelData(pCallback);
     if(PyCallable_Check(pCallback)) {
+        Py_BEGIN_ALLOW_THREADS
         status = ca_create_channel(pName, &connection_callback, pData, priority, &chid);
+        Py_END_ALLOW_THREADS
         if (status != ECA_NORMAL) delete pData;
     } else {
+        Py_BEGIN_ALLOW_THREADS
         status = ca_create_channel(pName, NULL, pData, priority, &chid);
+        Py_END_ALLOW_THREADS
     }
-    Py_END_ALLOW_THREADS
 
     if (status == ECA_NORMAL) {
         PyObject *pChid = CAPSULE_BUILD(chid, "chid", NULL);
@@ -797,11 +799,14 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
 {
     PyObject *pChid;
     PyObject *pType = Py_None;
+    chtype field_type = -1;
+    unsigned long element_count = 0;
     chtype dbrtype = -1;
     PyObject *pCount = Py_None;
     unsigned long count = 0;
     PyObject *pCallback = Py_None;
     bool use_numpy = false;
+    int status;
 
     const char *kwlist[] = {"chid", "chtype", "count", "callback", "use_numpy", NULL};
 
@@ -812,28 +817,37 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
     if (chid == NULL)
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
+    field_type = ca_field_type(chid);
+    element_count = ca_element_count(chid);
+    Py_END_ALLOW_THREADS
+
     if (pType == Py_None)
-        dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+        dbrtype = dbf_type_to_DBR(field_type);
     else
         dbrtype = PyLong_AsLong(pType);
 
     if (pCount == Py_None)
-        count = ca_element_count(chid);
+        count = element_count;
     else
-        count = MIN(ca_element_count(chid), PyLong_AsUnsignedLong(pCount));
+        count = MIN(element_count, PyLong_AsUnsignedLong(pCount));
 
     if (PyCallable_Check(pCallback)) {
         ChannelData *pData = new ChannelData(pCallback);
         pData->use_numpy = use_numpy;
-        int status = ca_array_get_callback(dbrtype, count, chid, get_callback, pData);
+        Py_BEGIN_ALLOW_THREADS
+        status = ca_array_get_callback(dbrtype, count, chid, get_callback, pData);
+        Py_BEGIN_END_THREADS
         if (status != ECA_NORMAL) {
             delete pData;
         }
         return Py_BuildValue("(iO)", status, Py_None);
     } else {
         // prepare the storage
-        void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > ca_element_count(chid)) ? ca_element_count(chid) : count));
-        int status = ca_array_get(dbrtype, count, chid, pValue);
+        void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > element_count) ? element_count : count));
+        Py_BEGIN_ALLOW_THREADS
+        status = ca_array_get(dbrtype, count, chid, pValue);
+        Py_END_ALLOW_THREADS
         if (status == ECA_NORMAL) {
             return Py_BuildValue("(iN)", status, DBRValue_New(dbrtype, count, pValue, use_numpy));
         } else {
@@ -900,11 +914,15 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
 
     if (PyCallable_Check(pCallback)) {
         ChannelData *pData = new ChannelData(pCallback);
+        Py_BEGIN_ALLOW_THREADS
         status = ca_array_put_callback(dbrtype, count, chid, pbuf, put_callback, pData);
+        Py_END_ALLOW_THREADS
         if (status != ECA_NORMAL)
             delete pData;
     } else {
+        Py_BEGIN_ALLOW_THREADS
         status = ca_array_put(dbrtype, count, chid, pbuf);
+        Py_END_ALLOW_THREADS
     }
 
     free(pbuf);
@@ -920,6 +938,8 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObj
     PyObject *pType = Py_None;
     PyObject *pCount = Py_None;
     PyObject *pMask = Py_None;
+    chtype field_type = -1;
+    unsigned long element_count = 0;
     chtype dbrtype = -1;
     unsigned long count = 0;
     unsigned long mask = DBE_VALUE | DBE_ALARM;
@@ -933,13 +953,18 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObj
     if (chid == NULL)
         return NULL;
 
+    Py_BEGIN_ALLOW_THREADS
+    field_type = ca_field_type(chid);
+    element_count = ca_element_count(chid);
+    Py_END_ALLOW_THREADS
+
     if (pType == Py_None)
-        dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+        dbrtype = dbf_type_to_DBR(field_type);
     else
         dbrtype = PyLong_AsLong(pType);
 
     if (pCount == Py_None)
-        count = ca_element_count(chid);
+        count = element_count;
     else
         count = PyLong_AsUnsignedLong(pCount);
 
@@ -1025,15 +1050,18 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
     if (chid == NULL)
         return NULL;
 
-    /* store the callback and args in channel data */
-    Py_XINCREF(pCallback);
-
     int status;
     Py_BEGIN_ALLOW_THREADS
     ChannelData *pData= (ChannelData *)ca_puser(chid);
-    pData->pAccessEventCallback = pCallback;
     status = ca_replace_access_rights_event(chid, access_rights_handler);
     Py_END_ALLOW_THREADS
+
+    /* release previous callback */
+    Py_XDECREF(pData->pAccessEventCallback);
+
+    /* store the callback in channel data */
+    pData->pAccessEventCallback = pCallback;
+    Py_XINCREF(pCallback);
 
     return Py_BuildValue("i", status);
 }
@@ -1189,6 +1217,8 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
     PyObject *pChid;
     PyObject *pType = Py_None;
     PyObject *pCount = Py_None;
+    chtype field_type = -1;
+    unsigned long element_count = 0;
     chtype dbrtype = -1;
     unsigned long count = 0;
     bool use_numpy = false;
@@ -1201,19 +1231,24 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
     if (chid == NULL)
         return NULL;
+    
+    Py_BEGIN_ALLOW_THREADS
+    field_type = ca_field_type(chid);
+    element_count = ca_element_count(chid);
+    Py_END_ALLOW_THREADS
 
     if (pType == Py_None)
-        dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+        dbrtype = dbf_type_to_DBR(field_type);
     else
         dbrtype = PyLong_AsLong(pType);
 
     if (pCount == Py_None)
-        count = ca_element_count(chid);
+        count = element_count;
     else
         count = (unsigned long)PyLong_AsUnsignedLong(pCount);
 
     // prepare the storage
-    void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > ca_element_count(chid)) ? ca_element_count(chid) : count));
+    void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > element_count) ? element_count : count));
     int status;
     Py_BEGIN_ALLOW_THREADS
     status = ca_sg_array_get(gid, dbrtype, count, chid, pValue);
@@ -1266,7 +1301,7 @@ static PyObject *Py_ca_sg_reset(PyObject *self, PyObject *args)
     CA_SYNC_GID gid;
     int status;
 
-    if(!PyArg_ParseTuple(args, "ld", &gid))
+    if(!PyArg_ParseTuple(args, "l", &gid))
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
@@ -2478,9 +2513,16 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
                                 chtype &dbrtype, unsigned long &count)
 {
     void *pbuf = NULL;
+    chtype field_type = -1;
+    unsigned long element_count = 0;
+
+    Py_BEGIN_ALLOW_THREADS
+    field_type = ca_field_type(chid);
+    element_count = ca_element_count(chid);
+    Py_END_ALLOW_THREADS
 
     if (pType == Py_None)
-        dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+        dbrtype = dbf_type_to_DBR(field_type);
     else
         dbrtype = PyLong_AsLong(pType);
 
@@ -2517,7 +2559,7 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
         if (pCount != Py_None)
             value_count = MIN(value_count, PyLong_AsUnsignedLong(pCount));
 
-        count = MIN(ca_element_count(chid), value_count);
+        count = MIN(element_count, value_count);
 
 
         if (count == 1 && dbrtype != DBR_STRING) {
