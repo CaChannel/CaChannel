@@ -36,15 +36,15 @@ class TestCa(unittest.TestCase):
             raise RuntimeError("Platform % is not supported"%UNAME)
 
         EPICS_BIN = os.path.join(os.environ['PREFIX'], 'epics', 'bin', HOSTARCH)
-        EPICS_DBD = os.path.join(os.environ['PREFIX'], 'epics', 'dbd')
+        EPICS_DBD = os.path.join(os.environ['PREFIX'], 'epics', 'dbd', 'softIoc.dbd')
 
         environ = os.environ.copy()
         environ['PATH'] += os.pathsep + EPICS_BIN
 
         self.softIoc = subprocess.Popen([os.path.join(EPICS_BIN, 'softIoc'),
-                    '-D', os.path.join(EPICS_DBD, 'softIoc.dbd'),
+                    '-D', EPICS_DBD,
+                    '-S',
                     '-d', 'tests/test.db'],
-                stdin = subprocess.PIPE,
                 stdout = subprocess.PIPE,
                 env = environ
         )
@@ -66,7 +66,8 @@ class TestCa(unittest.TestCase):
         runner.run(test)
 
     def tearDown(self):
-        self.softIoc.stdin.write('exit\n')
+        time.sleep(2)
+        self.softIoc.kill()
         time.sleep(2)
 
 if __name__ == '__main__':
