@@ -30,7 +30,7 @@ install:
   - conda config --add channels defaults
   - conda config --add channels %CONDA_CHANNEL%
   - conda install conda-build epics-base numpy anaconda-client
-  - ps: $SoftIOC = Start-Process $env:MINICONDA\epics\bin\$env:EPICS_HOST_ARCH\softIoc.exe -D $env:MINICONDA\epics\dbd\softIoc.dbd -S -d tests\test.db
+  - ps: $SoftIOC = Start-Process -FilePath $env:MINICONDA\epics\bin\$env:EPICS_HOST_ARCH\softIoc.exe -ArgumentList "-D $env:MINICONDA\epics\dbd\softIoc.dbd -S -d tests\test.db" -PassThru
 
 build_script:
   - "%CMD_IN_ENV% conda build conda-recipe"
