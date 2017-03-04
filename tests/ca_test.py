@@ -254,7 +254,7 @@ if __name__ == '__main__':
             if dbfType in [ca.DBF_ENUM, ca.DBF_CHAR, ca.DBF_SHORT, ca.DBF_LONG]:
                 value = readback = 12
             if dbfType == ca.DBR_STRING:
-                value = readback = '12.300' # well the precision is 3
+                value = readback = '12.3000' # well the precision is 4
             suit.addTest(CaPutTest(func, "catest",  dbfType,  1, value, readback))
 
     suit.addTest(CaPutTest('test_put', "catest",  ca.DBR_DOUBLE,  1, '12.3', 49.000)) # str converted to list [49,50,46,51]
@@ -263,7 +263,7 @@ if __name__ == '__main__':
     suit.addTest(CaPutTest('test_put', "cabo",    ca.DBR_STRING,  1, 'Busy'))
     # cawave is a record of 20 element DBF_DOUBLE
     suit.addTest(CaPutTest('test_put', "cawave",  ca.DBR_DOUBLE,  1, 1))
-    suit.addTest(CaPutTest('test_put', "cawave",  ca.DBR_STRING,  3, ['1', '2', '3'], ['1.000', '2.000', '3.000']))
+    suit.addTest(CaPutTest('test_put', "cawave",  ca.DBR_STRING,  3, ['1', '2', '3'], ['1.0000', '2.0000', '3.0000']))
     suit.addTest(CaPutTest('test_put', "cawave",  ca.DBR_DOUBLE, 22, [0.0]*20))
 
     suit.addTest(CaPutTest('test_put', "cawaves", ca.DBR_STRING,  2, ['1', '2', '3'], ['1', '2']))
@@ -278,7 +278,7 @@ if __name__ == '__main__':
             if dbfType in [ca.DBF_ENUM, ca.DBF_CHAR, ca.DBF_SHORT, ca.DBF_LONG]:
                 value = 12
             if dbfType == ca.DBR_STRING:
-                value = '12.300' # well the precision is 3
+                value = '12.3000' # well the precision is 4
 
             dbrType = ca.dbf_type_to_DBR(dbfType)
             suit.addTest(CaGetTest(func, "catest", dbrType, value))
@@ -318,7 +318,7 @@ if __name__ == '__main__':
                 if dbfType in [ca.DBF_ENUM, ca.DBF_CHAR, ca.DBF_SHORT, ca.DBF_LONG]:
                     value = [0] * 20
                 if dbfType == ca.DBR_STRING:
-                    value = ['0.000'] * 20 # well the precision is 3
+                    value = ['0.0000'] * 20 # well the precision is 4
 
                 dbrType = ca.dbf_type_to_DBR(dbfType)
                 suit.addTest(CaGetTest(func, "cawave", dbrType, value, use_numpy))
@@ -343,5 +343,5 @@ if __name__ == '__main__':
                  )
 
 
-    runner = unittest.TextTestRunner()
+    runner = unittest.TextTestRunner(verbosity=10)
     runner.run(suit)

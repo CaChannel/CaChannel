@@ -24,7 +24,7 @@ record(ao,"catest")
     field(LOLO, "-20")
     field(LLSV,  "MAJOR")
     field(EGU,  "mm")
-    field(PREC, "3")
+    field(PREC, "4")
 }
 
 record(bo,  "cabo")
@@ -49,7 +49,7 @@ record(waveform, "cawave")
     field(DESC, "numeric array")
     field(NELM, "20")
     field(FTVL, "DOUBLE")
-    field(PREC, "3")
+    field(PREC, "4")
 }
 record(waveform,"cawavec")
 {
