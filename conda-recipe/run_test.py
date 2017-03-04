@@ -10,44 +10,12 @@ import runpy
 import subprocess
 import doctest
 import unittest
-import pcaspy
-import pcaspy.tools
-
-
-pvdb = {
-    'castr': {'type':'str'},
-    'catest': {'lolo':-20,'low':-10,'high':10,'hihi':20,'prec':4,'unit':'mm'},
-    'cabo': {
-        'type':'enum',
-        'enums': ['Done','Busy'],
-        'states': [pcaspy.Severity.NO_ALARM, pcaspy.Severity.MINOR_ALARM]
-        },
-    'cawave': {'count':20, 'prec':4},
-    'cawavec': {'type':'char', 'count':5},
-    'cawaves': {'type':'str', 'count':3},
-}
-
-class myDriver(pcaspy.Driver):
-    def __init__(self):
-        pcaspy.Driver.__init__(self)
 
 
 class TestCa(unittest.TestCase):
     def setUp(self):
-        if platform.system() == 'Windows':
-            self.start_pcas()
-        else:
+        if platform.system() != 'Windows':
             self.start_ioc()
-
-    def start_pcas(self):
-        server = pcaspy.SimpleServer()
-        server.createPV('', pvdb)
-        driver = myDriver()
-        self.server_thread = pcaspy.tools.ServerThread(server)
-        self.server_thread.start()
-
-    def stop_pcas(self):
-        self.server_thread.stop()
 
     def start_ioc(self):
         try:
@@ -108,12 +76,9 @@ class TestCa(unittest.TestCase):
         runner.run(test)
 
     def tearDown(self):
-        time.sleep(2)
-        if platform.system() == 'Windows':
-            self.stop_pcas()
-        else:
+        if platform.system() != 'Windows':
             self.stop_ioc()
-        time.sleep(2)
+            time.sleep(2)
 
 if __name__ == '__main__':
     unittest.main()
