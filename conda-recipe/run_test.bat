@@ -1,2 +1,2 @@
-%PYTHON% tests\ca_test.py
-%PYTHON% -m "CaChannel.CaChannel"
+python tests\ca_test.py
+python -m "CaChannel.CaChannel"
