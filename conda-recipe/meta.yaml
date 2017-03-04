@@ -25,9 +25,10 @@ test:
   imports:
     - CaChannel
 
-  # commands:
+  commands:
     # You can put test commands to be run here.  Use this to test that the
     # entry points work.
+    - run_test.bat # [win]
 
   source_files:
     - tests/ca_test.py
