@@ -68,7 +68,7 @@ class CaChannel:
     12.3
     """
 
-    ca_timeout = 1.0
+    ca_timeout = 3.0
 
     def __init__(self, pvName=None):
         self._pvname = pvName
