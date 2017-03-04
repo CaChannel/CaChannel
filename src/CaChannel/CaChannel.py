@@ -468,7 +468,7 @@ class CaChannel:
         pv_loctrllim 0.0
         pv_lodislim 0.0
         pv_lowarnlim -10.0
-        pv_precision 3
+        pv_precision 4
         pv_severity 2
         pv_status 3
         pv_units mm
