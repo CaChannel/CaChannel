@@ -753,7 +753,7 @@ class CaChannel:
         .. note:: This method waits for connection to be established or fail with exception.
 
         >>> chan = CaChannel('non-exist-channel')
-        >>> chan.searchw()
+        >>> chan.searchw() # doctest: +IGNORE_EXCEPTION_DETAIL
         Traceback (most recent call last):
             ...
         CaChannelException: User specified timeout on IO operation expired
