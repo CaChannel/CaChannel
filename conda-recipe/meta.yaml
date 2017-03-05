@@ -41,7 +41,6 @@ test:
     # - nose
     - setuptools
     - epics-base
-    - pcaspy # [win]
     - numpy
 
 about:
