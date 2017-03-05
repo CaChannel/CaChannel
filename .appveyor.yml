@@ -30,8 +30,6 @@ install:
   - conda config --add channels defaults
   - conda config --add channels %CONDA_CHANNEL%
   - conda install conda-build epics-base numpy anaconda-client
-  - ps: $caRepeater = Start-Process -FilePath $env:MINICONDA\epics\bin\$env:EPICS_HOST_ARCH\caRepeater.exe -PassThru
-  - ps: $SoftIOC = Start-Process -FilePath $env:MINICONDA\epics\bin\$env:EPICS_HOST_ARCH\softIoc.exe -ArgumentList "-D $env:MINICONDA\epics\dbd\softIoc.dbd -S -d tests\test.db" -PassThru
 
 build_script:
   - "%CMD_IN_ENV% conda build conda-recipe"
@@ -48,6 +46,3 @@ on_success:
   - pip install twine
   - if %APPVEYOR_REPO_TAG% == true (twine upload -r mypypi %MINICONDA%\\conda-bld\\win-%PYTHON_ARCH%\\*.whl)
 
-on_finish:
-  - ps: Stop-Process -Id $SoftIOC.Id
-  - ps: Stop-Process -Id $caRepeater.Id
