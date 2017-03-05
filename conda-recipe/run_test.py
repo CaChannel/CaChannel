@@ -39,6 +39,10 @@ class TestCa(unittest.TestCase):
 
         EPICS_BIN = os.path.join(os.environ['PREFIX'], 'epics', 'bin', HOSTARCH)
         EPICS_DBD = os.path.join(os.environ['PREFIX'], 'epics', 'dbd', 'softIoc.dbd')
+        os.environ.update({
+            'EPICS_CA_AUTO_ADDR_LIST': 'NO',
+            'EPICS_CA_ADDR_LIST': 'localhost',
+            })
 
         self.caRepeater = subprocess.Popen([os.path.join(EPICS_BIN, 'caRepeater')])
         self.softIoc = subprocess.Popen([os.path.join(EPICS_BIN, 'softIoc'),
@@ -49,11 +53,12 @@ class TestCa(unittest.TestCase):
         time.sleep(2)
 
     def stop_ioc(self):
+        time.sleep(2)
         self.softIoc.kill()
         self.softIoc.wait()
+        time.sleep(1)
         self.caRepeater.kill()
         self.caRepeater.wait()
-        time.sleep(2)
 
     def test_ca(self):
         try:
