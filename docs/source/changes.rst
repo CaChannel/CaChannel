@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+3.0.0 (XX-03-2017)
+------------------
+
+- Rewrite low level :py:module:`ca` module with the same API as in package `caffi <https://pypi.python.org/pypi/caffi>`_.
+- Configure continous integration/deployment on Travis/AppVeyor.
+
 2.4.2
 -----
 
