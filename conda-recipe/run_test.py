@@ -65,6 +65,10 @@ class TestCa(unittest.TestCase):
         self.caRepeater.wait()
 
     def test_ca(self):
+        if self.softIoc is None:
+            print("softIoc has not been started, skip the test")
+            return
+
         try:
             if platform.system() != 'Linux':
                 runpy.run_path('tests/ca_test.py', run_name='__main__')
@@ -75,6 +79,10 @@ class TestCa(unittest.TestCase):
         self.assertEqual(ecode, 0)
 
     def test_CaChannel(self):
+        if self.softIoc is None:
+            print("softIoc has not been started, skip the test")
+            return
+
         # increase default timeout to 10 seconds
         import CaChannel.CaChannel
         CaChannel.CaChannel.ca_timeout = 10.
