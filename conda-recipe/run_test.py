@@ -51,11 +51,15 @@ class TestCa(unittest.TestCase):
                     '-d', 'tests/test.db'],
         )
         time.sleep(2)
+        # check for early crashes
+        if self.softIoc.poll() is not None:
+            self.softIoc = None
 
     def stop_ioc(self):
         time.sleep(2)
-        self.softIoc.kill()
-        self.softIoc.wait()
+        if self.softIoc:
+            self.softIoc.kill()
+            self.softIoc.wait()
         time.sleep(1)
         self.caRepeater.kill()
         self.caRepeater.wait()
