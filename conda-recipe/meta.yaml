@@ -5,7 +5,10 @@ package:
 source:
   # build from source tree (for conda-build > 1.9)
   path: ..
-  
+  patches:
+    - readline.patch # [linux]
+
+ 
   # If this is a new build for the same version, increment the build
   # number. If you do not include this key, it defaults to 0.
   # number: 1
@@ -15,10 +18,12 @@ requirements:
     - python
     - setuptools
     - numpy
+    - epics-base
 
   run:
     - python
     - setuptools
+    - epics-base
 
 test:
   # Python imports
@@ -39,6 +44,7 @@ test:
   requires:
     # Put any additional test requirements here.  For example
     # - nose
+    - cachannel
     - setuptools
     - epics-base
     - numpy

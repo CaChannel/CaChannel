@@ -1,5 +1,6 @@
 import os
 import warnings
+
 if os.environ.get('CACHANNEL_BACKEND') == 'caffi':
     from caffi.ca import *
     from caffi.macros import *

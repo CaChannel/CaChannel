@@ -1,9 +1,7 @@
-include README
+include README.rst
 include LICENSE
 include MANIFEST.in
-include src/_ca314.cpp
-include src/_conv_helper.cpp
+include src/_ca.cpp
 include src/*.py
-recursive-include epicsbase *
 prune */build
 prune ._*
