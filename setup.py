@@ -125,7 +125,7 @@ ca_module = Extension('_ca',
                       libraries=libraries,
                       library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),])
 
-if UNAME != ["WIN32", "Darwin", "Linux"]:
+if UNAME not in ["WIN32", "Darwin", "Linux"]:
     ca_module.runtime_library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),]
 
 setup(name="CaChannel",
