@@ -53,7 +53,7 @@ if UNAME.lower() == "windows":
             if not os.path.exists(dllpath):
                 static = True
                 break
-            shutil.copy(os.path.join(EPICSBASE, 'lib', HOSTARCH, dll),
+            shutil.copy(dllpath,
                         os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'CaChannel'))
         macros += [('_CRT_SECURE_NO_WARNINGS', 'None'),('EPICS_CALL_DLL', '')]
         cflags += ['/Z7']
