@@ -54,6 +54,8 @@ The source can be downloaded in various ways:
 
     $ git clone https://github.com/CaChannel/CaChannel.git
 
+.. _getting-epics:
+
 Getting EPICS
 ~~~~~~~~~~~~~
 In general please follow `the official installation instruction <http://www.aps.anl.gov/epics/base/R3-14/12-docs/README.html>`_. Here is a short guide,
