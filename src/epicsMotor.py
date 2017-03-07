@@ -44,10 +44,10 @@ class epicsMotor:
     >>> from epicsMotor import epicsMotor
     >>> m = epicsMotor('13BMD:m38')
     >>> m.move(10)              # Move to position 10 in user coordinates
-    >>> m.move(100, dial=1)     # Move to position 100 in dial coordinates
-    >>> m.move(1, step=1, relative=1) # Move 1 step relative to current position
     >>> m.wait()                # Wait for motor to stop moving
-    >>> m.wait(start=1)         # Wait for motor to start moving
+    >>> m.move(50, dial=1)      # Move to position 50 in dial coordinates
+    >>> m.wait()                # Wait for motor to stop moving
+    >>> m.move(1, step=-1, relative=1) # Move 1 step relative to current position
     >>> m.wait(start=1, stop=1) # Wait for motor to start, then to stop
     >>> m.stop()                # Stop moving immediately
     >>> high = m.high_limit     # Get the high soft limit in user coordinates
@@ -59,7 +59,6 @@ class epicsMotor:
     >>> p = m.get_position(readback=1) # Get the actual position in user coordinates
     >>> p = m.get_position(readback=1, step=1) # Get the actual motor position in steps
     >>> p = m.set_position(100)   # Set the current position to 100 in user coordinates
-                                  # Puts motor in Set mode, writes value, puts back in Use mode.
     >>> p = m.set_position(10000, step=1) # Set the current position to 10000 steps
     """
 
@@ -124,8 +123,9 @@ class epicsMotor:
                     }
         # Wait for all PVs to connect
         self.pvs['val'].pend_io()
+        self.pvs['dmov'].setMonitor()
 
-    def move(self, value, relative=0, dial=0, step=0, ignore_limits=0):
+    def move(self, value, relative=False, dial=False, step=False, ignore_limits=False):
         """
         Moves a motor to an absolute position or relative to the current position
         in user, dial or step coordinates.
@@ -142,27 +142,27 @@ class epicsMotor:
 
         >>> m=epicsMotor('13BMD:m38')
         >>> m.move(10)          # Move to position 10 in user coordinates
-        >>> m.move(100, dial=1) # Move to position 100 in dial coordinates
+        >>> m.move(50, dial=1)  # Move to position 50 in dial coordinates
         >>> m.move(2, step=1, relative=1) # Move 2 steps
         """
-        if (dial != 0):
+        if dial:
             # Position in dial coordinates
-            if (relative != 0):
+            if relative:
                 current = self.get_position(dial=1)
                 self.pvs['dval'].putw(current+value)
             else:
                 self.pvs['dval'].putw(value)
 
-        elif (step != 0):
+        elif step:
             # Position in steps
-            if (relative != 0):
+            if relative:
                 current = self.get_position(step=1)
                 self.pvs['rval'].putw(current + value)
             else:
                 self.pvs['rval'].putw(value)
         else:
             # Position in user coordinates
-            if (relative != 0):
+            if relative:
                 self.pvs['rlv'].putw(value)
             else:
                 self.pvs['val'].putw(value)
@@ -177,13 +177,13 @@ class epicsMotor:
         :raises epicsMotorException: If software limit or hard limit violation detected.
         """
         limit = self.pvs['lvio'].getw()
-        if (limit!=0):
+        if (limit != 0):
             raise epicsMotorException('Soft limit violation')
         limit = self.pvs['lls'].getw()
-        if (limit!=0):
+        if (limit != 0):
             raise epicsMotorException('Low hard limit violation')
         limit = self.pvs['hls'].getw()
-        if (limit!=0):
+        if (limit != 0):
             raise epicsMotorException('High hard limit violation')
 
 
@@ -197,7 +197,7 @@ class epicsMotor:
         """
         self.pvs['stop'].putw(1)
 
-    def get_position(self, dial=0, readback=0, step=0):
+    def get_position(self, dial=False, readback=False, step=False):
         """
         Returns the target or readback motor position in user, dial or step
         coordinates.
@@ -219,23 +219,23 @@ class epicsMotor:
         >>> p = m.get_position(dial=1)   # Read the target position in dial coordinates
         >>> p = m.get_position(readback=1, step=1) # Read the actual position in steps
         """
-        if (dial != 0):
-            if (readback != 0):
+        if dial:
+            if readback:
                 return self.pvs['drbv'].getw()
             else:
                 return self.pvs['dval'].getw()
-        elif (step != 0):
-            if (readback != 0):
+        elif step:
+            if readback:
                 return self.pvs['rrbv'].getw()
             else:
                 return self.pvs['rval'].getw()
         else:
-            if (readback != 0):
+            if readback:
                 return self.pvs['rbv'].getw()
             else:
                 return self.pvs['val'].getw()
 
-    def set_position(self, position, dial=0, step=0):
+    def set_position(self, position, dial=False, step=False):
         """
         Sets the motor position in user, dial or step coordinates.
 
@@ -253,9 +253,9 @@ class epicsMotor:
         """
         # Put the motor in "SET" mode
         self.pvs['set'].putw(1)
-        if (dial != 0):
+        if dial:
             self.pvs['dval'].putw(position)
-        elif (step != 0):
+        elif step:
             self.pvs['rval'].putw(position)
         else:
             self.pvs['val'].putw(position)
@@ -263,7 +263,7 @@ class epicsMotor:
         self.pvs['set'].putw(0)
 
 
-    def wait(self, start=0, stop=0, poll=0.01, ignore_limits=0):
+    def wait(self, start=False, stop=False, poll=0.01, ignore_limits=False):
         """
         Waits for the motor to start moving and/or stop moving.
 
@@ -285,21 +285,17 @@ class epicsMotor:
            waits for the motor to start moving, and then to stop moving.
 
         >>> m = epicsMotor('13BMD:m38')
-        >>> m.move(100)               # Move to position 100
+        >>> m.move(50)                # Move to position 50
         >>> m.wait(start=1, stop=1)   # Wait for the motor to start moving and then to stop moving
         """
-        if (start == 0) and (stop == 0): stop=1
-        if (start != 0):
-            while(1):
-                done = self.pvs['dmov'].getw()
-                if (done != 1): break
+        if not start and not stop: stop = True
+        if start:
+            while self.pvs['dmov'].getw() == 1:
                 time.sleep(poll)
-        if (stop != 0):
-            while(1):
-                done = self.pvs['dmov'].getw()
-                if (done != 0): break
+        if stop:
+            while self.pvs['dmov'].getw() == 0:
                 time.sleep(poll)
-        if (ignore_limits == 0): self.check_limits()
+        if not ignore_limits: self.check_limits()
 
 class epicsMotorException(Exception):
     def __init__(self, message=''):
@@ -307,3 +303,7 @@ class epicsMotorException(Exception):
 
     def __str__(self):
         return self.message
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
