@@ -109,6 +109,7 @@ class epicsMotor:
         :param bool dial: If True, _value_ is in dial coordinates. The default is user coordinates.
         :param bool step: If True, _value_ is in steps. The default is user coordinates.
         :param bool ignore_limits: If True, suppress raising exceptions if the move results in a soft or hard limit violation.
+        :raises epicsMotorException: If software limit or hard limit violation detected, unless ignore_limits=True is set.
 
         .. note:: The "step" and "dial" keywords are mutually exclusive.
            The "relative" keyword can be used in user, dial or step coordinates.
@@ -146,6 +147,8 @@ class epicsMotor:
     def check_limits(self):
         """
         Check wether there is a soft limit, low hard limit or high hard limit violation.
+
+        :raises epicsMotorException: If software limit or hard limit violation detected.
         """
         limit = self.pvs['lvio'].getw()
         if (limit!=0):
@@ -245,6 +248,8 @@ class epicsMotor:
                            The default is 0.01 seconds.
         :param bool ignore_limits: If True, suppress raising an exception if a soft or
                                    hard limit is detected.
+        :raises epicsMotorException: If software limit or hard limit violation detected, unless ignore_limits=True is set.
+
 
         .. note:: If neither the "start" nor "stop" keywords are set then "stop"
            is set to 1, so the routine waits for the motor to stop moving.
