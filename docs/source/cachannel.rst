@@ -89,7 +89,7 @@ and value return.
 Exception :class:`CaChannelException`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. exception:: CaChannel.CaChannelException
+.. exception:: CaChannelException
 
     This is the exception type throwed by any channel access operations. 
     Its string representation shows the descriptive message.
@@ -97,49 +97,49 @@ Exception :class:`CaChannelException`
 Class :class:`CaChannel`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: CaChannel.CaChannel
+.. autoclass:: CaChannel
 
 Connect
 ~~~~~~~
-    .. automethod:: CaChannel.CaChannel.search
-    .. automethod:: CaChannel.CaChannel.search_and_connect
-    .. automethod:: CaChannel.CaChannel.searchw
-    .. automethod:: CaChannel.CaChannel.clear_channel()
+    .. automethod:: CaChannel.search
+    .. automethod:: CaChannel.search_and_connect
+    .. automethod:: CaChannel.searchw
+    .. automethod:: CaChannel.clear_channel()
 
 Read
 ~~~~
-    .. automethod:: CaChannel.CaChannel.array_get
-    .. automethod:: CaChannel.CaChannel.getValue
-    .. automethod:: CaChannel.CaChannel.array_get_callback
-    .. automethod:: CaChannel.CaChannel.getw
+    .. automethod:: CaChannel.array_get
+    .. automethod:: CaChannel.getValue
+    .. automethod:: CaChannel.array_get_callback
+    .. automethod:: CaChannel.getw
 
 Write
 ~~~~~
-    .. automethod:: CaChannel.CaChannel.array_put
-    .. automethod:: CaChannel.CaChannel.array_put_callback
-    .. automethod:: CaChannel.CaChannel.putw
+    .. automethod:: CaChannel.array_put
+    .. automethod:: CaChannel.array_put_callback
+    .. automethod:: CaChannel.putw
 
 Monitor
 ~~~~~~~
-    .. automethod:: CaChannel.CaChannel.add_masked_array_event
-    .. automethod:: CaChannel.CaChannel.clear_event
+    .. automethod:: CaChannel.add_masked_array_event
+    .. automethod:: CaChannel.clear_event
 
 Execute
 ~~~~~~~
-    .. automethod:: CaChannel.CaChannel.pend_io
-    .. automethod:: CaChannel.CaChannel.pend_event
-    .. automethod:: CaChannel.CaChannel.poll
-    .. automethod:: CaChannel.CaChannel.flush_io
+    .. automethod:: CaChannel.pend_io
+    .. automethod:: CaChannel.pend_event
+    .. automethod:: CaChannel.poll
+    .. automethod:: CaChannel.flush_io
 
 Information
 ~~~~~~~~~~~
-    .. automethod:: CaChannel.CaChannel.field_type
-    .. automethod:: CaChannel.CaChannel.element_count
-    .. automethod:: CaChannel.CaChannel.name
-    .. automethod:: CaChannel.CaChannel.state
-    .. automethod:: CaChannel.CaChannel.host_name
-    .. automethod:: CaChannel.CaChannel.read_access
-    .. automethod:: CaChannel.CaChannel.write_access
+    .. automethod:: CaChannel.field_type
+    .. automethod:: CaChannel.element_count
+    .. automethod:: CaChannel.name
+    .. automethod:: CaChannel.state
+    .. automethod:: CaChannel.host_name
+    .. automethod:: CaChannel.read_access
+    .. automethod:: CaChannel.write_access
 
 
 :mod:`epicsPV`
@@ -155,6 +155,13 @@ Class :class:`epicsPV`
 Constructor
 ~~~~~~~~~~~
     .. automethod:: epicsPV.__init__
+
+Read
+~~~~
+    .. automethod:: epicsPV.array_get
+    .. automethod:: epicsPV.getValue
+    .. automethod:: epicsPV.getw
+    .. automethod:: epicsPV.getControl
 
 Write
 ~~~~~
