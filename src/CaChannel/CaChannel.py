@@ -63,9 +63,9 @@ class CaChannel:
     >>> import CaChannel
     >>> chan = CaChannel.CaChannel('catest')
     >>> chan.searchw()
-    >>> chan.putw(12.3)
+    >>> chan.putw(12.5)
     >>> chan.getw()
-    12.3
+    12.5
     """
 
     ca_timeout = 3.0
