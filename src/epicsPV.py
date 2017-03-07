@@ -159,8 +159,8 @@ class epicsPV(CaChannel):
     def array_get(self, req_type=None, count=None, **keywords):
         """
         If :meth:`setMonitor` has not been called then this function simply calls
-        :meth:`CaChannel.array_get`.  If :meth:`setMonitor` has been called then it calls
-        :meth:`CaChannel.pend_event` with a very short timeout, and then returns the
+        :meth:`CaChannel.CaChannel.array_get`.  If :meth:`setMonitor` has been called then it calls
+        :meth:`CaChannel.CaChannel.pend_event` with a very short timeout, and then returns the
         PV value from the last callback.
         """
         if self.callBack.monitorState != 0:
