@@ -359,7 +359,7 @@ class CaChannel:
         :raises CaChannelException: if error happens
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+        and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
 
@@ -452,7 +452,7 @@ class CaChannel:
         If no arguments were specified then the tuple is empty.
 
         .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (``pend_io``, ``poll``, ``pend_event``, ``flush_io``)
+        and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> def getCB(epicsArgs, userArgs):
