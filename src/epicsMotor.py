@@ -7,7 +7,10 @@ Created:        Sept. 16, 2002
 
 Modifications:
 
-- Mar. 7, 2017 Xiaoqiang Wang - Reformat the docstring and code indent.
+- Mar. 7, 2017 Xiaoqiang Wang
+
+  - Reformat the docstring and code indent.
+  - Use class property to expose certain fields.
 """
 import time
 
@@ -18,50 +21,73 @@ class epicsMotor:
     This module provides a class library for the EPICS motor record.
     It uses the :class:`epicsPV.epicsPV` class, which is in turn a subclass of :class:`CaChannel.CaChannel`
 
-    Virtual attributes:
-        These attributes do not appear in the dictionary for this class, but
-        are implemented with the __getattr__ and __setattr__ methods.  They
-        simply do getw() or putw(value) to the appropriate motor record fields.
-        All attributes can be both read and written unless otherwise noted.
+    Certain motor record fields are exposed as class properties.
+    They can be both read and written unless otherwise noted.
 
-        ===============  ===========================  =====
-        Attribute        Description                  Field
-        ===============  ===========================  =====
-        slew_speed       Slew speed or velocity       .VELO
-        base_speed       Base or starting speed       .VBAS
-        acceleration     Acceleration time (sec)      .ACCL
-        description      Description of motor         .DESC
-        resolution       Resolution (units/step)      .MRES
-        high_limit       High soft limit (user)       .HLM
-        low_limit        Low soft limit (user)        .LLM
-        dial_high_limit  High soft limit (dial)       .DHLM
-        dial_low_limit   Low soft limit (dial)        .DLLM
-        backlash         Backlash distance            .BDST
-        offset           Offset from dial to user     .OFF
-        done_moving      1=Done, 0=Moving, read-only  .DMOV
-        ===============  ===========================  =====
+    ===============  ===========================  =====
+    Property         Description                  Field
+    ===============  ===========================  =====
+    slew_speed       Slew speed or velocity       .VELO
+    base_speed       Base or starting speed       .VBAS
+    acceleration     Acceleration time (sec)      .ACCL
+    description      Description of motor         .DESC
+    resolution       Resolution (units/step)      .MRES
+    high_limit       High soft limit (user)       .HLM
+    low_limit        Low soft limit (user)        .LLM
+    dial_high_limit  High soft limit (dial)       .DHLM
+    dial_low_limit   Low soft limit (dial)        .DLLM
+    backlash         Backlash distance            .BDST
+    offset           Offset from dial to user     .OFF
+    done_moving      1=Done, 0=Moving, read-only  .DMOV
+    ===============  ===========================  =====
 
     >>> from epicsMotor import epicsMotor
-    >>> m=epicsMotor('13BMD:m38')
-    >>> m.move(10)               # Move to position 10 in user coordinates
-    >>> m.move(100, dial=1)      # Move to position 100 in dial coordinates
+    >>> m = epicsMotor('13BMD:m38')
+    >>> m.move(10)              # Move to position 10 in user coordinates
+    >>> m.move(100, dial=1)     # Move to position 100 in dial coordinates
     >>> m.move(1, step=1, relative=1) # Move 1 step relative to current position
-    >>> m.wait()                 # Wait for motor to stop moving
-    >>> m.wait(start=1)          # Wait for motor to start moving
-    >>> m.wait(start=1, stop=1)  # Wait for motor to start, then to stop
-    >>> m.stop()                 # Stop moving immediately
-    >>> high = m.high_limit      # Get the high soft limit in user coordinates
-    >>> m.dial_high_limit = 100  # Set the high limit to 100 in dial coodinates
-    >>> speed = m.slew_speed     # Get the slew speed
-    >>> m.acceleration = 0.1     # Set the acceleration to 0.1 seconds
-    >>> p=m.get_position()       # Get the desired motor position in user coordinates
-    >>> p=m.get_position(dial=1) # Get the desired motor position in dial coordinates
-    >>> p=m.get_position(readback=1) # Get the actual position in user coordinates
-    >>> p=m.get_position(readback=1, step=1) Get the actual motor position in steps
-    >>> p=m.set_position(100)   # Set the current position to 100 in user coordinates
-                                # Puts motor in Set mode, writes value, puts back in Use mode.
-    >>> p=m.set_position(10000, step=1) # Set the current position to 10000 steps
+    >>> m.wait()                # Wait for motor to stop moving
+    >>> m.wait(start=1)         # Wait for motor to start moving
+    >>> m.wait(start=1, stop=1) # Wait for motor to start, then to stop
+    >>> m.stop()                # Stop moving immediately
+    >>> high = m.high_limit     # Get the high soft limit in user coordinates
+    >>> m.dial_high_limit = 100 # Set the high limit to 100 in dial coodinates
+    >>> speed = m.slew_speed    # Get the slew speed
+    >>> m.acceleration = 0.1    # Set the acceleration to 0.1 seconds
+    >>> p = m.get_position()      # Get the desired motor position in user coordinates
+    >>> p = m.get_position(dial=1)# Get the desired motor position in dial coordinates
+    >>> p = m.get_position(readback=1) # Get the actual position in user coordinates
+    >>> p = m.get_position(readback=1, step=1) # Get the actual motor position in steps
+    >>> p = m.set_position(100)   # Set the current position to 100 in user coordinates
+                                  # Puts motor in Set mode, writes value, puts back in Use mode.
+    >>> p = m.set_position(10000, step=1) # Set the current position to 10000 steps
     """
+
+    class PVProperty(object):
+        def __init__(self, name, readonly=False):
+            self.name = name
+            self.readonly = readonly
+        def __get__(self, instance, owner):
+            if instance is None:
+                return self
+            return instance.pvs[self.name].getw()
+        def __set__(self, instance, value):
+            if instance is None or self.readonly:
+                return
+            instance.pvs[self.name].putw(value)
+
+    slew_speed  = PVProperty('velo')
+    base_speed  = PVProperty('vbas')
+    acceleration= PVProperty('accl')
+    description = PVProperty('desc')
+    resolution  = PVProperty('mres')
+    high_limit  = PVProperty('hlm')
+    low_limit   = PVProperty('llm')
+    dial_high_limit = PVProperty('dhlm')
+    dial_low_limit  = PVProperty('dllm')
+    backlash    = PVProperty('bdst')
+    offset      = PVProperty('off')
+    done_moving = PVProperty('dmov', readonly=True)
 
     def __init__(self, name):
         """
@@ -69,7 +95,7 @@ class epicsMotor:
 
         :param str name: The name of the EPICS motor record without any trailing period or field name.
 
-        >>> m=epicsMotor('13BMD:m38')
+        >>> m = epicsMotor('13BMD:m38')
         """
         self.pvs = {'val' : epicsPV.epicsPV(name+'.VAL',  wait=0),
                     'dval': epicsPV.epicsPV(name+'.DVAL', wait=0),
@@ -221,7 +247,7 @@ class epicsMotor:
 
         .. note:: The "step" and "dial" keywords are mutually exclusive.
 
-        >>> m=epicsMotor('13BMD:m38')
+        >>> m = epicsMotor('13BMD:m38')
         >>> m.set_position(10, dial=1)   # Set the motor position to 10 in dial coordinates
         >>> m.set_position(1000, step=1) # Set the motor position to 1000 steps
         """
@@ -258,7 +284,7 @@ class epicsMotor:
            If both "start" and "stop" are set to 1 then the routine first
            waits for the motor to start moving, and then to stop moving.
 
-        >>> m=epicsMotor('13BMD:m38')
+        >>> m = epicsMotor('13BMD:m38')
         >>> m.move(100)               # Move to position 100
         >>> m.wait(start=1, stop=1)   # Wait for the motor to start moving and then to stop moving
         """
@@ -275,36 +301,9 @@ class epicsMotor:
                 time.sleep(poll)
         if (ignore_limits == 0): self.check_limits()
 
-    def __getattr__(self, attrname):
-        if   (attrname == 'slew_speed'):      return self.pvs['velo'].getw()
-        elif (attrname == 'base_speed'):      return self.pvs['vbas'].getw()
-        elif (attrname == 'acceleration'):    return self.pvs['accl'].getw()
-        elif (attrname == 'description'):     return self.pvs['desc'].getw()
-        elif (attrname == 'resolution'):      return self.pvs['mres'].getw()
-        elif (attrname == 'high_limit'):      return self.pvs['hlm'].getw()
-        elif (attrname == 'low_limit'):       return self.pvs['llm'].getw()
-        elif (attrname == 'dial_high_limit'): return self.pvs['dhlm'].getw()
-        elif (attrname == 'dial_low_limit'):  return self.pvs['dllm'].getw()
-        elif (attrname == 'backlash'):        return self.pvs['bdst'].getw()
-        elif (attrname == 'offset'):          return self.pvs['off'].getw()
-        elif (attrname == 'done_moving'):     return self.pvs['dmov'].getw()
-        else: raise AttributeError(attrname)
-
-    def __setattr__(self, attrname, value):
-        if   (attrname == 'pvs'): self.__dict__[attrname]=value
-        elif (attrname == 'slew_speed'):      self.pvs['velo'].putw(value)
-        elif (attrname == 'base_speed'):      self.pvs['vbas'].putw(value)
-        elif (attrname == 'acceleration'):    self.pvs['accl'].putw(value)
-        elif (attrname == 'description'):     self.pvs['desc'].putw(value)
-        elif (attrname == 'resolution'):      self.pvs['mres'].putw(value)
-        elif (attrname == 'high_limit'):      self.pvs['hlm'].putw(value)
-        elif (attrname == 'low_limit'):       self.pvs['llm'].putw(value)
-        elif (attrname == 'dial_high_limit'): self.pvs['dhlm'].putw(value)
-        elif (attrname == 'dial_low_limit'):  self.pvs['dllm'].putw(value)
-        elif (attrname == 'backlash'):        self.pvs['bdst'].putw(value)
-        elif (attrname == 'offset'):          self.pvs['off'].putw(value)
-        else: raise AttributeError(attrname)
-
 class epicsMotorException(Exception):
-    def __init__(self, args=None):
-        self.args=args
+    def __init__(self, message=''):
+        self.message = message
+
+    def __str__(self):
+        return self.message
