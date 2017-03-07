@@ -141,3 +141,67 @@ Information
     .. automethod:: CaChannel.CaChannel.read_access
     .. automethod:: CaChannel.CaChannel.write_access
 
+
+:mod:`epicsPV`
+--------------
+
+.. automodule:: epicsPV
+
+Class :class:`epicsPV`
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: epicsPV
+
+Constructor
+~~~~~~~~~~~
+    .. automethod:: epicsPV.__init__
+
+Write
+~~~~~
+    .. automethod:: epicsPV.putWait
+
+Monitor
+~~~~~~~
+    .. automethod:: epicsPV.setMonitor
+    .. automethod:: epicsPV.clearMonitor
+    .. automethod:: epicsPV.checkMonitor
+
+:mod:`epicsMotor`
+-----------------
+
+.. automodule:: epicsMotor
+
+Exception :class:`epicsMotorException`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. exception:: epicsMotorException
+
+    This exception is raised when :meth:`epicsMotor.check_limits` method detects a soft limit
+    or hard limit violation. The :meth:`epicsMotor.move` and :meth:`epicsMotor.wait` methods call
+    :meth:`epicsMotor.check_limits` before they return, unless they are called with the
+    ``ignore_limits=True`` keyword set.
+
+Class :class:`epicsMotor`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: epicsMotor
+
+Constructor
+~~~~~~~~~~~
+    .. automethod:: epicsMotor.__init__
+
+Move
+~~~~
+    .. automethod:: epicsMotor.move
+    .. automethod:: epicsMotor.stop
+    .. automethod:: epicsMotor.wait
+
+Readback
+~~~~~~~~
+    .. automethod:: epicsMotor.get_position
+    .. automethod:: epicsMotor.check_limits
+
+Config
+~~~~~~
+    .. automethod:: epicsMotor.set_position
+
