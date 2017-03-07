@@ -333,7 +333,7 @@ class CaChannel:
         if not self.val.use_numpy:
             if isinstance(value, dict):
                 if hasattr(value['pv_value'], 'tolist'):
-                   value['pv_value'] = value['pv_value'].tolist()
+                    value['pv_value'] = value['pv_value'].tolist()
             else:
                 if hasattr(value, 'tolist'):
                     value = value.tolist()
@@ -696,15 +696,15 @@ class CaChannel:
     def state(self):
         """Current state of the CA connection.
 
-            ==================    =============
-            States                Meaning
-            ==================    =============
-            ca.cs_never_conn      PV not found
-            ca.cs_prev_conn       PV was found but unavailable
-            ca.cs_conn            PV was found and available
-            ca.cs_closed          PV not closed
-            ca.cs_never_search    PV not searched yet
-            ==================    =============
+            ==================  =====  =============
+            States              Value  Meaning
+            ==================  =====  =============
+            ca.cs_never_conn    0      PV not found
+            ca.cs_prev_conn     1      PV was found but unavailable
+            ca.cs_conn          2      PV was found and available
+            ca.cs_closed        3      PV not closed
+            ca.cs_never_search  4      PV not searched yet
+            ==================  =====  =============
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
