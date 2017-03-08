@@ -1105,7 +1105,7 @@ static void exception_handler(struct exception_handler_args args)
 static PyObject *Py_ca_add_exception_event(PyObject *self, PyObject *args)
 {
     PyObject *pCallback = NULL;
-    if(!PyArg_ParseTuple(args, "O", &pCallback))
+    if(!PyArg_ParseTuple(args, "|O", &pCallback))
         return NULL;
 
     /* release previous callback */
@@ -1159,7 +1159,7 @@ int printf_handler(const char *pFormat, va_list args)
 static PyObject *Py_ca_replace_printf_handler(PyObject *self, PyObject *args)
 {
     PyObject *pCallback = NULL;
-    if(!PyArg_ParseTuple(args, "O", &pCallback))
+    if(!PyArg_ParseTuple(args, "|O", &pCallback))
         return NULL;
 
     /* release previous callback/args */
