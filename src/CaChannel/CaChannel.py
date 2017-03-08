@@ -12,8 +12,10 @@ from . import ca
 
 
 # create default preemptive enabled context
-ca.create_context(True)
 CONTEXT = ca.current_context()
+if CONTEXT is None:
+    ca.create_context(True)
+    CONTEXT = ca.current_context()
 
 cs_never_search = 4
 
