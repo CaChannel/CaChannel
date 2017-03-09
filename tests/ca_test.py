@@ -218,7 +218,7 @@ class CaGroupTest(CaTest):
         for chid, chanName, dbrType, value, _ in self.channels:
             status = ca.sg_put(self.gid, chid, value, dbrType)
             self.assertNormal(status)
-        while ca.sg_test(self.gid)  != ca.ECA_IODONE:
+        while ca.sg_test(self.gid) != ca.ECA_IODONE:
             ca.sg_block(self.gid, 0.05)
 
         for channel in self.channels:
@@ -227,7 +227,7 @@ class CaGroupTest(CaTest):
             self.assertNormal(status)
             channel[-1] = dbrValue
 
-        while ca.sg_test(self.gid)  != ca.ECA_IODONE:
+        while ca.sg_test(self.gid) != ca.ECA_IODONE:
             ca.sg_block(self.gid, 0.05)
 
         for chid, chanName, dbrType, value, dbrValue in self.channels:
@@ -336,11 +336,11 @@ if __name__ == '__main__':
                 suit.addTest(CaGetTest(func, "cawave", dbrType, value, use_numpy))
 
 
-    suit.addTest(CaGroupTest("test_group", [
-                                ("cabo",   ca.DBR_STRING, "Busy"),
-                                ('catest', ca.DBR_DOUBLE, 1),
-                            ])
-                 )
+    #suit.addTest(CaGroupTest("test_group", [
+    #                            ("cabo",   ca.DBR_STRING, "Busy"),
+    #                            ('catest', ca.DBR_DOUBLE, 1),
+    #                        ])
+    #             )
 
 
     runner = unittest.TextTestRunner(verbosity=10)
