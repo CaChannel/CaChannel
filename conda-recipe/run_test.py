@@ -70,8 +70,7 @@ class TestCa(unittest.TestCase):
             return
 
         try:
-            if platform.system() != 'Linux':
-                runpy.run_path('tests/ca_test.py', run_name='__main__')
+            runpy.run_path('tests/ca_test.py', run_name='__main__')
         except SystemExit as e:
             ecode = e.code
         else:
