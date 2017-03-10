@@ -146,11 +146,16 @@ class CaChannel:
         ...     print('read:', epicsArgs['read_access'], 'write:', epicsArgs['write_access'])
         >>> chan.replace_access_rights_event(accessCB)
         read: 1 write: 1
+        >>> chan.replace_access_rights_event() # clear the callback
 
         .. versionadded:: 3.0
         """
-        self._callbacks['accessCB']=(callback, user_args)
-        ca.replace_access_rights_event(self._chid, self._access_callback)
+        if callable(callback):
+            self._callbacks['accessCB'] = (callback, user_args)
+            ca.replace_access_rights_event(self._chid, self._access_callback)
+        else:
+            self._callbacks['accessCB'] = None
+            ca.replace_access_rights_event(self._chid)
 
 #
 # *************** Channel access medthod ***************
