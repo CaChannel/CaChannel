@@ -1043,7 +1043,7 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
 {
     PyObject *pChid;
     PyObject *pCallback = NULL;
-    if(!PyArg_ParseTuple(args, "OO", &pChid,  &pCallback))
+    if(!PyArg_ParseTuple(args, "O|O", &pChid,  &pCallback))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -1055,14 +1055,22 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
     pData= (ChannelData *)ca_puser(chid);
     Py_END_ALLOW_THREADS
 
-    /* replace the callback */
+    /* release previous callback */
     Py_XDECREF(pData->pAccessEventCallback);
-    pData->pAccessEventCallback = pCallback;
-    Py_XINCREF(pCallback);
+    pData->pAccessEventCallback = NULL;
+
+    caArh *handler = NULL;
+    if (PyCallable_Check(pCallback)) {
+        /* store callback */
+        pData->pAccessEventCallback = pCallback;
+        Py_XINCREF(pCallback);
+
+        handler = access_rights_handler;
+    }
 
     int status;
     Py_BEGIN_ALLOW_THREADS
-    status = ca_replace_access_rights_event(chid, access_rights_handler);
+    status = ca_replace_access_rights_event(chid, handler);
     Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
@@ -1172,6 +1180,7 @@ static PyObject *Py_ca_replace_printf_handler(PyObject *self, PyObject *args)
     if (PyCallable_Check(pCallback)) {
         Py_XINCREF(pCallback);
         pPrintfHandler = pCallback;
+
         pFunc = printf_handler;
     }
 
