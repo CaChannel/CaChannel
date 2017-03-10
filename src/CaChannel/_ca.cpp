@@ -1050,19 +1050,20 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
     if (chid == NULL)
         return NULL;
 
-    int status;
     ChannelData *pData;
     Py_BEGIN_ALLOW_THREADS
     pData= (ChannelData *)ca_puser(chid);
-    status = ca_replace_access_rights_event(chid, access_rights_handler);
     Py_END_ALLOW_THREADS
 
-    /* release previous callback */
+    /* replace the callback */
     Py_XDECREF(pData->pAccessEventCallback);
-
-    /* store the callback in channel data */
     pData->pAccessEventCallback = pCallback;
     Py_XINCREF(pCallback);
+
+    int status;
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_replace_access_rights_event(chid, access_rights_handler);
+    Py_END_ALLOW_THREADS
 
     return Py_BuildValue("i", status);
 }
