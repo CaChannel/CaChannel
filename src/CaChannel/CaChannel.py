@@ -93,7 +93,7 @@ class CaChannel:
 
 
     def version(self):
-        return "CaChannel, version v28-05-2014"
+        return PACKAGE.__version__
 #
 # Class helper methods
 #
