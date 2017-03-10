@@ -62,12 +62,15 @@ class CaChannel:
     They have shorter names and default arguments. It is recommended to start with these methods.
     Study the other C alike methods when necessary.
 
-    >>> import CaChannel
-    >>> chan = CaChannel.CaChannel('catest')
+    >>> chan = CaChannel('catest')
     >>> chan.searchw()
     >>> chan.putw(12.5)
     >>> chan.getw()
     12.5
+    >>> chan.searchw('cabo')
+    >>> chan.putw('Done')
+    >>> chan.getw(ca.DBR_STRING)
+    'Done'
     """
 
     ca_timeout = 3.0
@@ -161,6 +164,9 @@ class CaChannel:
         >>> status = chan.pend_event(2)
         catest is connected
         """
+        if self._chid is not None:
+            self.clear_channel()
+
         if pvName is None:
             pvName = self._pvname
         else:
@@ -189,6 +195,9 @@ class CaChannel:
         >>> chan.state()
         2
         """
+        if self._chid is not None:
+            self.clear_channel()
+
         if pvName is None:
             pvName = self._pvname
         else:
@@ -214,6 +223,7 @@ class CaChannel:
         """
         if(self._chid is not None):
             ca.clear_channel(self._chid)
+            self._chid = None
 
 
 #
