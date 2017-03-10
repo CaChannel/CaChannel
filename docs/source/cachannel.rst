@@ -140,6 +140,11 @@ Information
     .. automethod:: CaChannel.read_access
     .. automethod:: CaChannel.write_access
 
+Misc
+~~~~
+    .. automethod:: CaChannel.setTimeout
+    .. automethod:: CaChannel.getTimeout
+    .. automethod:: CaChannel.replace_access_rights_event
 
 :mod:`epicsPV`
 --------------
