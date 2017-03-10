@@ -124,6 +124,34 @@ class CaChannel:
         return timeout
 
 
+    def replace_access_rights_event(self, callback=None, user_args=None):
+        """
+        Install or replace the access rights state change callback handler for the specified channel.
+
+        The callback handler is called in the following situations.
+
+            - whenever CA connects the channel immediately before the channel's connection handler is called
+            - whenever CA disconnects the channel immediately after the channel's disconnect callback is called
+              once immediately after installation if the channel is connected.
+            - whenever the access rights state of a connected channel changes
+
+        When a channel is created no access rights handler is installed.
+
+        :param callable callback: function called when access rights change.
+        :param user_args:
+
+        >>> chan = CaChannel('catest')
+        >>> chan.searchw()
+        >>> def accessCB(epicsArgs, userArgs):
+        ...     print('read:', epicsArgs['read_access'], 'write:', epicsArgs['write_access'])
+        >>> chan.replace_access_rights_event(accessCB)
+        read: 1 write: 1
+
+        .. versionadded:: 3.0
+        """
+        self._callbacks['accessCB']=(callback, user_args)
+        ca.replace_access_rights_event(self._chid, self._access_callback)
+
 #
 # *************** Channel access medthod ***************
 #
@@ -934,6 +962,17 @@ class CaChannel:
 # Callback functions
 #
 # These functions hook user supplied callback functions to CA extension
+
+    def _access_callback(self, epicsArgs):
+        callback = self._callbacks.get('accessCB')
+        if callback is None:
+            return
+        callbackFunc, userArgs = callback
+        try:
+            callbackFunc(epicsArgs, userArgs)
+        except:
+            pass
+
 
     def _conn_callback(self, epicsArgs):
         callback = self._callbacks.get('connCB')
