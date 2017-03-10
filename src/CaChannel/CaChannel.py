@@ -132,12 +132,13 @@ class CaChannel:
 
             - whenever CA connects the channel immediately before the channel's connection handler is called
             - whenever CA disconnects the channel immediately after the channel's disconnect callback is called
-              once immediately after installation if the channel is connected.
+            - once immediately after installation if the channel is connected
             - whenever the access rights state of a connected channel changes
 
         When a channel is created no access rights handler is installed.
 
-        :param callable callback: function called when access rights change.
+        :param callable callback: function called when access rights change. If None is given,
+                                  remove the access rights event callback.
         :param user_args: user provided arguments that are passed to callback when it is invoked.
 
         >>> chan = CaChannel('catest')
