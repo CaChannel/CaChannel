@@ -138,7 +138,7 @@ class CaChannel:
         When a channel is created no access rights handler is installed.
 
         :param callable callback: function called when access rights change.
-        :param user_args:
+        :param user_args: user provided arguments that are passed to callback when it is invoked.
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
