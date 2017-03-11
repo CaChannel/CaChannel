@@ -9,6 +9,9 @@ matrix:
   include:
     - os: linux
       dist: trusty
+      env: CONDA_PY=2.6
+    - os: linux
+      dist: trusty
       env: CONDA_PY=2.7
     - os: linux
       dist: trusty
