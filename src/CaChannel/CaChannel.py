@@ -10,14 +10,11 @@ import math
 import CaChannel as PACKAGE
 from . import ca
 
-
 # create default preemptive enabled context
 CONTEXT = ca.current_context()
 if CONTEXT is None:
     ca.create_context(True)
     CONTEXT = ca.current_context()
-
-cs_never_search = 4
 
 
 class CaChannelException(Exception):
@@ -29,6 +26,7 @@ class CaChannelException(Exception):
 
     def __str__(self):
         return ca.message(self.status)
+
 
 # A wrapper to automatically attach to default CA context
 def attach_ca_context(func):
@@ -80,7 +78,8 @@ class CaChannel:
         self._chid = None
         self._evid = None
         self._timeout = None
-        self._callbacks={}
+        self._dbrvalue = None
+        self._callbacks = {}
 
     def __del__(self):
         try:
@@ -91,23 +90,23 @@ class CaChannel:
         except:
             pass
 
-
-    def version(self):
+    @staticmethod
+    def version():
         return PACKAGE.__version__
-#
-# Class helper methods
-#
+
+    #
+    # Class helper methods
+    #
     def setTimeout(self, timeout):
         """Set the timeout for this channel object. It overrides the class timeout.
 
         :param float timeout:  timeout in seconds
 
         """
-        if (timeout>=0 or timeout is None):
+        if timeout >= 0 or timeout is None:
             self._timeout = timeout
         else:
             raise ValueError
-
 
     def getTimeout(self):
         """Retrieve the timeout set for this channel object.
@@ -122,7 +121,6 @@ class CaChannel:
             timeout = self._timeout
 
         return timeout
-
 
     def replace_access_rights_event(self, callback=None, user_args=None):
         """
@@ -143,7 +141,7 @@ class CaChannel:
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
-        >>> def accessCB(epicsArgs, userArgs):
+        >>> def accessCB(epicsArgs, _):
         ...     print('read:', epicsArgs['read_access'], 'write:', epicsArgs['write_access'])
         >>> chan.replace_access_rights_event(accessCB)
         read: 1 write: 1
@@ -158,15 +156,15 @@ class CaChannel:
             self._callbacks['accessCB'] = None
             ca.replace_access_rights_event(self._chid)
 
-#
-# *************** Channel access medthod ***************
-#
+    #
+    # *************** Channel access method ***************
+    #
+    #
+    # Connection methods
+    #   search_and_connect
+    #   search
+    #   clear_channel
 
-#
-# Connection methods
-#   search_and_connect
-#   search
-#   clear_channel
     @attach_ca_context
     def search_and_connect(self, pvName, callback, *user_args):
         """Attempt to establish a connection to a process variable.
@@ -192,7 +190,7 @@ class CaChannel:
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> chan = CaChannel('catest')
-        >>> def connCB(epicsArgs, userArgs):
+        >>> def connCB(epicsArgs, _):
         ...     chid = epicsArgs[0]
         ...     connection_state = epicsArgs[1]
         ...     if connection_state == ca.CA_OP_CONN_UP:
@@ -209,7 +207,7 @@ class CaChannel:
         else:
             self._pvname = pvName
 
-        self._callbacks['connCB']=(callback, user_args)
+        self._callbacks['connCB'] = (callback, user_args)
 
         status, self._chid = ca.create_channel(pvName, self._conn_callback)
         if status != ca.ECA_NORMAL:
@@ -259,16 +257,16 @@ class CaChannel:
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         """
-        if(self._chid is not None):
+        if self._chid is not None:
             ca.clear_channel(self._chid)
             self._chid = None
 
+    #
+    # Write methods
+    #   array_put
+    #   array_put_callback
+    #
 
-#
-# Write methods
-#   array_put
-#   array_put_callback
-#
     @attach_ca_context
     def array_put(self, value, req_type=None, count=None):
         """Write a value or array of values to a channel
@@ -315,7 +313,6 @@ class CaChannel:
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
-
     @attach_ca_context
     def array_put_callback(self, value, req_type, count, callback, *user_args):
         """Write a value or array of values to a channel and execute the user
@@ -351,7 +348,7 @@ class CaChannel:
            and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
-        >>> def putCB(epicsArgs, userArgs):
+        >>> def putCB(epicsArgs, _):
         ...     print(ca.name(epicsArgs['chid']), 'put completed')
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -377,14 +374,13 @@ class CaChannel:
         status = ca.put(self._chid, value, req_type, count, lambda epics_args: callback(epics_args, user_args))
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
-#
-# Read methods
-#   getValue
-#   array_get
-#   array_get_callback
-#
+    #
+    # Read methods
+    #   getValue
+    #   array_get
+    #   array_get_callback
+    #
 
-    # Obtain read value after ECA_NORMAL is returned on an array_get().
     def getValue(self):
         """
         Return the value(s) after :meth:`array_get` has completed.
@@ -409,14 +405,14 @@ class CaChannel:
         pv_status 7
         pv_value 1
         """
-        dbrvalue = self.val.get()
+        dbrvalue = self._dbrvalue.get()
         if isinstance(dbrvalue, dict):
             value = {}
-            self._format_value(dbrvalue, value, self.val.use_numpy)
+            CaChannel._format_value(dbrvalue, value, self._dbrvalue.use_numpy)
         else:
             value = dbrvalue
 
-        if not self.val.use_numpy:
+        if not self._dbrvalue.use_numpy:
             if isinstance(value, dict):
                 if hasattr(value['pv_value'], 'tolist'):
                     value['pv_value'] = value['pv_value'].tolist()
@@ -425,8 +421,6 @@ class CaChannel:
                     value = value.tolist()
         return value
 
-
-    # Simulate with a synchronous getw function call
     @attach_ca_context
     def array_get(self, req_type=None, count=None, **keywords):
         """Read a value or array of values from a channel.
@@ -462,11 +456,9 @@ class CaChannel:
         123.0
         """
         use_numpy = keywords.get('use_numpy', PACKAGE.USE_NUMPY)
-        status, self.val = ca.get(self._chid, req_type, count, None, use_numpy)
-        #self.val.use_numpy = use_numpy
+        status, self._dbrvalue = ca.get(self._chid, req_type, count, None, use_numpy)
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
-
 
     @attach_ca_context
     def array_get_callback(self, req_type, count, callback, *user_args, **keywords):
@@ -548,7 +540,7 @@ class CaChannel:
            and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
-        >>> def getCB(epicsArgs, userArgs):
+        >>> def getCB(epicsArgs, _):
         ...     for item in sorted(epicsArgs.keys()):
         ...         if item.startswith('pv_'):
         ...             print(item,epicsArgs[item])
@@ -582,24 +574,22 @@ class CaChannel:
         pv_value 0
         """
         use_numpy = keywords.get('use_numpy', PACKAGE.USE_NUMPY)
-        self._callbacks['getCB']=(callback, user_args, use_numpy)
+        self._callbacks['getCB'] = (callback, user_args, use_numpy)
         status, _ = ca.get(self._chid, req_type, count, self._get_callback, use_numpy)
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
-
-#
-# Monitor methods
-#   add_masked_array_event
-#   clear_event
-#
-
-    # Creates a new event id and stores it on self.__evid.  Only one event registered
-    # per CaChannel object.  If an event is already registered the event is cleared
-    # before registering a new event.
+    #
+    # Monitor methods
+    #   add_masked_array_event
+    #   clear_event
+    #
     @attach_ca_context
     def add_masked_array_event(self, req_type, count, mask, callback, *user_args, **keywords):
         """Specify a callback function to be executed whenever changes occur to a PV.
+
+        Creates a new event id and stores it on self.__evid.  Only one event registered per CaChannel object.
+        If an event is already registered the event is cleared before registering a new event.
 
         :param req_type:    database request type (``ca.DBR_XXXX``). Defaults to be the native data type.
         :param count:       number of data values to read, Defaults to be the native count.
@@ -625,7 +615,7 @@ class CaChannel:
            and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
-        >>> def eventCB(epicsArgs, userArgs):
+        >>> def eventCB(epicsArgs, _):
         ...     print('pv_value', epicsArgs['pv_value'])
         ...     print('pv_status', int(epicsArgs['pv_status']))
         ...     print('pv_severity', int(epicsArgs['pv_severity']))
@@ -659,13 +649,12 @@ class CaChannel:
             count = self.element_count()
 
         use_numpy = keywords.get('use_numpy', PACKAGE.USE_NUMPY)
-        self._callbacks['eventCB']=(callback, user_args, use_numpy)
+        self._callbacks['eventCB'] = (callback, user_args, use_numpy)
 
         status, self._evid = ca.create_subscription(self._chid, self._event_callback, req_type, count, mask, use_numpy)
 
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
-
 
     @attach_ca_context
     def clear_event(self):
@@ -681,17 +670,16 @@ class CaChannel:
             if status != ca.ECA_NORMAL:
                 raise CaChannelException(status)
 
-
-#
-# Execute methods
-#   pend_io
-#   pend_event
-#   poll
-#   flush_io
-#
+    #
+    # Execute methods
+    #   pend_io
+    #   pend_event
+    #   poll
+    #   flush_io
+    #
 
     @attach_ca_context
-    def pend_io(self,timeout=None):
+    def pend_io(self, timeout=None):
         """
         Flush the send buffer and wait until outstanding queries (:meth:`search`, :meth:`array_get`) complete
         or the specified timeout expires.
@@ -706,9 +694,8 @@ class CaChannel:
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
-
     @attach_ca_context
-    def pend_event(self,timeout=None):
+    def pend_event(self, timeout=None):
         """Flush the send buffer and process background activity (connect/get/put/monitor callbacks) for ``timeout`` seconds.
 
         It will not return before the specified timeout expires and all unfinished channel access labor has been processed.
@@ -722,7 +709,6 @@ class CaChannel:
         # status is always ECA_TIMEOUT
         return status
 
-
     @attach_ca_context
     def poll(self):
         """Flush the send buffer and execute any outstanding background activity.
@@ -735,7 +721,6 @@ class CaChannel:
         # status is always ECA_TIMEOUT
         return status
 
-
     @attach_ca_context
     def flush_io(self):
         """
@@ -747,17 +732,17 @@ class CaChannel:
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
+    #
+    # Channel Access Macros
+    #   field_type
+    #   element_count
+    #   name
+    #   state
+    #   host_name
+    #   read_access
+    #   write_access
+    #
 
-#
-# Channel Access Macros
-#   field_type
-#   element_count
-#   name
-#   state
-#   host_name
-#   read_access
-#   write_access
-#
     def field_type(self):
         """
         Native type of the PV in the server, :data:`ca.DBF_XXXX`.
@@ -774,7 +759,6 @@ class CaChannel:
         """
         return int(ca.field_type(self._chid))
 
-
     def element_count(self):
         """
         Maximum array element count of the PV in the server.
@@ -786,7 +770,6 @@ class CaChannel:
         """
         return int(ca.element_count(self._chid))
 
-
     def name(self):
         """
         Channel name specified when the channel was created.
@@ -797,7 +780,6 @@ class CaChannel:
         'catest'
         """
         return ca.name(self._chid)
-
 
     def state(self):
         """
@@ -821,17 +803,15 @@ class CaChannel:
         2
         """
         if self._chid is None:
-            return cs_never_search
+            return int(ca.cs_never_search)
         else:
             return int(ca.state(self._chid))
-
 
     def host_name(self):
         """
         Host name that hosts the process variable.
         """
         return ca.host_name(self._chid)
-
 
     def read_access(self):
         """Access right to read the channel.
@@ -841,7 +821,6 @@ class CaChannel:
          """
         return ca.read_access(self._chid)
 
-
     def write_access(self):
         """Access right to write the channel.
 
@@ -850,11 +829,10 @@ class CaChannel:
         """
         return ca.write_access(self._chid)
 
-
-#
-# Wait functions
-#
-# These functions wait for completion of the requested action.
+    #
+    # Wait functions
+    #
+    # These functions wait for completion of the requested action.
     def searchw(self, pvName=None):
         """
         Attempt to establish a connection to a process variable.
@@ -874,7 +852,6 @@ class CaChannel:
         self.search(pvName)
         timeout = self.getTimeout()
         self.pend_io(timeout)
-
 
     def putw(self, value, req_type=None):
         """
@@ -928,7 +905,6 @@ class CaChannel:
         self.array_put(value, req_type)
         self.flush_io()
 
-
     def getw(self, req_type=None, count=None, **keywords):
         """Read the value from a channel.
 
@@ -963,11 +939,10 @@ class CaChannel:
         value = self.getValue()
         return value
 
-
-#
-# Callback functions
-#
-# These functions hook user supplied callback functions to CA extension
+    #
+    # Callback functions
+    #
+    # These functions hook user supplied callback functions to CA extension
 
     def _access_callback(self, epicsArgs):
         callback = self._callbacks.get('accessCB')
@@ -978,7 +953,6 @@ class CaChannel:
             callbackFunc(epicsArgs, userArgs)
         except:
             pass
-
 
     def _conn_callback(self, epicsArgs):
         callback = self._callbacks.get('connCB')
@@ -991,7 +965,6 @@ class CaChannel:
         except:
             pass
 
-
     def _put_callback(self, epicsArgs):
         callback = self._callbacks.get('putCB')
         if callback is None:
@@ -1002,43 +975,42 @@ class CaChannel:
         except:
             pass
 
-
     def _get_callback(self, epicsArgs):
         callback = self._callbacks.get('getCB')
         if callback is None:
             return
         callbackFunc, userArgs, use_numpy = callback
-        epicsArgs = self._format_cb_args(epicsArgs, use_numpy)
+        epicsArgs = CaChannel._format_cb_args(epicsArgs, use_numpy)
         try:
             callbackFunc(epicsArgs, userArgs)
         except:
             pass
-
 
     def _event_callback(self, epicsArgs):
         callback = self._callbacks.get('eventCB')
         if callback is None:
             return
         callbackFunc, userArgs, use_numpy = callback
-        epicsArgs = self._format_cb_args(epicsArgs, use_numpy)
+        epicsArgs = CaChannel._format_cb_args(epicsArgs, use_numpy)
         try:
             callbackFunc(epicsArgs, userArgs)
         except:
             pass
 
-
-    def _format_cb_args(self, args, use_numpy):
-        epicsArgs={}
-        epicsArgs['chid']   = args['chid']
-        epicsArgs['type']   = args['type']
-        epicsArgs['count']  = args['count']
-        epicsArgs['status'] = args['status']
-        self._format_value(args['value'], epicsArgs, use_numpy)
+    @staticmethod
+    def _format_cb_args(args, use_numpy):
+        epicsArgs = {
+            'chid': args['chid'],
+            'type': args['type'],
+            'count': args['count'],
+            'status': args['status']
+        }
+        CaChannel._format_value(args['value'], epicsArgs, use_numpy)
 
         return epicsArgs
 
-
-    def _format_value(self, value, epicsArgs, use_numpy):
+    @staticmethod
+    def _format_value(value, epicsArgs, use_numpy):
         # dbr value fields are prefixed with 'pv_'
         if isinstance(value, dict):
             for key in value:
@@ -1068,7 +1040,7 @@ class CaChannel:
             if 'pv_status' in epicsArgs:
                 epicsArgs['pv_status'] = int(epicsArgs['pv_status'])
                 epicsArgs['pv_severity'] = int(epicsArgs['pv_severity'])
-            # convert stamp(datetime) to seconds and nano seconds
+            # convert stamp(datetime) to seconds and nanoseconds
             if 'pv_stamp' in epicsArgs:
                 fraction, integer = math.modf(epicsArgs['pv_stamp'])
                 epicsArgs['pv_seconds'] = int(integer) - ca.POSIX_TIME_AT_EPICS_EPOCH
