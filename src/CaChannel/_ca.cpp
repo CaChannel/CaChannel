@@ -669,7 +669,7 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *
 {
     char *pName;
     PyObject *pCallback = NULL;
-    int priority = 0;
+    int priority = CA_PRIORITY_DEFAULT;
     const char *kwlist[] = {"name", "callback", "priority",  NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kws, "z|Oi", (char **)kwlist, &pName, &pCallback, &priority))
