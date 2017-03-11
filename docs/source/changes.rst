@@ -5,7 +5,9 @@ ChangeLog
 ------------------
 
 - Rewrite low level :py:mod:`ca` module with the same API as in package `caffi <https://pypi.python.org/pypi/caffi>`_.
+- Added method :py:meth:`CaChannel.CaChannel.replace_access_rights_event`
 - Configure continous integration/deployment on Travis/AppVeyor.
+- Drop Python 2.4 and 2.5 support.
 
 2.4.2
 -----
