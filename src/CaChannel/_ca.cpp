@@ -1535,7 +1535,7 @@ static PyObject *Py_ca_read_access(PyObject *self, PyObject *args)
     access = ca_read_access(chid);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", access);
+    return PyBool_FromLong(access);
 }
 
 static PyObject *Py_ca_write_access(PyObject *self, PyObject *args)
@@ -1553,7 +1553,7 @@ static PyObject *Py_ca_write_access(PyObject *self, PyObject *args)
     access = ca_write_access(chid);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", access);
+    return PyBool_FromLong(access);
 }
 
 
