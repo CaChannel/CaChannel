@@ -9,7 +9,7 @@ Get String of Enum
     from CaChannel import ca, CaChannel
     chan = CaChannel('myEnumPV')
     chan.searhw()
-    print chan.getw(ca.DBR_STRING)
+    print(chan.getw(ca.DBR_STRING))
 
 Get Control Information 
 -----------------------
@@ -19,7 +19,7 @@ Get Control Information
     from CaChannel import ca, CaChannel
     chan = CaChannel('myPV')
     chan.searhw()
-    print chan.getw(ca.dbf_type_to_DBR_CTRL(chan.field_type()))
+    print(chan.getw(ca.dbf_type_to_DBR_CTRL(chan.field_type())))
 
 Get Wavefrom as Numpy Array
 ---------------------------
@@ -29,7 +29,7 @@ Get Wavefrom as Numpy Array
     
     from CaChannel import ca, CaChannel
     chan = CaChanne('myWaveformPV')
-    print chan.getw(use_numpy=True)
+    print(chan.getw(use_numpy=True))
 
 - At module level
 
@@ -38,4 +38,5 @@ Get Wavefrom as Numpy Array
     import CaChannel
     CaChannel.USE_NUMPY = True
     chan = CaChannel.CaChanne('myWaveformPV')
-    print chan.getw()
+    print(chan.getw())
+
