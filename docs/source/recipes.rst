@@ -1,6 +1,23 @@
 Recipes
 =======
 
+.. py:currentmodule:: CaChannel.CaChannel
+
+Connect Multiple Channels
+-------------------------
+If there are multiple channels to connect, using :meth:`searchw` might not be efficient, because it connects each
+channel sequentially. A better approach is to create the channels and flush the search request at once.
+
+::
+
+    from CaChannel import ca, CaChannel
+    chans = {pvname: CaChannel(pvname) for pvname in ['pv1', 'pv2', 'pv3', ...]}
+    for chan in chans.values():
+        chan.search()
+    # call pend_io on either of the channels and the it will flush the requests and wait for completion
+    # if connection does not complete in 10 seconds, CaChannelException is raised with status ca.ECA_TIMEOUT
+    chans['pv1'].pend_io(10)
+
 Get String of Enum
 ------------------
 
