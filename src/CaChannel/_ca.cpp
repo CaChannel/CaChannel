@@ -1022,17 +1022,21 @@ static void access_rights_handler(struct access_rights_handler_args args)
 
     if (PyCallable_Check(pData->pAccessEventCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
+        PyObject *pRead = PyBool_FromLong(args.ar.read_access);
+        PyObject *pWrite = PyBool_FromLong(args.ar.write_access);
         PyObject *pArgs = Py_BuildValue(
-            "({s:O,s:i,s:i})",
+            "({s:O,s:O,s:O})",
             "chid", pChid,
-            "read_access", args.ar.read_access,
-            "write_access", args.ar.write_access
+            "read_access", pRead,
+            "write_access", pWrite
         );
         PyObject *ret = PyObject_CallObject(pData->pAccessEventCallback, pArgs);
         if (ret == NULL) {
             PyErr_Print();
         }
         Py_XDECREF(ret);
+        Py_XDECREF(pRead);
+        Py_XDECREF(pWrite);
         Py_XDECREF(pChid);
         Py_XDECREF(pArgs);
     }

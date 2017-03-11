@@ -144,7 +144,7 @@ class CaChannel:
         >>> def accessCB(epicsArgs, _):
         ...     print('read:', epicsArgs['read_access'], 'write:', epicsArgs['write_access'])
         >>> chan.replace_access_rights_event(accessCB)
-        read: 1 write: 1
+        read: True write: True
         >>> chan.replace_access_rights_event() # clear the callback
 
         .. versionadded:: 3.0
