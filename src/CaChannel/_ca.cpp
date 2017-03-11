@@ -482,6 +482,7 @@ MOD_INIT(_ca) {
     PyModule_AddIntMacro(pModule, cs_prev_conn);
     PyModule_AddIntMacro(pModule, cs_conn);
     PyModule_AddIntMacro(pModule, cs_closed);
+    PyModule_AddIntConstant(pModule, cs_never_search, 4);
 
     PyModule_AddIntMacro(pModule, NO_ALARM);
     PyModule_AddIntMacro(pModule, MINOR_ALARM);
