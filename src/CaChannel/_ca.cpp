@@ -569,7 +569,7 @@ MOD_INIT(_ca) {
     "    CONN            = ECA_CONN\n"
     "    ALLOCMEM        = ECA_ALLOCMEM\n"
     "    UKNCHAN         = ECA_UKNCHAN\n"
-    "    UKFIELD         = ECA_UKNFIELD\n"
+    "    UKNFIELD        = ECA_UKNFIELD\n"
     "    TOLARGE         = ECA_TOLARGE\n"
     "    TIMEOUT         = ECA_TIMEOUT\n"
     "    NOSUPPORT       = ECA_NOSUPPORT\n"
@@ -620,7 +620,7 @@ MOD_INIT(_ca) {
     "    BADPRIORITY     = ECA_BADPRIORITY\n"
     "    NOTTHREADED     = ECA_NOTTHREADED\n"
     "    # 16KARRAYCLIEN is an invalid variable name\n"
-    "    ARRAYCLIENT     = ECA_16KARRAYCLIENT\n"
+    "    ARRAY16KCLIENT  = ECA_16KARRAYCLIENT\n"
     "    CONNSEQTMO      = ECA_CONNSEQTMO\n"
     "    UNRESPTMO       = ECA_UNRESPTMO");
 
@@ -737,6 +737,26 @@ MOD_INIT(_ca) {
     "    WriteAccess = WRITE_ACCESS_ALARM\n");
 
     PyModule_AddIntMacro(pModule, POSIX_TIME_AT_EPICS_EPOCH);
+
+    PyModule_AddIntMacro(pModule, CA_PRIORITY_MAX);
+    PyModule_AddIntMacro(pModule, CA_PRIORITY_MIN);
+    PyModule_AddIntMacro(pModule, CA_PRIORITY_DEFAULT);
+    PyModule_AddIntMacro(pModule, CA_PRIORITY_DB_LINKS);
+    PyModule_AddIntMacro(pModule, CA_PRIORITY_ARCHIVE);
+    PyModule_AddIntMacro(pModule, CA_PRIORITY_OPI);
+
+    add_IntEnum(pModule,
+    "from enum import IntEnum\n"
+    "class CA_PRIORITY(IntEnum):\n"
+    "    \"\"\"\n"
+    "    Enum redefined from CA_PRIORITY_XXX macros.\n"
+    "    \"\"\"\n"
+    "    MAX     = CA_PRIORITY_MAX\n"
+    "    MIN     = CA_PRIORITY_MIN\n"
+    "    DEFAULT = CA_PRIORITY_DEFAULT\n"
+    "    DB_LINKS= CA_PRIORITY_DB_LINKS\n"
+    "    ARCHIVE = CA_PRIORITY_ARCHIVE\n"
+    "    OPI     = CA_PRIORITY_OPI");
 
     MODULE = pModule;
     #if PY_MAJOR_VERSION >= 3
