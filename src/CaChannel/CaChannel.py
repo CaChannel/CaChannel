@@ -102,6 +102,10 @@ class CaChannel:
 
         :param float timeout:  timeout in seconds
 
+        >>> chan = CaChannel()
+        >>> chan.setTimeout(10.)
+        >>> chan.getTimeout()
+        10.0
         """
         if timeout >= 0 or timeout is None:
             self._timeout = timeout
@@ -114,6 +118,9 @@ class CaChannel:
         :return: timeout in seconds for this channel instance
         :rtype: float
 
+        >>> chan = CaChannel()
+        >>> chan.getTimeout() == CaChannel.ca_timeout
+        True
         """
         if self._timeout is None:
             timeout = CaChannel.ca_timeout
@@ -198,6 +205,9 @@ class CaChannel:
         >>> chan.search_and_connect(None, connCB, chan)
         >>> status = chan.pend_event(2)
         catest is connected
+        >>> chan.search_and_connect('cabo', connCB, chan)
+        >>> status = chan.pend_event(2)
+        cabo is connected
         """
         if self._chid is not None:
             self.clear_channel()
@@ -627,7 +637,6 @@ class CaChannel:
         pv_value 1
         pv_status 7
         pv_severity 1
-        >>> chan.clear_event()
         >>> chan.add_masked_array_event(ca.DBR_STS_STRING, None, None, eventCB)
         >>> status = chan.pend_event(1)
         pv_value Busy
