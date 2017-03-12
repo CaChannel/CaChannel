@@ -12,6 +12,7 @@
 #endif
 
 static bool has_numpy = false;
+static PyObject *MODULE = NULL;
 
 #ifndef MIN
      #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
@@ -317,6 +318,25 @@ static struct PyModuleDef CA_Module = {
     #define MOD_INIT(name) extern "C" void init##name(void)
 #endif
 
+
+void add_IntEnum(PyObject * pModule, const char *buffer)
+{
+    PyObject *pModuleDict = PyModule_GetDict(pModule);
+    PyObject *pGlobalDict = PyEval_GetGlobals();
+
+    PyObject *pDict = PyDict_New();
+    PyDict_Update(pDict, pGlobalDict);
+    PyDict_Update(pDict, pModuleDict);
+
+    PyObject * pTemp = PyRun_String(buffer, Py_file_input, pDict, pModuleDict);
+    if (pTemp == NULL)
+        PyErr_Print();
+    else
+        Py_XDECREF(pTemp);
+
+    Py_XDECREF(pDict);
+}
+
 /* entry point for Python module initializer */
 
 MOD_INIT(_ca) {
@@ -346,6 +366,7 @@ MOD_INIT(_ca) {
     #endif
     PyModule_AddIntConstant(pModule, "HAS_NUMPY", has_numpy);
 
+    PyModule_AddIntMacro(pModule, TYPENOTCONN);
     PyModule_AddIntMacro(pModule, DBF_STRING);
     PyModule_AddIntMacro(pModule, DBF_SHORT);
     PyModule_AddIntMacro(pModule, DBF_INT);
@@ -354,6 +375,19 @@ MOD_INIT(_ca) {
     PyModule_AddIntMacro(pModule, DBF_CHAR);
     PyModule_AddIntMacro(pModule, DBF_LONG);
     PyModule_AddIntMacro(pModule, DBF_DOUBLE);
+
+    add_IntEnum(pModule,
+    "from enum import IntEnum\n"
+    "class DBF(IntEnum):\n"
+    "    NOTCONN= TYPENOTCONN\n"
+    "    STRING = DBF_STRING\n"
+    "    SHORT  = DBF_SHORT\n"
+    "    INT    = DBF_INT\n"
+    "    FLOAT  = DBF_FLOAT\n"
+    "    ENUM   = DBF_ENUM\n"
+    "    CHAR   = DBF_CHAR\n"
+    "    LONG   = DBF_LONG\n"
+    "    DOUBLE = DBF_DOUBLE\n");
 
     PyModule_AddIntMacro(pModule, DBR_STRING);
     PyModule_AddIntMacro(pModule, DBR_SHORT);
@@ -391,7 +425,6 @@ MOD_INIT(_ca) {
     PyModule_AddIntMacro(pModule, DBR_GR_LONG);
     PyModule_AddIntMacro(pModule, DBR_GR_DOUBLE);
 
-
     PyModule_AddIntMacro(pModule, DBR_CTRL_STRING);
     PyModule_AddIntMacro(pModule, DBR_CTRL_SHORT);
     PyModule_AddIntMacro(pModule, DBR_CTRL_INT);
@@ -406,6 +439,62 @@ MOD_INIT(_ca) {
     PyModule_AddIntMacro(pModule, DBR_STSACK_STRING);
     PyModule_AddIntMacro(pModule, DBR_CLASS_NAME);
     PyModule_AddIntMacro(pModule, LAST_BUFFER_TYPE);
+
+    add_IntEnum(pModule,
+    "from enum import IntEnum\n"
+    "class DBR(IntEnum):\n"
+    "    NOTCONN= TYPENOTCONN\n"
+    "\n"
+    "    STRING = DBR_STRING\n"
+    "    SHORT  = DBR_SHORT\n"
+    "    INT    = DBR_INT\n"
+    "    FLOAT  = DBR_FLOAT\n"
+    "    ENUM   = DBR_ENUM\n"
+    "    CHAR   = DBR_CHAR\n"
+    "    LONG   = DBR_LONG\n"
+    "    DOUBLE = DBR_DOUBLE\n"
+    "\n"
+    "    STS_STRING = DBR_STS_STRING\n"
+    "    STS_SHORT  = DBR_STS_SHORT\n"
+    "    STS_INT    = DBR_STS_INT\n"
+    "    STS_FLOAT  = DBR_STS_FLOAT\n"
+    "    STS_ENUM   = DBR_STS_ENUM\n"
+    "    STS_CHAR   = DBR_STS_CHAR\n"
+    "    STS_LONG   = DBR_STS_LONG\n"
+    "    STS_DOUBLE = DBR_STS_DOUBLE\n"
+    "\n"
+    "    TIME_STRING = DBR_TIME_STRING\n"
+    "    TIME_SHORT  = DBR_TIME_SHORT\n"
+    "    TIME_INT    = DBR_TIME_INT\n"
+    "    TIME_FLOAT  = DBR_TIME_FLOAT\n"
+    "    TIME_ENUM   = DBR_TIME_ENUM\n"
+    "    TIME_CHAR   = DBR_TIME_CHAR\n"
+    "    TIME_LONG   = DBR_TIME_LONG\n"
+    "    TIME_DOUBLE = DBR_TIME_DOUBLE\n"
+    "\n"
+    "    GR_STRING = DBR_GR_STRING\n"
+    "    GR_SHORT  = DBR_GR_SHORT\n"
+    "    GR_INT    = DBR_GR_INT\n"
+    "    GR_FLOAT  = DBR_GR_FLOAT\n"
+    "    GR_ENUM   = DBR_GR_ENUM\n"
+    "    GR_CHAR   = DBR_GR_CHAR\n"
+    "    GR_LONG   = DBR_GR_LONG\n"
+    "    GR_DOUBLE = DBR_GR_DOUBLE\n"
+    "\n"
+    "    CTRL_STRING = DBR_CTRL_STRING\n"
+    "    CTRL_SHORT  = DBR_CTRL_SHORT\n"
+    "    CTRL_INT    = DBR_CTRL_INT\n"
+    "    CTRL_FLOAT  = DBR_CTRL_FLOAT\n"
+    "    CTRL_ENUM   = DBR_CTRL_ENUM\n"
+    "    CTRL_CHAR   = DBR_CTRL_CHAR\n"
+    "    CTRL_LONG   = DBR_CTRL_LONG\n"
+    "    CTRL_DOUBLE = DBR_CTRL_DOUBLE\n"
+    "\n"
+    "    PUT_ACKT  = DBR_PUT_ACKT\n"
+    "    PUT_ACKS  = DBR_PUT_ACKS\n"
+    "    STSACK_STRING = DBR_STSACK_STRING\n"
+    "    CLASS_NAME = DBR_CLASS_NAME\n"
+    "    LAST_BUFFER_TYPE = LAST_BUFFER_TYPE\n");
 
     PyModule_AddIntMacro(pModule, ECA_NORMAL);
     PyModule_AddIntMacro(pModule, ECA_MAXIOC);        
@@ -469,14 +558,107 @@ MOD_INIT(_ca) {
     PyModule_AddIntMacro(pModule, ECA_CONNSEQTMO);
     PyModule_AddIntMacro(pModule, ECA_UNRESPTMO);
 
+    add_IntEnum(pModule,
+    "from enum import IntEnum\n"
+    "class ECA(IntEnum):\n"
+    "    NORMAL          = ECA_NORMAL\n"
+    "    MAXIOC          = ECA_MAXIOC\n"
+    "    UKNHOST         = ECA_UKNHOST\n"
+    "    UKNSERV         = ECA_UKNSERV\n"
+    "    SOCK            = ECA_SOCK\n"
+    "    CONN            = ECA_CONN\n"
+    "    ALLOCMEM        = ECA_ALLOCMEM\n"
+    "    UKNCHAN         = ECA_UKNCHAN\n"
+    "    UKFIELD         = ECA_UKNFIELD\n"
+    "    TOLARGE         = ECA_TOLARGE\n"
+    "    TIMEOUT         = ECA_TIMEOUT\n"
+    "    NOSUPPORT       = ECA_NOSUPPORT\n"
+    "    STRTOBIG        = ECA_STRTOBIG\n"
+    "    DISCONNCHID     = ECA_DISCONNCHID\n"
+    "    BADTYPE         = ECA_BADTYPE\n"
+    "    CHIDNOTFND      = ECA_CHIDNOTFND\n"
+    "    CHIDRETRY       = ECA_CHIDRETRY\n"
+    "    INTERNAL        = ECA_INTERNAL\n"
+    "    DBLCLFAIL       = ECA_DBLCLFAIL\n"
+    "    GETFAIL         = ECA_GETFAIL\n"
+    "    PUTFAIL         = ECA_PUTFAIL\n"
+    "    ADDFAIL         = ECA_ADDFAIL\n"
+    "    BADCOUNT        = ECA_BADCOUNT\n"
+    "    BADSTR          = ECA_BADSTR\n"
+    "    DISCONN         = ECA_DISCONN\n"
+    "    DBLCHNL         = ECA_DBLCHNL\n"
+    "    EVDISALLOW      = ECA_EVDISALLOW\n"
+    "    BUILDGET        = ECA_BUILDGET\n"
+    "    NEEDSFP         = ECA_NEEDSFP\n"
+    "    OVEVFAIL        = ECA_OVEVFAIL\n"
+    "    BADMONID        = ECA_BADMONID\n"
+    "    NEWADDR         = ECA_NEWADDR\n"
+    "    NEWCONN         = ECA_NEWCONN\n"
+    "    NOCACTX         = ECA_NOCACTX\n"
+    "    DEFUNCT         = ECA_DEFUNCT\n"
+    "    EMPTYSTR        = ECA_EMPTYSTR\n"
+    "    NOREPEATER      = ECA_NOREPEATER\n"
+    "    NOCHANMSG       = ECA_NOCHANMSG\n"
+    "    DLCKREST        = ECA_DLCKREST\n"
+    "    SERVBEHIND      = ECA_SERVBEHIND\n"
+    "    NOCAST          = ECA_NOCAST\n"
+    "    BADMASK         = ECA_BADMASK\n"
+    "    IODONE          = ECA_IODONE\n"
+    "    IOINPROGRESS    = ECA_IOINPROGRESS\n"
+    "    BADSYNCGRP      = ECA_BADSYNCGRP\n"
+    "    PUTCBINPROG     = ECA_PUTCBINPROG\n"
+    "    NORDACCESS      = ECA_NORDACCESS\n"
+    "    NOWTACCESS      = ECA_NOWTACCESS\n"
+    "    ANACHRONISM     = ECA_ANACHRONISM\n"
+    "    NOSEARCHADDR    = ECA_NOSEARCHADDR\n"
+    "    NOCONVERT       = ECA_NOCONVERT\n"
+    "    BADCHID         = ECA_BADCHID\n"
+    "    BADFUNCPTR      = ECA_BADFUNCPTR\n"
+    "    ISATTACHED      = ECA_ISATTACHED\n"
+    "    UNAVAILINSERV   = ECA_UNAVAILINSERV\n"
+    "    CHANDESTROY     = ECA_CHANDESTROY\n"
+    "    BADPRIORITY     = ECA_BADPRIORITY\n"
+    "    NOTTHREADED     = ECA_NOTTHREADED\n"
+    "    # 16KARRAYCLIEN is an invalid variable name\n"
+    "    ARRAYCLIENT     = ECA_16KARRAYCLIENT\n"
+    "    CONNSEQTMO      = ECA_CONNSEQTMO\n"
+    "    UNRESPTMO       = ECA_UNRESPTMO");
+
     PyModule_AddIntMacro(pModule, DBE_VALUE);
     PyModule_AddIntMacro(pModule, DBE_ARCHIVE);
     PyModule_AddIntMacro(pModule, DBE_LOG);
     PyModule_AddIntMacro(pModule, DBE_ALARM);
     PyModule_AddIntMacro(pModule, DBE_PROPERTY);
 
+    add_IntEnum(pModule,
+    "from enum import IntEnum\n"
+    "class DBE(IntEnum):\n"
+    "    VALUE    = DBE_VALUE\n"
+    "    ARCHIVE  = DBE_ARCHIVE\n"
+    "    LOG      = DBE_LOG\n"
+    "    ALARM    = DBE_ALARM\n"
+    "    PROPERTY = DBE_PROPERTY");
+
+    PyModule_AddIntMacro(pModule, CA_OP_GET);
+    PyModule_AddIntMacro(pModule, CA_OP_PUT);
+    PyModule_AddIntMacro(pModule, CA_OP_CREATE_CHANNEL);
+    PyModule_AddIntMacro(pModule, CA_OP_ADD_EVENT);
+    PyModule_AddIntMacro(pModule, CA_OP_CLEAR_EVENT);
+    PyModule_AddIntMacro(pModule, CA_OP_OTHER);
     PyModule_AddIntMacro(pModule, CA_OP_CONN_UP);
     PyModule_AddIntMacro(pModule, CA_OP_CONN_DOWN);
+
+    add_IntEnum(pModule,
+    "from enum import IntEnum\n"
+    "class CA_OP(IntEnum):\n"
+    "    GET            = CA_OP_GET\n"
+    "    PUT            = CA_OP_PUT\n"
+    "    CREATE_CHANNEL = CA_OP_CREATE_CHANNEL\n"
+    "    ADD_EVENT      = CA_OP_ADD_EVENT\n"
+    "    CLEAR_EVENT    = CA_OP_CLEAR_EVENT\n"
+    "    OTHER          = CA_OP_OTHER\n"
+    "    CONN_UP        = CA_OP_CONN_UP\n"
+    "    CONN_DOWN      = CA_OP_CONN_DOWN");
 
     PyModule_AddIntMacro(pModule, cs_never_conn);
     PyModule_AddIntMacro(pModule, cs_prev_conn);
@@ -484,10 +666,27 @@ MOD_INIT(_ca) {
     PyModule_AddIntMacro(pModule, cs_closed);
     PyModule_AddIntConstant(pModule, "cs_never_search", 4);
 
+    add_IntEnum(pModule,
+    "from enum import IntEnum\n"
+    "class ChannelState(IntEnum):\n"
+    "    NEVER_CONN   = cs_never_conn\n"
+    "    PREV_CONN    = cs_prev_conn\n"
+    "    CONN         = cs_conn\n"
+    "    CLOSED       = cs_closed\n"
+    "    NEVER_SEARCH = 4");
+
     PyModule_AddIntMacro(pModule, NO_ALARM);
     PyModule_AddIntMacro(pModule, MINOR_ALARM);
     PyModule_AddIntMacro(pModule, MAJOR_ALARM);
     PyModule_AddIntMacro(pModule, INVALID_ALARM);
+
+    add_IntEnum(pModule,
+    "from enum import IntEnum\n"
+    "class AlarmSeverity(IntEnum):\n"
+    "    No      = NO_ALARM\n"
+    "    Minor   = MINOR_ALARM\n"
+    "    Major   = MAJOR_ALARM\n"
+    "    Invalid = INVALID_ALARM\n");
 
     PyModule_AddIntMacro(pModule, READ_ALARM);
     PyModule_AddIntMacro(pModule, WRITE_ALARM);
@@ -511,11 +710,57 @@ MOD_INIT(_ca) {
     PyModule_AddIntMacro(pModule, READ_ACCESS_ALARM);
     PyModule_AddIntMacro(pModule, WRITE_ACCESS_ALARM);
 
+    add_IntEnum(pModule,
+    "from enum import IntEnum\n"
+    "class AlarmCondition(IntEnum):\n"
+    "    No          = NO_ALARM\n"
+    "    Read        = READ_ALARM\n"
+    "    Write       = WRITE_ALARM\n"
+    "    HiHi        = HIHI_ALARM\n"
+    "    High        = HIGH_ALARM\n"
+    "    Lolo        = LOLO_ALARM\n"
+    "    Low         = LOW_ALARM\n"
+    "    State       = STATE_ALARM\n"
+    "    Cos         = COS_ALARM\n"
+    "    Comm        = COMM_ALARM\n"
+    "    Timeout     = TIMEOUT_ALARM\n"
+    "    HwLimit     = HW_LIMIT_ALARM\n"
+    "    Calc        = CALC_ALARM\n"
+    "    Scam        = SCAN_ALARM\n"
+    "    Link        = LINK_ALARM\n"
+    "    Soft        = SOFT_ALARM\n"
+    "    BadSub      = BAD_SUB_ALARM\n"
+    "    UDF         = UDF_ALARM\n"
+    "    Disable     = DISABLE_ALARM\n"
+    "    Simm        = SIMM_ALARM\n"
+    "    ReadAccess  = READ_ACCESS_ALARM\n"
+    "    WriteAccess = WRITE_ACCESS_ALARM\n");
+
     PyModule_AddIntMacro(pModule, POSIX_TIME_AT_EPICS_EPOCH);
 
+    MODULE = pModule;
     #if PY_MAJOR_VERSION >= 3
     return pModule;
     #endif
+}
+
+/*******************************************************
+ *                Int to IntEnum routine               *
+ *******************************************************/
+
+static PyObject *IntToIntEnum(const char *type, int value)
+{
+    PyObject *pValue;
+    PyObject *pEnum = PyObject_GetAttrString(MODULE, type);
+
+    if (pEnum == NULL)
+        pValue = Py_BuildValue("i", value);
+    else
+        pValue = PyObject_CallFunction(pEnum, "i", value);
+
+    Py_XDECREF(pEnum);
+
+    return pValue;
 }
 
 /*******************************************************
@@ -535,7 +780,7 @@ static PyObject *Py_ca_create_context(PyObject *self, PyObject *args)
                 ca_enable_preemptive_callback : ca_disable_preemptive_callback);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_destroy_context(PyObject *self, PyObject *args)
@@ -563,7 +808,7 @@ static PyObject *Py_ca_attach_context(PyObject *self, PyObject *args)
     status = ca_attach_context(pContext);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_detach_context(PyObject *self, PyObject *args)
@@ -651,7 +896,7 @@ static void connection_callback(struct connection_handler_args args)
 
     if(PyCallable_Check(pData->pCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
-        PyObject *pArgs = Py_BuildValue("({s:O,s:i})", "chid", pChid, "op", args.op);
+        PyObject *pArgs = Py_BuildValue("({s:O,s:N})", "chid", pChid, "op", IntToIntEnum("CA_OP", args.op));
 
         PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
         if (ret == NULL) {
@@ -691,12 +936,9 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *
     }
 
     if (status == ECA_NORMAL) {
-        PyObject *pChid = CAPSULE_BUILD(chid, "chid", NULL);
-        PyObject *pRes = Py_BuildValue("iO", status, pChid);
-        Py_XDECREF(pChid);
-        return pRes;
+        return Py_BuildValue("NN", IntToIntEnum("ECA", status), CAPSULE_BUILD(chid, "chid", NULL));
     } else {
-        return Py_BuildValue("iO", status, Py_None);
+        return Py_BuildValue("NO", IntToIntEnum("ECA", status), Py_None);
     }
 }
 
@@ -719,7 +961,7 @@ static PyObject *Py_ca_clear_channel(PyObject *self, PyObject *args)
     delete pData;
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 
@@ -740,11 +982,11 @@ static void get_callback(struct event_handler_args args)
                     args.dbr,
                     pData->use_numpy);
         PyObject *pArgs = Py_BuildValue(
-            "({s:O,s:i,s:i,s:i,s:O})",
+            "({s:O,s:N,s:i,s:N,s:O})",
             "chid", pChid,
-            "type", args.type,
+            "type", IntToIntEnum("DBR", args.type),
             "count", args.count,
-            "status", args.status,
+            "status", IntToIntEnum("ECA", args.status),
             "value", pValue
         );
         PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
@@ -775,11 +1017,11 @@ static void event_callback(struct event_handler_args args)
                     args.dbr,
                     pData->use_numpy);
         PyObject *pArgs = Py_BuildValue(
-            "({s:O,s:i,s:i,s:i,s:O})",
+            "({s:O,s:N,s:i,s:N,s:O})",
             "chid", pChid,
-            "type", args.type,
+            "type", IntToIntEnum("DBR", args.type),
             "count", args.count,
-            "status", args.status,
+            "status", IntToIntEnum("ECA", args.status),
             "value", pValue
         );
         PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
@@ -842,7 +1084,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         if (status != ECA_NORMAL) {
             delete pData;
         }
-        return Py_BuildValue("(iO)", status, Py_None);
+        return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     } else {
         // prepare the storage
         void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > element_count) ? element_count : count));
@@ -850,10 +1092,10 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         status = ca_array_get(dbrtype, count, chid, pValue);
         Py_END_ALLOW_THREADS
         if (status == ECA_NORMAL) {
-            return Py_BuildValue("(iN)", status, DBRValue_New(dbrtype, count, pValue, use_numpy));
+            return Py_BuildValue("(NN)", IntToIntEnum("ECA", status), DBRValue_New(dbrtype, count, pValue, use_numpy));
         } else {
             free(pValue);
-            return Py_BuildValue("(iO)", status, Py_None);
+            return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
         }
     }
 }
@@ -867,12 +1109,15 @@ static void put_callback(struct event_handler_args args)
     if (PyCallable_Check(pData->pCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
         PyObject *pArgs = Py_BuildValue(
-            "({s:O,s:i,s:i,s:i})",
+            "({s:O,s:N,s:i,s:N})",
             "chid", pChid,
-            "type", args.type,
+            "type", IntToIntEnum("DBR", args.type),
             "count", args.count,
-            "status", args.status
+            "status", IntToIntEnum("ECA", args.status)
         );
+        if (pArgs == NULL) {
+            PyErr_Print();
+        }
         PyObject *ret = PyObject_CallObject(pData->pCallback, pArgs);
         if (ret == NULL) {
             PyErr_Print();
@@ -928,7 +1173,7 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
 
     free(pbuf);
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 
@@ -985,11 +1230,10 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObj
 
     if (status == ECA_NORMAL) {
         pData->eventID = eventID;
-        PyObject *pRes = Py_BuildValue("(iN)", status, CAPSULE_BUILD(pData, "evid", NULL));
-        return pRes;
+        return Py_BuildValue("(NN)", IntToIntEnum("ECA", status), CAPSULE_BUILD(pData, "evid", NULL));
     } else {
         delete pData;
-        return Py_BuildValue("(iO)", status, Py_None);
+        return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     }
 }
 
@@ -1011,7 +1255,7 @@ static PyObject *Py_ca_clear_subscription(PyObject *self, PyObject *args)
 
     delete pData;
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static void access_rights_handler(struct access_rights_handler_args args)
@@ -1021,23 +1265,17 @@ static void access_rights_handler(struct access_rights_handler_args args)
     ChannelData *pData= (ChannelData *)ca_puser(args.chid);
 
     if (PyCallable_Check(pData->pAccessEventCallback)) {
-        PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
-        PyObject *pRead = PyBool_FromLong(args.ar.read_access);
-        PyObject *pWrite = PyBool_FromLong(args.ar.write_access);
         PyObject *pArgs = Py_BuildValue(
-            "({s:O,s:O,s:O})",
-            "chid", pChid,
-            "read_access", pRead,
-            "write_access", pWrite
+            "({s:N,s:N,s:N})",
+            "chid", CAPSULE_BUILD(args.chid, "chid", NULL),
+            "read_access", PyBool_FromLong(args.ar.read_access),
+            "write_access", PyBool_FromLong(args.ar.write_access)
         );
         PyObject *ret = PyObject_CallObject(pData->pAccessEventCallback, pArgs);
         if (ret == NULL) {
             PyErr_Print();
         }
         Py_XDECREF(ret);
-        Py_XDECREF(pRead);
-        Py_XDECREF(pWrite);
-        Py_XDECREF(pChid);
         Py_XDECREF(pArgs);
     }
 
@@ -1078,7 +1316,7 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
     status = ca_replace_access_rights_event(chid, handler);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *pExceptionCallback = NULL;
@@ -1088,16 +1326,20 @@ static void exception_handler(struct exception_handler_args args)
     PyGILState_STATE gstate = PyGILState_Ensure();
 
     if (PyCallable_Check(pExceptionCallback)) {
-        PyObject *pChid = Py_None;
+        PyObject *pChid;
         if (args.chid)
             pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
+        else {
+            pChid = Py_None;
+            Py_XINCREF(pChid);
+        }
         PyObject *pArgs = Py_BuildValue(
-            "({s:O,s:i,s:i,s:i,s:i,s:s,s:s,s:i})",
+            "({s:O,s:N,s:i,s:N,s:N,s:s,s:s,s:i})",
             "chid", pChid,
-            "type", args.type,
+            "type", IntToIntEnum("DBR", args.type),
             "count", args.count,
-            "state", args.stat,
-            "op", args.op,
+            "state", IntToIntEnum("ECA", args.stat),
+            "op", IntToIntEnum("CA_OP", args.op),
             "ctx", args.ctx,
             "file", args.pFile,
             "lineNo", args.lineNo
@@ -1140,7 +1382,7 @@ static PyObject *Py_ca_add_exception_event(PyObject *self, PyObject *args)
     status = ca_add_exception_event(handler, NULL);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *pPrintfHandler = NULL;
@@ -1194,7 +1436,7 @@ static PyObject *Py_ca_replace_printf_handler(PyObject *self, PyObject *args)
     status = ca_replace_printf_handler(pFunc);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 /*******************************************************
@@ -1210,7 +1452,7 @@ static PyObject *Py_ca_sg_create(PyObject *self, PyObject *args)
     status = ca_sg_create(&gid);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("(il)", status, gid);
+    return Py_BuildValue("(Nl)", IntToIntEnum("ECA", status), gid);
 }
 
 static PyObject *Py_ca_sg_delete(PyObject *self, PyObject *args)
@@ -1224,7 +1466,7 @@ static PyObject *Py_ca_sg_delete(PyObject *self, PyObject *args)
     status = ca_sg_delete(gid);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
@@ -1271,10 +1513,10 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
     Py_END_ALLOW_THREADS
 
     if (status == ECA_NORMAL) {
-        return Py_BuildValue("(iN)", status, DBRValue_New(dbrtype, count, pValue, use_numpy));
+        return Py_BuildValue("(NN)", IntToIntEnum("ECA", status), DBRValue_New(dbrtype, count, pValue, use_numpy));
     } else {
         free(pValue);
-        return Py_BuildValue("(iO)", status, Py_None);
+        return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     }
 }
 
@@ -1309,7 +1551,7 @@ static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args, PyObject *kws)
 
     free(pbuf);
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_sg_reset(PyObject *self, PyObject *args)
@@ -1324,7 +1566,7 @@ static PyObject *Py_ca_sg_reset(PyObject *self, PyObject *args)
     status = ca_sg_reset(gid);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_sg_block(PyObject *self, PyObject *args)
@@ -1340,7 +1582,7 @@ static PyObject *Py_ca_sg_block(PyObject *self, PyObject *args)
     status = ca_sg_block(gid, timeout);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_sg_test(PyObject *self, PyObject *args)
@@ -1355,7 +1597,7 @@ static PyObject *Py_ca_sg_test(PyObject *self, PyObject *args)
     status = ca_sg_test(gid);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 
@@ -1371,7 +1613,7 @@ static PyObject *Py_ca_flush_io(PyObject *self, PyObject *args)
     status = ca_flush_io();
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_pend_io(PyObject *self, PyObject *args)
@@ -1386,7 +1628,7 @@ static PyObject *Py_ca_pend_io(PyObject *self, PyObject *args)
     status = ca_pend_io(timeout);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_pend_event(PyObject *self, PyObject *args)
@@ -1401,7 +1643,7 @@ static PyObject *Py_ca_pend_event(PyObject *self, PyObject *args)
     status = ca_pend_event(timeout);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_poll(PyObject *self, PyObject *args)
@@ -1412,7 +1654,7 @@ static PyObject *Py_ca_poll(PyObject *self, PyObject *args)
     status = ca_poll();
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 static PyObject *Py_ca_test_io(PyObject *self, PyObject *args)
@@ -1423,7 +1665,7 @@ static PyObject *Py_ca_test_io(PyObject *self, PyObject *args)
     status = ca_test_io();
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", status);
+    return IntToIntEnum("ECA", status);
 }
 
 
@@ -1446,7 +1688,7 @@ static PyObject *Py_ca_field_type(PyObject *self, PyObject *args)
     field_type = ca_field_type(chid);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("l", field_type);
+    return IntToIntEnum("DBF", field_type);
 }
 
 static PyObject *Py_ca_element_count(PyObject *self, PyObject *args)
@@ -1500,7 +1742,7 @@ static PyObject *Py_ca_state(PyObject *self, PyObject *args)
     state = ca_state(chid); 
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("i", state);
+    return IntToIntEnum("ChannelState", state);
 }
 static PyObject *Py_ca_host_name(PyObject *self, PyObject *args)
 {
@@ -1609,7 +1851,7 @@ static PyObject *Py_dbf_text_to_type(PyObject *self, PyObject *args)
         return NULL;
 
     dbf_text_to_type(text, field_type);
-    return PyInt_FromLong(field_type);
+    return IntToIntEnum("DBF", field_type);
 }
 
 static PyObject *Py_dbr_text(PyObject *self, PyObject *args)
@@ -1631,7 +1873,7 @@ static PyObject *Py_dbr_text_to_type(PyObject *self, PyObject *args)
         return NULL;
 
     dbr_text_to_type(text, req_type);
-    return PyInt_FromLong(req_type);
+    return IntToIntEnum("DBR", req_type);
 }
 
 static PyObject *Py_ca_message(PyObject *self, PyObject *args)
@@ -1651,7 +1893,7 @@ static PyObject *Py_dbf_type_is_valid(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbftype))
          return NULL;
 
-    return PyInt_FromLong(dbf_type_is_valid(dbftype));
+    return PyBool_FromLong(dbf_type_is_valid(dbftype));
 }
 
 static PyObject *Py_dbf_type_to_DBR(PyObject *self, PyObject *args)
@@ -1661,7 +1903,7 @@ static PyObject *Py_dbf_type_to_DBR(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &field_type))
          return NULL;
 
-    return PyInt_FromLong(dbf_type_to_DBR(field_type));
+    return IntToIntEnum("DBR", dbf_type_to_DBR(field_type));
 }
 
 static PyObject *Py_dbf_type_to_DBR_STS(PyObject *self, PyObject *args)
@@ -1671,7 +1913,7 @@ static PyObject *Py_dbf_type_to_DBR_STS(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &field_type))
          return NULL;
 
-    return PyInt_FromLong(dbf_type_to_DBR_STS(field_type));
+    return IntToIntEnum("DBR", dbf_type_to_DBR_STS(field_type));
 }
 
 static PyObject *Py_dbf_type_to_DBR_TIME(PyObject *self, PyObject *args)
@@ -1681,7 +1923,7 @@ static PyObject *Py_dbf_type_to_DBR_TIME(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &field_type))
          return NULL;
 
-    return PyInt_FromLong(dbf_type_to_DBR_TIME(field_type));
+    return IntToIntEnum("DBR", dbf_type_to_DBR_TIME(field_type));
 }
 
 static PyObject *Py_dbf_type_to_DBR_GR(PyObject *self, PyObject *args)
@@ -1691,7 +1933,7 @@ static PyObject *Py_dbf_type_to_DBR_GR(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &field_type))
          return NULL;
 
-    return PyInt_FromLong(dbf_type_to_DBR_GR(field_type));
+    return IntToIntEnum("DBR", dbf_type_to_DBR_GR(field_type));
 }
 
 static PyObject *Py_dbf_type_to_DBR_CTRL(PyObject *self, PyObject *args)
@@ -1701,7 +1943,7 @@ static PyObject *Py_dbf_type_to_DBR_CTRL(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &field_type))
          return NULL;
 
-    return PyInt_FromLong(dbf_type_to_DBR_CTRL(field_type));
+    return IntToIntEnum("DBR", dbf_type_to_DBR_CTRL(field_type));
 }
 
 static PyObject *Py_dbr_type_is_valid(PyObject *self, PyObject *args)
@@ -1711,7 +1953,7 @@ static PyObject *Py_dbr_type_is_valid(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_valid(dbrtype));
+    return PyBool_FromLong(dbr_type_is_valid(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_plain(PyObject *self, PyObject *args)
@@ -1721,7 +1963,7 @@ static PyObject *Py_dbr_type_is_plain(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_plain(dbrtype));
+    return PyBool_FromLong(dbr_type_is_plain(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_STS(PyObject *self, PyObject *args)
@@ -1731,7 +1973,7 @@ static PyObject *Py_dbr_type_is_STS(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_STS(dbrtype));
+    return PyBool_FromLong(dbr_type_is_STS(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_TIME(PyObject *self, PyObject *args)
@@ -1741,7 +1983,7 @@ static PyObject *Py_dbr_type_is_TIME(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_TIME(dbrtype));
+    return PyBool_FromLong(dbr_type_is_TIME(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_GR(PyObject *self, PyObject *args)
@@ -1751,7 +1993,7 @@ static PyObject *Py_dbr_type_is_GR(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_GR(dbrtype));
+    return PyBool_FromLong(dbr_type_is_GR(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_CTRL(PyObject *self, PyObject *args)
@@ -1761,7 +2003,7 @@ static PyObject *Py_dbr_type_is_CTRL(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_CTRL(dbrtype));
+    return PyBool_FromLong(dbr_type_is_CTRL(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_STRING(PyObject *self, PyObject *args)
@@ -1771,7 +2013,7 @@ static PyObject *Py_dbr_type_is_STRING(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_STRING(dbrtype));
+    return PyBool_FromLong(dbr_type_is_STRING(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_SHORT(PyObject *self, PyObject *args)
@@ -1781,7 +2023,7 @@ static PyObject *Py_dbr_type_is_SHORT(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_SHORT(dbrtype));
+    return PyBool_FromLong(dbr_type_is_SHORT(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_FLOAT(PyObject *self, PyObject *args)
@@ -1791,7 +2033,7 @@ static PyObject *Py_dbr_type_is_FLOAT(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_FLOAT(dbrtype));
+    return PyBool_FromLong(dbr_type_is_FLOAT(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_ENUM(PyObject *self, PyObject *args)
@@ -1801,7 +2043,7 @@ static PyObject *Py_dbr_type_is_ENUM(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_ENUM(dbrtype));
+    return PyBool_FromLong(dbr_type_is_ENUM(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_CHAR(PyObject *self, PyObject *args)
@@ -1811,7 +2053,7 @@ static PyObject *Py_dbr_type_is_CHAR(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_CHAR(dbrtype));
+    return PyBool_FromLong(dbr_type_is_CHAR(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_LONG(PyObject *self, PyObject *args)
@@ -1821,7 +2063,7 @@ static PyObject *Py_dbr_type_is_LONG(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_LONG(dbrtype));
+    return PyBool_FromLong(dbr_type_is_LONG(dbrtype));
 }
 
 static PyObject *Py_dbr_type_is_DOUBLE(PyObject *self, PyObject *args)
@@ -1831,7 +2073,7 @@ static PyObject *Py_dbr_type_is_DOUBLE(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "i", &dbrtype))
          return NULL;
 
-    return PyInt_FromLong(dbr_type_is_DOUBLE(dbrtype));
+    return PyBool_FromLong(dbr_type_is_DOUBLE(dbrtype));
 }
 
 /*******************************************************
@@ -1986,10 +2228,10 @@ PyObject * CBufferToPythonDict(chtype type,
     {
         struct dbr_sts_string  *cval=(struct dbr_sts_string  *)val;
         FormatDBRStringtoValue(count, string,  cval->value , dbr_string_t_ptr, PyString_FromString);
-        arglist=Py_BuildValue("{s:O,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status);
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status));
     }
         break;
     case DBR_STS_SHORT:
@@ -2001,10 +2243,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count, &(cval->value), dbr_short_t,   PyInt_FromLong, NPY_SHORT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status);
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status));
     }
         break;
     case DBR_STS_FLOAT:
@@ -2016,10 +2258,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count, &(cval->value), dbr_float_t, PyFloat_FromDouble, NPY_FLOAT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status);
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status));
     }
         break;
     case DBR_STS_ENUM:
@@ -2031,10 +2273,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,  &(cval->value), dbr_enum_t,      PyInt_FromLong, NPY_USHORT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status);
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status));
     }
         break;
     case DBR_STS_CHAR:
@@ -2046,10 +2288,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,  &(cval->value), dbr_char_t,     PyInt_FromLong, NPY_BYTE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status);
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status));
     }
         break;
     case DBR_STS_LONG:
@@ -2061,10 +2303,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,  &(cval->value), dbr_long_t,     PyInt_FromLong, NPY_INT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status);
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status));
     }
         break;
     case DBR_STS_DOUBLE:
@@ -2076,10 +2318,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,    &(cval->value), dbr_double_t, PyFloat_FromDouble, NPY_DOUBLE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status);
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status));
     }
         break;
 
@@ -2087,10 +2329,10 @@ PyObject * CBufferToPythonDict(chtype type,
     {
         struct dbr_time_string  *cval=(struct dbr_time_string  *)val;
         FormatDBRStringtoValue(count, string,  cval->value, dbr_string_t_ptr, PyString_FromString);
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "stamp",    TS2secs(cval->stamp));
     }
         break;
@@ -2103,10 +2345,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,   &(cval->value), dbr_short_t,      PyInt_FromLong, NPY_SHORT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "stamp",    TS2secs(cval->stamp));
     }
         break;
@@ -2119,10 +2361,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,   &(cval->value), dbr_float_t,      PyFloat_FromDouble, NPY_FLOAT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "stamp",    TS2secs(cval->stamp));
     }
         break;
@@ -2135,10 +2377,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,  &(cval->value), dbr_enum_t,        PyInt_FromLong, NPY_USHORT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "stamp",    TS2secs(cval->stamp));
     }
         break;
@@ -2151,10 +2393,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,  &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "stamp",    TS2secs(cval->stamp));
     }
         break;
@@ -2167,10 +2409,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,  &(cval->value), dbr_long_t,        PyInt_FromLong, NPY_INT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "stamp",    TS2secs(cval->stamp));
     }
         break;
@@ -2183,10 +2425,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,    &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "stamp",    TS2secs(cval->stamp));
     }
         break;
@@ -2200,10 +2442,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
              FormatDBRtoValueArray(count,   &(cval->value), dbr_short_t,     PyInt_FromLong, NPY_SHORT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:i,s:i,s:i,s:i,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:i,s:i,s:i,s:i,s:i,s:i}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2223,10 +2465,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,    &(cval->value), dbr_float_t,     PyFloat_FromDouble, NPY_FLOAT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:f,s:f,s:f,s:f,s:f,s:f,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:f,s:f,s:f,s:f,s:f,s:f,s:i}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2253,10 +2495,10 @@ PyObject * CBufferToPythonDict(chtype type,
         for(i=0; i< nstr;i++){
             PyTuple_SET_ITEM(ptup,i,PyString_FromString((*strs)[i]));
         }
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:i,s:O}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:i,s:O}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "no_str",   cval->no_str,
                 "strs",     ptup
                 );
@@ -2272,10 +2514,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,   &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:b,s:b,s:b,s:b,s:b,s:b}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:b,s:b,s:b,s:b,s:b,s:b}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2295,10 +2537,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,   &(cval->value), dbr_long_t,       PyInt_FromLong, NPY_INT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:i,s:i,s:i,s:i,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:i,s:i,s:i,s:i,s:i,s:i}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2319,10 +2561,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,     &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:d,s:d,s:d,s:d,s:d,s:d,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:d,s:d,s:d,s:d,s:d,s:d,s:i}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2344,10 +2586,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,    &(cval->value), dbr_short_t,      PyInt_FromLong, NPY_SHORT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2369,10 +2611,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
              FormatDBRtoValueArray(count,   &(cval->value), dbr_float_t,      PyFloat_FromDouble, NPY_FLOAT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:f,s:f,s:f,s:f,s:f,s:f,s:f,s:f,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:f,s:f,s:f,s:f,s:f,s:f,s:f,s:f,s:i}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2401,10 +2643,10 @@ PyObject * CBufferToPythonDict(chtype type,
         for(i=0; i< nstr;i++){
             PyTuple_SET_ITEM(ptup,i,PyString_FromString((*strs)[i]));
         }
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:i,s:O}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:i,s:O}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "no_str",   cval->no_str,
                 "strs",     ptup
                 );
@@ -2420,10 +2662,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,   &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:b,s:b,s:b,s:b,s:b,s:b,s:b,s:b}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:b,s:b,s:b,s:b,s:b,s:b,s:b,s:b}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2445,10 +2687,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,   &(cval->value), dbr_long_t,        PyInt_FromLong, NPY_INT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2471,10 +2713,10 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,     &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:i,s:i,s:s,s:d,s:d,s:d,s:d,s:d,s:d,s:d,s:d,s:i}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:s,s:d,s:d,s:d,s:d,s:d,s:d,s:d,s:d,s:i}",
                 "value",    value,
-                "severity", cval->severity,
-                "status",   cval->status,
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
                 "units",    cval->units,
                 "upper_disp_limit",     cval->upper_disp_limit,
                 "lower_disp_limit",     cval->lower_disp_limit,
@@ -2491,11 +2733,11 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STSACK_STRING:
     {
         struct dbr_stsack_string  *cval=(struct dbr_stsack_string *)val;
-        arglist = Py_BuildValue("{s:i,s:i,s:i,s:i,s:s}",
-                "status",   cval->status,
-                "severity", cval->severity,
-                "ackt",     cval->ackt,
-                "acks",     cval->acks,
+        arglist = Py_BuildValue("{s:N,s:N,s:N,s:N,s:s}",
+                "status",   IntToIntEnum("AlarmCondition", cval->status),
+                "severity", IntToIntEnum("AlarmSeverity", cval->severity),
+                "ackt",     PyBool_FromLong(cval->ackt),
+                "acks",     IntToIntEnum("AlarmSeverity", cval->acks),
                 "value",    cval->value
                 );
     }
