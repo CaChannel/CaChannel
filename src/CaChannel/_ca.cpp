@@ -330,7 +330,7 @@ void add_IntEnum(PyObject * pModule, const char *buffer)
 
     PyObject * pTemp = PyRun_String(buffer, Py_file_input, pDict, pModuleDict);
     if (pTemp == NULL)
-        PyErr_Print();
+        PyErr_Clear();
     else
         Py_XDECREF(pTemp);
 
@@ -773,8 +773,10 @@ static PyObject *IntToIntEnum(const char *type, int value)
     PyObject *pValue;
     PyObject *pEnum = PyObject_GetAttrString(MODULE, type);
 
-    if (pEnum == NULL)
+    if (pEnum == NULL) {
+        PyErr_Clear();
         pValue = Py_BuildValue("i", value);
+    }
     else
         pValue = PyObject_CallFunction(pEnum, "i", value);
 
