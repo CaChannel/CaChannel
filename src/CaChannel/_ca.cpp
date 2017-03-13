@@ -380,6 +380,7 @@ MOD_INIT(_ca) {
     "from enum import IntEnum\n"
     "class DBF(IntEnum):\n"
     "    NOTCONN= TYPENOTCONN\n"
+    "    INVALID= TYPENOTCONN\n"
     "    STRING = DBF_STRING\n"
     "    SHORT  = DBF_SHORT\n"
     "    INT    = DBF_INT\n"
@@ -443,7 +444,7 @@ MOD_INIT(_ca) {
     add_IntEnum(pModule,
     "from enum import IntEnum\n"
     "class DBR(IntEnum):\n"
-    "    NOTCONN= TYPENOTCONN\n"
+    "    INVALID= TYPENOTCONN\n"
     "\n"
     "    STRING = DBR_STRING\n"
     "    SHORT  = DBR_SHORT\n"
