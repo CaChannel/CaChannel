@@ -45,7 +45,7 @@ Native Type                Request Type              C Type             Python T
 .. data:: ca.DBF_DOUBLE    .. data:: ca.DBR_DOUBLE   64bit double       Float
 ========================   ========================  ===============    ============
 
-The one area where type conversion is extremely useful is dealing with fields of type ca.DBF_ENUM.
+The one area where type conversion is extremely useful is dealing with fields of type :data:`ca.DBF_ENUM`.
 An ENUM value can only be one from a predefined list.
 A list consists of a set of string values that correspond to the ENUM values (similar to the C enum type).
 It is easier to remember the list in terms of the strings instead of the numbers corresponding to each string.

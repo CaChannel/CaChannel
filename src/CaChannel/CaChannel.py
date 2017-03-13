@@ -833,7 +833,7 @@ class CaChannel:
     def read_access(self):
         """Access right to read the channel.
 
-         :return: True if the channel can be read, False otherwise.
+        :return: True if the channel can be read, False otherwise.
 
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
