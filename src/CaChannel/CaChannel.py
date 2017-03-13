@@ -237,7 +237,7 @@ class CaChannel:
 
         >>> chan = CaChannel()
         >>> chan.search('catest')
-        >>> status = chan.pend_io(1)
+        >>> status = chan.pend_io()
         >>> chan.state()
         2
         """
