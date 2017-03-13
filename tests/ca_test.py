@@ -42,6 +42,22 @@ class CaCreateTest(CaTest):
         status = ca.clear_channel(chid)
         self.assertNormal(status)
 
+    def test_access_callback(self):
+        epicsArgs = {}
+        def accessCB(args):
+            epicsArgs.update(args)
+
+        status, chid = ca.create_channel(self.chanName)
+        self.assertNormal(status)
+        status = ca.replace_access_rights_event(chid, accessCB)
+        self.assertNormal(status)
+        ca.pend_io(10)
+        self.assertEqual(epicsArgs['read_access'], 1)
+        self.assertEqual(epicsArgs['write_access'], 1)
+        status = ca.replace_access_rights_event(chid)
+        status = ca.clear_channel(chid)
+        self.assertNormal(status)
+
 class CaGetTest(CaTest):
 
     def __init__(self, testName, chanName, dbrType, value, use_numpy=False):
@@ -245,6 +261,7 @@ if __name__ == '__main__':
     suit = unittest.TestSuite()
     suit.addTest(CaCreateTest("test_create", "catest"))
     suit.addTest(CaCreateTest("test_create_callback", "catest"))
+    suit.addTest(CaCreateTest("test_access_callback", "catest"))
 
     # catest is a record of single element DBF_DOUBLE
     # this tests the whole conversion matrix
