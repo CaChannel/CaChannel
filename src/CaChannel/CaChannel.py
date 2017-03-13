@@ -819,6 +819,11 @@ class CaChannel:
     def host_name(self):
         """
         Host name that hosts the process variable.
+
+        >>> chan = CaChannel('catest')
+        >>> chan.searchw()
+        >>> host_name = chan.host_name()
+
         """
         return ca.host_name(self._chid)
 
@@ -827,6 +832,10 @@ class CaChannel:
 
          :return: True if the channel can be read, False otherwise.
 
+        >>> chan = CaChannel('catest')
+        >>> chan.searchw()
+        >>> chan.read_access()
+        True
          """
         return ca.read_access(self._chid)
 
@@ -835,6 +844,10 @@ class CaChannel:
 
         :return: True if the channel can be written, False otherwise.
 
+        >>> chan = CaChannel('catest')
+        >>> chan.searchw()
+        >>> chan.write_access()
+        True
         """
         return ca.write_access(self._chid)
 
