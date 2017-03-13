@@ -32,20 +32,21 @@ if not os.path.exists(EPICSBASE):
     raise IOError("Please correct EPICS_BASE environment variable, "
                   "the path {0} does not exist".format(EPICSBASE))
 
-HOSTARCH  = os.environ.get("EPICS_HOST_ARCH")
+HOSTARCH = os.environ.get("EPICS_HOST_ARCH")
 if not HOSTARCH:
     raise IOError("Please define EPICS_HOST_ARCH environment variable")
 
 umacros = []
-macros   = []
-cflags=[]
-lflags=[]
-dlls=[]
+macros = []
+cflags = []
+lflags = []
+dlls = []
 extra_objects = []
-libraries=["ca","Com"]
+libraries = ["ca", "Com"]
+CMPL = 'gcc'
 # platform dependent libraries and macros
 if UNAME.lower() == "windows":
-    UNAME="WIN32"
+    UNAME = "WIN32"
     static = False
     if HOSTARCH in ['win32-x86', 'windows-x64', 'win32-x86-debug', 'windows-x64-debug']:
         dlls = ['Com.dll', 'ca.dll']
@@ -56,13 +57,13 @@ if UNAME.lower() == "windows":
                 break
             shutil.copy(dllpath,
                         os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'CaChannel'))
-        macros += [('_CRT_SECURE_NO_WARNINGS', 'None'),('EPICS_CALL_DLL', '')]
+        macros += [('_CRT_SECURE_NO_WARNINGS', 'None'), ('EPICS_CALL_DLL', '')]
         cflags += ['/Z7']
         CMPL = 'msvc'
     if HOSTARCH in ['win32-x86-static', 'windows-x64-static'] or static:
         libraries += ['ws2_32', 'user32', 'advapi32']
         macros += [('_CRT_SECURE_NO_WARNINGS', 'None'), ('EPICS_DLL_NO', '')]
-        umacros+= ['_DLL']
+        umacros += ['_DLL']
         cflags += ['/EHsc', '/Z7']
         lflags += ['/LTCG']
         if HOSTARCH[-5:] == 'debug':
@@ -75,7 +76,7 @@ if UNAME.lower() == "windows":
     # GCC compiler
     if HOSTARCH in ['win32-x86-mingw', 'windows-x64-mingw']:
         macros += [('_MINGW', ''), ('EPICS_DLL_NO', '')]
-        lflags += ['-static',]
+        lflags += ['-static']
         CMPL = 'gcc'
     if HOSTARCH == 'windows-x64-mingw':
         macros += [('MS_WIN64', '')]
@@ -83,11 +84,11 @@ if UNAME.lower() == "windows":
 elif UNAME.lower() == "darwin":
     CMPL = 'clang'
     HOSTARCH = 'darwin-x86'
-    extra_objects = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'lib%s.a'%lib) for lib in libraries]
+    extra_objects = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'lib%s.a' % lib) for lib in libraries]
     libraries = []
 elif UNAME.lower() == "linux":
     CMPL = 'gcc'
-    extra_objects = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'lib%s.a'%lib) for lib in libraries]
+    extra_objects = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'lib%s.a' % lib) for lib in libraries]
     libraries = ['rt']
     if subprocess.call('nm %s | grep -q rl_' % os.path.join(EPICSBASE, 'lib', HOSTARCH, 'libCom.a'), shell=True) == 0:
         libraries += ['readline']
@@ -95,11 +96,11 @@ else:
     print("Platform", UNAME, ARCH, " Not Supported")
     sys.exit(1)
 
-_version = imp.load_source('_version','src/CaChannel/_version.py')
+_version = imp.load_source('_version', 'src/CaChannel/_version.py')
 
-include_dirs = [os.path.join(EPICSBASE,"include"),
-                os.path.join(EPICSBASE,"include", "os",UNAME),
-                os.path.join(EPICSBASE,"include", "compiler", CMPL),
+include_dirs = [os.path.join(EPICSBASE, "include"),
+                os.path.join(EPICSBASE, "include", "os", UNAME),
+                os.path.join(EPICSBASE, "include", "compiler", CMPL),
                 ]
 
 # guess numpy path
@@ -109,8 +110,8 @@ try:
 except:
     WITH_NUMPY = False
 else:
-    numpy_header = os.path.join(os.path.dirname(numpy.__file__),'core','include')
-    if not os.path.exists(os.path.join(numpy_header,'numpy','arrayobject.h')):
+    numpy_header = os.path.join(os.path.dirname(numpy.__file__), 'core', 'include')
+    if not os.path.exists(os.path.join(numpy_header, 'numpy', 'arrayobject.h')):
         WITH_NUMPY = False
 
 if WITH_NUMPY:
@@ -118,28 +119,28 @@ if WITH_NUMPY:
     include_dirs += [numpy_header]
 
 ca_module = Extension('_ca',
-                      sources = ['src/CaChannel/_ca.cpp'],
+                      sources=['src/CaChannel/_ca.cpp'],
                       extra_compile_args=cflags,
                       include_dirs=include_dirs,
                       define_macros=macros,
                       undef_macros=umacros,
-                      extra_link_args = lflags,
-                      extra_objects = extra_objects,
+                      extra_link_args=lflags,
+                      extra_objects=extra_objects,
                       libraries=libraries,
-                      library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),])
+                      library_dirs=[os.path.join(EPICSBASE, "lib", HOSTARCH)])
 
 if UNAME not in ["WIN32", "Darwin", "Linux"]:
-    ca_module.runtime_library_dirs=[os.path.join(EPICSBASE,"lib",HOSTARCH),]
+    ca_module.runtime_library_dirs = [os.path.join(EPICSBASE, "lib", HOSTARCH)]
 
 setup(name="CaChannel",
       version=_version.__version__,
       author="Xiaoqiang Wang",
-      author_email = "xiaoqiang.wang AT psi DOT ch",
+      author_email="xiaoqiang.wang AT psi DOT ch",
       description="CaChannel Interface to EPICS",
       long_description=open('README.rst').read(),
       url="http://pypi.python.org/pypi/cachannel",
-      license     = "BSD",
-      platforms   = ["Windows","Linux", "Mac OS X"],
+      license="BSD",
+      platforms=["Windows", "Linux", "Mac OS X"],
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Environment :: Console',
@@ -153,9 +154,9 @@ setup(name="CaChannel",
           'Topic :: Scientific/Engineering',
       ],
       packages=["CaChannel"],
-      package_dir={"" : "src", "CaChannel": "src/CaChannel"},
+      package_dir={"": "src", "CaChannel": "src/CaChannel"},
       py_modules=["ca", "ca_util", "epicsPV", "epicsMotor"],
       ext_package='CaChannel',
-      ext_modules=[ca_module,],
-      package_data = {'CaChannel': dlls}
+      ext_modules=[ca_module],
+      package_data={'CaChannel': dlls}
       )
