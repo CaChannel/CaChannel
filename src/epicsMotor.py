@@ -16,6 +16,7 @@ import time
 
 import epicsPV
 
+
 class epicsMotor:
     """
     This module provides a class library for the EPICS motor record.
@@ -41,51 +42,52 @@ class epicsMotor:
     done_moving      1=Done, 0=Moving, read-only  .DMOV
     ===============  ===========================  =====
 
-    >>> from epicsMotor import epicsMotor
     >>> m = epicsMotor('13BMD:m38')
     >>> m.move(10)              # Move to position 10 in user coordinates
     >>> m.wait()                # Wait for motor to stop moving
-    >>> m.move(50, dial=1)      # Move to position 50 in dial coordinates
+    >>> m.move(50, dial=True)   # Move to position 50 in dial coordinates
     >>> m.wait()                # Wait for motor to stop moving
-    >>> m.move(1, step=-1, relative=1) # Move 1 step relative to current position
-    >>> m.wait(start=1, stop=1) # Wait for motor to start, then to stop
+    >>> m.move(1, step=True, relative=True) # Move 1 step relative to current position
+    >>> m.wait(start=True, stop=True) # Wait for motor to start, then to stop
     >>> m.stop()                # Stop moving immediately
     >>> high = m.high_limit     # Get the high soft limit in user coordinates
     >>> m.dial_high_limit = 100 # Set the high limit to 100 in dial coodinates
     >>> speed = m.slew_speed    # Get the slew speed
     >>> m.acceleration = 0.1    # Set the acceleration to 0.1 seconds
-    >>> p = m.get_position()      # Get the desired motor position in user coordinates
-    >>> p = m.get_position(dial=1)# Get the desired motor position in dial coordinates
-    >>> p = m.get_position(readback=1) # Get the actual position in user coordinates
-    >>> p = m.get_position(readback=1, step=1) # Get the actual motor position in steps
-    >>> p = m.set_position(100)   # Set the current position to 100 in user coordinates
-    >>> p = m.set_position(10000, step=1) # Set the current position to 10000 steps
+    >>> val = m.get_position()      # Get the desired motor position in user coordinates
+    >>> dval = m.get_position(dial=True)# Get the desired motor position in dial coordinates
+    >>> rbv = m.get_position(readback=True) # Get the actual position in user coordinates
+    >>> rrbv = m.get_position(readback=True, step=True) # Get the actual motor position in steps
+    >>> m.set_position(100)   # Set the current position to 100 in user coordinates
+    >>> m.set_position(10000, step=True) # Set the current position to 10000 steps
     """
 
     class PVProperty(object):
         def __init__(self, name, readonly=False):
             self.name = name
             self.readonly = readonly
+
         def __get__(self, instance, owner):
             if instance is None:
                 return self
             return instance.pvs[self.name].getw()
+
         def __set__(self, instance, value):
             if instance is None or self.readonly:
                 return
             instance.pvs[self.name].putw(value)
 
-    slew_speed  = PVProperty('velo')
-    base_speed  = PVProperty('vbas')
-    acceleration= PVProperty('accl')
+    slew_speed = PVProperty('velo')
+    base_speed = PVProperty('vbas')
+    acceleration = PVProperty('accl')
     description = PVProperty('desc')
-    resolution  = PVProperty('mres')
-    high_limit  = PVProperty('hlm')
-    low_limit   = PVProperty('llm')
+    resolution = PVProperty('mres')
+    high_limit = PVProperty('hlm')
+    low_limit = PVProperty('llm')
     dial_high_limit = PVProperty('dhlm')
-    dial_low_limit  = PVProperty('dllm')
-    backlash    = PVProperty('bdst')
-    offset      = PVProperty('off')
+    dial_low_limit = PVProperty('dllm')
+    backlash = PVProperty('bdst')
+    offset = PVProperty('off')
     done_moving = PVProperty('dmov', readonly=True)
 
     def __init__(self, name):
@@ -96,30 +98,30 @@ class epicsMotor:
 
         >>> m = epicsMotor('13BMD:m38')
         """
-        self.pvs = {'val' : epicsPV.epicsPV(name+'.VAL',  wait=0),
-                    'dval': epicsPV.epicsPV(name+'.DVAL', wait=0),
-                    'rval': epicsPV.epicsPV(name+'.RVAL', wait=0),
-                    'rlv' : epicsPV.epicsPV(name+'.RLV',  wait=0),
-                    'rbv' : epicsPV.epicsPV(name+'.RBV',  wait=0),
-                    'drbv': epicsPV.epicsPV(name+'.DRBV', wait=0),
-                    'rrbv': epicsPV.epicsPV(name+'.RRBV', wait=0),
-                    'dmov': epicsPV.epicsPV(name+'.DMOV', wait=0),
-                    'stop': epicsPV.epicsPV(name+'.STOP', wait=0),
-                    'velo': epicsPV.epicsPV(name+'.VELO', wait=0),
-                    'vbas': epicsPV.epicsPV(name+'.VBAS', wait=0),
-                    'accl': epicsPV.epicsPV(name+'.ACCL', wait=0),
-                    'desc': epicsPV.epicsPV(name+'.DESC', wait=0),
-                    'mres': epicsPV.epicsPV(name+'.MRES', wait=0),
-                    'hlm':  epicsPV.epicsPV(name+'.HLM',  wait=0),
-                    'llm':  epicsPV.epicsPV(name+'.LLM',  wait=0),
-                    'dhlm': epicsPV.epicsPV(name+'.DHLM', wait=0),
-                    'dllm': epicsPV.epicsPV(name+'.DLLM', wait=0),
-                    'bdst': epicsPV.epicsPV(name+'.BDST', wait=0),
-                    'set':  epicsPV.epicsPV(name+'.SET',  wait=0),
-                    'lvio': epicsPV.epicsPV(name+'.LVIO', wait=0),
-                    'lls':  epicsPV.epicsPV(name+'.LLS',  wait=0),
-                    'hls':  epicsPV.epicsPV(name+'.HLS',  wait=0),
-                    'off':  epicsPV.epicsPV(name+'.OFF',  wait=0)
+        self.pvs = {'val':  epicsPV.epicsPV(name+'.VAL',  wait=False),
+                    'dval': epicsPV.epicsPV(name+'.DVAL', wait=False),
+                    'rval': epicsPV.epicsPV(name+'.RVAL', wait=False),
+                    'rlv':  epicsPV.epicsPV(name+'.RLV',  wait=False),
+                    'rbv':  epicsPV.epicsPV(name+'.RBV',  wait=False),
+                    'drbv': epicsPV.epicsPV(name+'.DRBV', wait=False),
+                    'rrbv': epicsPV.epicsPV(name+'.RRBV', wait=False),
+                    'dmov': epicsPV.epicsPV(name+'.DMOV', wait=False),
+                    'stop': epicsPV.epicsPV(name+'.STOP', wait=False),
+                    'velo': epicsPV.epicsPV(name+'.VELO', wait=False),
+                    'vbas': epicsPV.epicsPV(name+'.VBAS', wait=False),
+                    'accl': epicsPV.epicsPV(name+'.ACCL', wait=False),
+                    'desc': epicsPV.epicsPV(name+'.DESC', wait=False),
+                    'mres': epicsPV.epicsPV(name+'.MRES', wait=False),
+                    'hlm':  epicsPV.epicsPV(name+'.HLM',  wait=False),
+                    'llm':  epicsPV.epicsPV(name+'.LLM',  wait=False),
+                    'dhlm': epicsPV.epicsPV(name+'.DHLM', wait=False),
+                    'dllm': epicsPV.epicsPV(name+'.DLLM', wait=False),
+                    'bdst': epicsPV.epicsPV(name+'.BDST', wait=False),
+                    'set':  epicsPV.epicsPV(name+'.SET',  wait=False),
+                    'lvio': epicsPV.epicsPV(name+'.LVIO', wait=False),
+                    'lls':  epicsPV.epicsPV(name+'.LLS',  wait=False),
+                    'hls':  epicsPV.epicsPV(name+'.HLS',  wait=False),
+                    'off':  epicsPV.epicsPV(name+'.OFF',  wait=False)
                     }
         # Wait for all PVs to connect
         self.pvs['val'].pend_io()
@@ -134,21 +136,23 @@ class epicsMotor:
         :param bool relative: If True, move relative to current position. The default is an absolute move.
         :param bool dial: If True, _value_ is in dial coordinates. The default is user coordinates.
         :param bool step: If True, _value_ is in steps. The default is user coordinates.
-        :param bool ignore_limits: If True, suppress raising exceptions if the move results in a soft or hard limit violation.
-        :raises epicsMotorException: If software limit or hard limit violation detected, unless ignore_limits=True is set.
+        :param bool ignore_limits: If True, suppress raising exceptions if the move results in a soft or
+                                   hard limit violation.
+        :raises epicsMotorException: If software limit or hard limit violation detected,
+                                     unless ignore_limits=True is set.
 
         .. note:: The "step" and "dial" keywords are mutually exclusive.
            The "relative" keyword can be used in user, dial or step coordinates.
 
         >>> m=epicsMotor('13BMD:m38')
         >>> m.move(10)          # Move to position 10 in user coordinates
-        >>> m.move(50, dial=1)  # Move to position 50 in dial coordinates
-        >>> m.move(2, step=1, relative=1) # Move 2 steps
+        >>> m.move(50, dial=True)  # Move to position 50 in dial coordinates
+        >>> m.move(2, step=True, relative=True) # Move 2 steps
         """
         if dial:
             # Position in dial coordinates
             if relative:
-                current = self.get_position(dial=1)
+                current = self.get_position(dial=True)
                 self.pvs['dval'].putw(current+value)
             else:
                 self.pvs['dval'].putw(value)
@@ -156,7 +160,7 @@ class epicsMotor:
         elif step:
             # Position in steps
             if relative:
-                current = self.get_position(step=1)
+                current = self.get_position(step=True)
                 self.pvs['rval'].putw(current + value)
             else:
                 self.pvs['rval'].putw(value)
@@ -168,7 +172,8 @@ class epicsMotor:
                 self.pvs['val'].putw(value)
 
         # Check for limit violations
-        if (ignore_limits == 0): self.check_limits()
+        if not ignore_limits:
+            self.check_limits()
 
     def check_limits(self):
         """
@@ -177,15 +182,14 @@ class epicsMotor:
         :raises epicsMotorException: If software limit or hard limit violation detected.
         """
         limit = self.pvs['lvio'].getw()
-        if (limit != 0):
+        if limit != 0:
             raise epicsMotorException('Soft limit violation')
         limit = self.pvs['lls'].getw()
-        if (limit != 0):
+        if limit != 0:
             raise epicsMotorException('Low hard limit violation')
         limit = self.pvs['hls'].getw()
-        if (limit != 0):
+        if limit != 0:
             raise epicsMotorException('High hard limit violation')
-
 
     def stop(self):
         """
@@ -216,8 +220,8 @@ class epicsMotor:
 
         >>> m = epicsMotor('13BMD:m38')
         >>> m.move(10)                   # Move to position 10 in user coordinates
-        >>> p = m.get_position(dial=1)   # Read the target position in dial coordinates
-        >>> p = m.get_position(readback=1, step=1) # Read the actual position in steps
+        >>> pos_dial = m.get_position(dial=True)   # Read the target position in dial coordinates
+        >>> pos_step = m.get_position(readback=True, step=True) # Read the actual position in steps
         """
         if dial:
             if readback:
@@ -248,8 +252,8 @@ class epicsMotor:
         .. note:: The "step" and "dial" keywords are mutually exclusive.
 
         >>> m = epicsMotor('13BMD:m38')
-        >>> m.set_position(10, dial=1)   # Set the motor position to 10 in dial coordinates
-        >>> m.set_position(1000, step=1) # Set the motor position to 1000 steps
+        >>> m.set_position(10, dial=True)   # Set the motor position to 10 in dial coordinates
+        >>> m.set_position(1000, step=True) # Set the motor position to 1000 steps
         """
         # Put the motor in "SET" mode
         self.pvs['set'].putw(1)
@@ -262,7 +266,6 @@ class epicsMotor:
         # Put the motor back in "Use" mode
         self.pvs['set'].putw(0)
 
-
     def wait(self, start=False, stop=False, poll=0.01, ignore_limits=False):
         """
         Waits for the motor to start moving and/or stop moving.
@@ -274,7 +277,8 @@ class epicsMotor:
                            The default is 0.01 seconds.
         :param bool ignore_limits: If True, suppress raising an exception if a soft or
                                    hard limit is detected.
-        :raises epicsMotorException: If software limit or hard limit violation detected, unless ignore_limits=True is set.
+        :raises epicsMotorException: If software limit or hard limit violation detected,
+                                     unless *ignore_limits=True* is set.
 
 
         .. note:: If neither the "start" nor "stop" keywords are set then "stop"
@@ -286,16 +290,19 @@ class epicsMotor:
 
         >>> m = epicsMotor('13BMD:m38')
         >>> m.move(50)                # Move to position 50
-        >>> m.wait(start=1, stop=1)   # Wait for the motor to start moving and then to stop moving
+        >>> m.wait(start=True, stop=True)   # Wait for the motor to start moving and then to stop moving
         """
-        if not start and not stop: stop = True
+        if not start and not stop:
+            stop = True
         if start:
             while self.pvs['dmov'].getw() == 1:
                 time.sleep(poll)
         if stop:
             while self.pvs['dmov'].getw() == 0:
                 time.sleep(poll)
-        if not ignore_limits: self.check_limits()
+        if not ignore_limits:
+            self.check_limits()
+
 
 class epicsMotorException(Exception):
     def __init__(self, message=''):
