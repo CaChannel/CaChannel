@@ -52,7 +52,8 @@ class epicsPV(CaChannel):
         :param bool wait: If wait is True and pvName is not None then this constructor will do a
                           :meth:`CaChannel.CaChannel.searchw` on the PV. If wait is False and pvName ist not None then
                           this constructor will do a :meth:`CaChannel.CaChannel.search` on the PV, and the user
-                          must subsequently do a :meth:`CaChannel.CaChannel.pend_io` on this or another :class:`epicsPV` or :class:`CaChannel` object.
+                          must subsequently do a :meth:`CaChannel.CaChannel.pend_io` on this
+                          or another :class:`epicsPV` or :class:`CaChannel` object.
         """
         # Invoke the base class initialization
         self.callBack = callBack()
