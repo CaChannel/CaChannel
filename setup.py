@@ -10,6 +10,7 @@ import platform
 import imp
 import shutil
 import subprocess
+import warnings
 
 # Use setuptools to include build_sphinx, upload/sphinx commands
 try:
@@ -104,19 +105,13 @@ include_dirs = [os.path.join(EPICSBASE, "include"),
                 ]
 
 # guess numpy path
-WITH_NUMPY = True
 try:
     import numpy
 except:
-    WITH_NUMPY = False
+    warnings.warn('numpy is not present. Large array read could suffer from low efficiency.')
 else:
-    numpy_header = os.path.join(os.path.dirname(numpy.__file__), 'core', 'include')
-    if not os.path.exists(os.path.join(numpy_header, 'numpy', 'arrayobject.h')):
-        WITH_NUMPY = False
-
-if WITH_NUMPY:
     macros += [('WITH_NUMPY', None)]
-    include_dirs += [numpy_header]
+    include_dirs += [numpy.get_include()]
 
 ca_module = Extension('_ca',
                       sources=['src/CaChannel/_ca.cpp'],
