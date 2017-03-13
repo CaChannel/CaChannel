@@ -192,8 +192,8 @@ class CaChannel:
         If no arguments were specified then the tuple is empty.
 
 
-        .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
+        .. note:: All remote operation requests such as the above are accumulated (buffered) and not forwarded to
+           the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> chan = CaChannel('catest')
@@ -231,8 +231,8 @@ class CaChannel:
         :type pvName: bytes, str
         :raises CaChannelException: if error happens
 
-        .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
+        .. note:: All remote operation requests such as the above are accumulated (buffered) and not forwarded to
+           the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> chan = CaChannel()
@@ -262,8 +262,8 @@ class CaChannel:
         If the channel is currently connected then resources are freed only some
         time after this request is flushed out to the server.
 
-        .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
+        .. note:: All remote operation requests such as the above are accumulated (buffered) and not forwarded to
+           the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         """
@@ -288,8 +288,8 @@ class CaChannel:
         :type req_type: int, None
         :type count: int, None
 
-        .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
+        .. note:: All remote operation requests such as the above are accumulated (buffered) and not forwarded to
+           the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> chan = CaChannel('catest')
@@ -354,8 +354,8 @@ class CaChannel:
         The second argument is a tuple containing any user arguments specified by *user_args*.
         If no arguments were specified then the tuple is empty.
 
-        .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
+        .. note:: All remote operation requests such as the above are accumulated (buffered) and not forwarded to
+           the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> def putCB(epicsArgs, _):
@@ -445,14 +445,15 @@ class CaChannel:
                             ===========   =====
                             keyword       value
                             ===========   =====
-                            use_numpy     True if waveform should be returned as numpy array. Default :data:`CaChannel.USE_NUMPY`.
+                            use_numpy     True if waveform should be returned as numpy array.
+                                          Default :data:`CaChannel.USE_NUMPY`.
                             ===========   =====
         :type req_type: int, None
         :type count: int, None
         :raises CaChannelException: if error happens
 
-        .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
+        .. note:: All remote operation requests such as the above are accumulated (buffered) and not forwarded to
+           the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         .. seealso:: :meth:`getValue`
@@ -484,7 +485,8 @@ class CaChannel:
                             ===========   =====
                             keyword       value
                             ===========   =====
-                            use_numpy     True if waveform should be returned as numpy array. Default :data:`CaChannel.USE_NUMPY`.
+                            use_numpy     True if waveform should be returned as numpy array.
+                                          Default :data:`CaChannel.USE_NUMPY`.
                             ===========   =====
         :type req_type:     int, None
         :type count:        int, None
@@ -612,7 +614,8 @@ class CaChannel:
                             ===========   =====
                             keyword       value
                             ===========   =====
-                            use_numpy     True if waveform should be returned as numpy array. Default :data:`CaChannel.USE_NUMPY`.
+                            use_numpy     True if waveform should be returned as numpy array.
+                                          Default :data:`CaChannel.USE_NUMPY`.
                             ===========   =====
         :type req_type: int, None
         :type count: int, None
@@ -621,8 +624,8 @@ class CaChannel:
 
         :raises CaChannelException: if error happens
 
-        .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
+        .. note:: All remote operation requests such as the above are accumulated (buffered) and not forwarded to
+           the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
 
         >>> def eventCB(epicsArgs, _):
@@ -669,8 +672,8 @@ class CaChannel:
     def clear_event(self):
         """Remove previously installed callback function.
 
-        .. note:: All remote operation requests such as the above are accumulated (buffered)
-           and not forwarded to the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
+        .. note:: All remote operation requests such as the above are accumulated (buffered) and not forwarded to
+           the IOC until one of execution methods (:meth:`pend_io`, :meth:`poll`, :meth:`pend_event`, :meth:`flush_io`)
            is called. This allows several requests to be efficiently sent over the network in one message.
         """
         if self._evid is not None:
@@ -944,13 +947,14 @@ class CaChannel:
                             ===========   =====
                             keyword       value
                             ===========   =====
-                            use_numpy     True if waveform should be returned as numpy array. Default :data:`CaChannel.USE_NUMPY`.
+                            use_numpy     True if waveform should be returned as numpy array.
+                                          Default :data:`CaChannel.USE_NUMPY`.
                             ===========   =====
         :type req_type:     int, None
         :type count:        int, None
-        :return:            If *req_type* is plain request type, only the value is returned. Otherwise a dict returns
-                            with information depending on the request type, same as the first argument passed to user's callback.
-                            See :meth:`array_get_callback`.
+        :return:            If *req_type* is plain request type, only the value is returned.
+                            Otherwise a dict returns with information depending on the request type,
+                            same as the first argument passed to user's callback by :meth:`array_get_callback`.
 
         :raises CaChannelException: if timeout error happens
         """
