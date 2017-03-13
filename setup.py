@@ -35,7 +35,9 @@ if not EPICSBASE or not os.path.exists(EPICSBASE) or not HOSTARCH:
     !!!                 Switch to caffi as backend                             !!!
     """)
 
+
 def create_exension():
+    global EPICSBASE, HOSTARCH
     umacros = []
     macros = []
     cflags = []
