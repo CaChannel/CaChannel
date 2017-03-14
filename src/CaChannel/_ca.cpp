@@ -58,6 +58,7 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
 static PyObject *Py_ca_add_exception_event(PyObject *self, PyObject *args);
 static PyObject *Py_ca_replace_printf_handler(PyObject *self, PyObject *args);
 
+static PyObject *Py_ca_pend(PyObject *self, PyObject *args);
 static PyObject *Py_ca_flush_io(PyObject *self, PyObject *args);
 static PyObject *Py_ca_pend_io(PyObject *self, PyObject *args);
 static PyObject *Py_ca_pend_event(PyObject *self, PyObject *args);
@@ -253,6 +254,7 @@ static PyMethodDef CA_Methods[] = {
     {"read_access",     Py_ca_read_access,      METH_VARARGS, "PV's readability"},
     {"write_access",    Py_ca_write_access,     METH_VARARGS, "PV's writability"},
     /* Execution */
+    {"pend",        Py_ca_pend,         METH_VARARGS, "call pend_io if early is True otherwise pend_event is called"},
     {"flush_io",    Py_ca_flush_io,     METH_VARARGS, "flush IO requests"},
     {"pend_io",     Py_ca_pend_io,      METH_VARARGS, "wait pending connection and get"},
     {"pend_event",  Py_ca_pend_event,   METH_VARARGS, "process background activities"},
@@ -1652,6 +1654,22 @@ static PyObject *Py_ca_sg_test(PyObject *self, PyObject *args)
 /*******************************************************
  *                    CA Execution                     *
  *******************************************************/
+
+static PyObject *Py_ca_pend(PyObject *self, PyObject *args)
+{
+    double timeout;
+    int early;
+    if(!PyArg_ParseTuple(args, "di", &timeout, &early))
+        return NULL;
+
+    int status;
+
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_pend(timeout, early);
+    Py_END_ALLOW_THREADS
+
+    return IntToIntEnum("ECA", status);
+}
 
 static PyObject *Py_ca_flush_io(PyObject *self, PyObject *args)
 {
