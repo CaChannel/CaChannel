@@ -650,7 +650,10 @@ MOD_INIT(_ca) {
     "    # 16KARRAYCLIEN is an invalid variable name\n"
     "    ARRAY16KCLIENT  = ECA_16KARRAYCLIENT\n"
     "    CONNSEQTMO      = ECA_CONNSEQTMO\n"
-    "    UNRESPTMO       = ECA_UNRESPTMO");
+    "    UNRESPTMO       = ECA_UNRESPTMO\n"
+    "\n"
+    "    def message(self):\n"
+    "        return globals()['message'](self.value)\n");
 
     PyModule_AddIntMacro(pModule, DBE_VALUE);
     PyModule_AddIntMacro(pModule, DBE_ARCHIVE);
