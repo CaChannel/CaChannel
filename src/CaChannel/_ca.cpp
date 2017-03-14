@@ -495,7 +495,32 @@ MOD_INIT(_ca) {
     "    PUT_ACKS  = DBR_PUT_ACKS\n"
     "    STSACK_STRING = DBR_STSACK_STRING\n"
     "    CLASS_NAME = DBR_CLASS_NAME\n"
-    "    LAST_BUFFER_TYPE = LAST_BUFFER_TYPE\n");
+    "    LAST_BUFFER_TYPE = LAST_BUFFER_TYPE\n"
+    "\n"
+    "    def isSTRING(self):\n"
+    "        return dbr_type_is_STRING(self.value)\n"
+    "    def isSHORT(self):\n"
+    "        return dbr_type_is_SHORT(self.value)\n"
+    "    def isFLOAT(self):\n"
+    "        return dbr_type_is_FLOAT(self.value)\n"
+    "    def isENUM(self):\n"
+    "        return dbr_type_is_ENUM(self.value)\n"
+    "    def isCHAR(self):\n"
+    "        return dbr_type_is_CHAR(self.value)\n"
+    "    def isLONG(self):\n"
+    "        return dbr_type_is_LONG(self.value)\n"
+    "    def isDOUBLE(self):\n"
+    "        return dbr_type_is_DOUBLE(self.value)\n"
+    "    def isPlain(self):\n"
+    "        return dbr_type_is_plain(self.value)\n"
+    "    def isSTS(self):\n"
+    "        return dbr_type_is_STS(self.value)\n"
+    "    def isTIME(self):\n"
+    "        return dbr_type_is_TIME(self.value)\n"
+    "    def isGR(self):\n"
+    "        return dbr_type_is_GR(self.value)\n"
+    "    def isCTRL(self):\n"
+    "        return dbr_type_is_CTRL(self.value)");
 
     PyModule_AddIntMacro(pModule, ECA_NORMAL);
     PyModule_AddIntMacro(pModule, ECA_MAXIOC);        
