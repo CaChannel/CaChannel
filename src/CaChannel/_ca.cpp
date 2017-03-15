@@ -809,7 +809,7 @@ static PyObject *IntToIntEnum(const char *type, int value)
         pValue = Py_BuildValue("i", value);
     }
     else
-        pValue = PyObject_CallFunction(pEnum, "i", value);
+        pValue = PyObject_CallFunction(pEnum, (char *)"i", value);
 
     Py_XDECREF(pEnum);
 
@@ -1208,8 +1208,12 @@ static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws)
         return NULL;
 
     pbuf = setup_put(chid, pValue, pType, pCount, dbrtype, count);
-    if (pbuf == NULL)
-        return NULL;
+    if (pbuf == NULL) {
+        if (PyErr_Occurred())
+            return NULL;
+        else
+            return IntToIntEnum("ECA", ECA_BADTYPE);
+    }
 
     if (PyCallable_Check(pCallback)) {
         ChannelData *pData = new ChannelData(pCallback);
@@ -1595,8 +1599,12 @@ static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args, PyObject *kws)
         return NULL;
 
     pbuf = setup_put(chid, pValue, pType, pCount, dbrtype, count);
-    if (pbuf == NULL)
-        return NULL;
+    if (pbuf == NULL) {
+        if (PyErr_Occurred())
+            return NULL;
+        else
+            return IntToIntEnum("ECA", ECA_BADTYPE);
+    }
 
     Py_BEGIN_ALLOW_THREADS
     status = ca_sg_array_put(gid, dbrtype, count, chid, pbuf);
@@ -2856,8 +2864,7 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
     // incr refcnt and we will decr at the end
     Py_XINCREF(pValue);
 
-    // sequence object (including string/bytes)
-    if (PySequence_Check(pValue)) {
+    if (PySequence_Check(pValue)) {     // sequence object (including string/bytes)
         unsigned long value_count = (unsigned long)PySequence_Length(pValue);
 
         if (PyUnicode_Check(pValue) || PyBytes_Check(pValue)) {
@@ -2865,8 +2872,8 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
             if (dbrtype == DBR_ENUM || dbrtype == DBR_STRING) {
                 dbrtype = DBR_STRING;
                 value_count = 1;
-            } else {
-                // for other numeric types, convert string/bytes to list of integers with 0 appended.
+            } else if (dbrtype == DBR_CHAR) {
+                // for char types, convert string/bytes to list of integers with 0 appended.
                 // equivalent to [ord(x) for x in value] + [0]
                 char * pBuff = NULL;
                 Py_ssize_t buff_size = 0;
@@ -2881,6 +2888,19 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
                 // the new list replaces string/bytes object
                 Py_XDECREF(pValue);
                 pValue = pCharList;
+            } else {
+                PyObject *pNumericValue = PyNumber_Float(pValue);
+                if (pNumericValue == NULL) {
+                    Py_XDECREF(pValue);
+                    return NULL;
+                }
+                value_count = 1;
+                // create a 1-element list with the new float value
+                PyObject *pFloatList = PyList_New(1);
+                PyList_SetItem(pFloatList, 0, pNumericValue);
+                // the new list replaces string/bytes object
+                Py_XDECREF(pValue);
+                pValue = pFloatList;
             }
         }
         if (pCount != Py_None)
@@ -2888,12 +2908,21 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
 
         count = MIN(element_count, value_count);
 
-
-        if (count == 1 && dbrtype != DBR_STRING) {
+        if (count == 1 && !(PyUnicode_Check(pValue) || PyBytes_Check(pValue)) ) {
             PyObject *item = PySequence_GetItem(pValue, 0);
             Py_XDECREF(pValue);
             pValue = item;
         }
+    }
+    // NOTE: number check has to be after sequence check, because numpy array implements
+    //       number protocol. What we want is really a 1-element numerical value.
+    else if (PyNumber_Check(pValue)) {
+        count = 1;
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "value must be of int, bytes, str, or tuple, list, array of them");
+        Py_XDECREF(pValue);
+        return NULL;
     }
 
     pbuf = calloc(count, dbr_value_size[dbrtype]);

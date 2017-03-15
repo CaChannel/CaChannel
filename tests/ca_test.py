@@ -274,16 +274,19 @@ if __name__ == '__main__':
                 value = readback = '12.3000' # well the precision is 4
             suit.addTest(CaPutTest(func, "catest",  dbfType,  1, value, readback))
 
-    suit.addTest(CaPutTest('test_put', "catest",  ca.DBR_DOUBLE,  1, '12.3', 49.000)) # str converted to list [49,50,46,51]
+    suit.addTest(CaPutTest('test_put', "catest",  ca.DBR_DOUBLE,  1, '12.3', 12.3)) # str converted to float
     suit.addTest(CaPutTest('test_put', "catest",  ca.DBR_DOUBLE,  12, [12.3, 0, 0], 12.3)) # only the first element will be used
     # enum as string
     suit.addTest(CaPutTest('test_put', "cabo",    ca.DBR_STRING,  1, 'Busy'))
     # cawave is a record of 20 element DBF_DOUBLE
     suit.addTest(CaPutTest('test_put', "cawave",  ca.DBR_DOUBLE,  1, 1))
+    suit.addTest(CaPutTest('test_put', "cawave",  ca.DBR_DOUBLE,  1, '12.3', 12.3))
     suit.addTest(CaPutTest('test_put', "cawave",  ca.DBR_STRING,  3, ['1', '2', '3'], ['1.0000', '2.0000', '3.0000']))
     suit.addTest(CaPutTest('test_put', "cawave",  ca.DBR_DOUBLE, 22, [0.0]*20))
 
     suit.addTest(CaPutTest('test_put', "cawaves", ca.DBR_STRING,  2, ['1', '2', '3'], ['1', '2']))
+    suit.addTest(CaPutTest('test_put', "cawaves", ca.DBR_STRING,  1, ['1', '2', '3'], '1'))
+    suit.addTest(CaPutTest('test_put', "cawaves", ca.DBR_STRING,  1, '123', '123'))
 
     suit.addTest(CaPutTest('test_put', "cawavec", ca.DBR_CHAR,    10, '123', [49, 50, 51, 0, 0]))
 
