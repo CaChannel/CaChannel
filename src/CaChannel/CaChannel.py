@@ -563,7 +563,7 @@ class CaChannel:
         >>> status = chan.pend_event(1)
         pv_loalarmlim -20.0
         pv_loctrllim 0.0
-        pv_lodislim 0.0
+        pv_lodislim -20.0
         pv_lowarnlim -10.0
         pv_precision 4
         pv_severity 2
@@ -571,7 +571,7 @@ class CaChannel:
         pv_units mm
         pv_upalarmlim 20.0
         pv_upctrllim 0.0
-        pv_updislim 0.0
+        pv_updislim 20.0
         pv_upwarnlim 10.0
         pv_value 145.0
         >>> chan = CaChannel('cabo')
