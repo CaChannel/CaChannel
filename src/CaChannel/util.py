@@ -99,7 +99,7 @@ def caput(name, value, wait=False, timeout=None):
 
     if wait:
         event = threading.Event()
-        chan.array_put_callback(value, put_callback, event)
+        chan.array_put_callback(value, None, None, put_callback, event)
         chan.flush_io()
         event.wait(timeout)
     else:
@@ -164,7 +164,7 @@ def cainfo(name):
     if not r and not w:
         access = 'No access'
     else:
-        access =''
+        access = ''
         if r:
             access += 'R'
         if w:
@@ -178,12 +178,12 @@ def cainfo(name):
     Data type:      %s
     Element count:  %d
     Access:         %s""" % (
-        name,
-        ['Not connected', 'Connected'][chan.state() == ca.cs_conn],
-        chan.host_name(),
-        ca.dbf_text(chan.field_type()),
-        chan.element_count(),
-        access)
+            name,
+            ['Not connected', 'Connected'][chan.state() == ca.cs_conn],
+            chan.host_name(),
+            ca.dbf_text(chan.field_type()),
+            chan.element_count(),
+            access)
 
     if chan.state() == ca.cs_conn:
         ctrl = chan.getw(ca.dbf_type_to_DBR_CTRL(chan.field_type()))
