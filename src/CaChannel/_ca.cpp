@@ -1810,13 +1810,17 @@ static PyObject *Py_ca_state(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "O", &pChid))
         return NULL;
 
+    if (pChid == Py_None) {
+        return IntToIntEnum("ChannelState", 4);
+    }
+
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
     if (chid == NULL)
         return NULL;
 
     int state;
     Py_BEGIN_ALLOW_THREADS
-    state = ca_state(chid); 
+    state = ca_state(chid);
     Py_END_ALLOW_THREADS
 
     return IntToIntEnum("ChannelState", state);
