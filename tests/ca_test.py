@@ -362,6 +362,8 @@ if __name__ == '__main__':
     #                        ])
     #             )
 
+    result = unittest.TextTestRunner(failfast=True).run(suit)
 
-    runner = unittest.TextTestRunner(verbosity=10)
-    runner.run(suit)
+    # exit code is 1 if failures happen
+    import sys
+    sys.exit(len(result.failures))
