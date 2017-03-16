@@ -216,3 +216,13 @@ Config
 ~~~~~~
     .. automethod:: epicsMotor.set_position
 
+
+:mod:`CaChannel.util`
+---------------------
+
+.. automodule:: CaChannel.util
+
+.. autofunction:: caget
+.. autofunction:: caput
+.. autofunction:: camonitor
+.. autofunction:: cainfo
