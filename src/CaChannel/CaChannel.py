@@ -6,6 +6,7 @@ based on caffi
 from __future__ import print_function, absolute_import
 from functools import wraps
 import math
+import traceback
 
 import CaChannel as PACKAGE
 from . import ca
@@ -978,7 +979,7 @@ class CaChannel:
         try:
             callbackFunc(epicsArgs, userArgs)
         except:
-            pass
+            traceback.print_exc()
 
     def _conn_callback(self, epicsArgs):
         callback = self._callbacks.get('connCB')
@@ -989,7 +990,7 @@ class CaChannel:
         try:
             callbackFunc(epicsArgs, userArgs)
         except:
-            pass
+            traceback.print_exc()
 
     def _put_callback(self, epicsArgs):
         callback = self._callbacks.get('putCB')
@@ -999,7 +1000,7 @@ class CaChannel:
         try:
             callbackFunc(epicsArgs, userArgs)
         except:
-            pass
+            traceback.print_exc()
 
     def _get_callback(self, epicsArgs):
         callback = self._callbacks.get('getCB')
@@ -1010,7 +1011,7 @@ class CaChannel:
         try:
             callbackFunc(epicsArgs, userArgs)
         except:
-            pass
+            traceback.print_exc()
 
     def _event_callback(self, epicsArgs):
         callback = self._callbacks.get('eventCB')
@@ -1021,7 +1022,7 @@ class CaChannel:
         try:
             callbackFunc(epicsArgs, userArgs)
         except:
-            pass
+            traceback.print_exc()
 
     @staticmethod
     def _format_cb_args(args, use_numpy):
