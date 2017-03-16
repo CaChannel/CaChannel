@@ -204,10 +204,10 @@ class CaChannel:
         ...     if connection_state == ca.CA_OP_CONN_UP:
         ...         print(ca.name(chid), "is connected")
         >>> chan.search_and_connect(None, connCB, chan)
-        >>> status = chan.pend_event(2)
+        >>> status = chan.pend_event(3)
         catest is connected
         >>> chan.search_and_connect('cabo', connCB, chan)
-        >>> status = chan.pend_event(2)
+        >>> status = chan.pend_event(3)
         cabo is connected
         """
         if self._chid is not None:
