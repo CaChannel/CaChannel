@@ -86,8 +86,8 @@ class TestCa(unittest.TestCase):
         import CaChannel.CaChannel
         CaChannel.CaChannel.ca_timeout = 10.
         test = doctest.DocTestSuite('CaChannel.CaChannel')
-        runner = unittest.TextTestRunner()
-        runner.run(test)
+        results = unittest.TextTestRunner().run(test)
+        self.assertEqual(len(results.failures), 0)
 
     def tearDown(self):
         self.stop_ioc()
