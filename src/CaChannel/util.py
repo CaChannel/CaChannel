@@ -1,3 +1,28 @@
+"""
+This module provides functions similiar to those command line tools found in EPICS base,
+e.g. :func:`caget`, :func:`caput`, :func:`camonitor`, :func:`cainfo`.
+
+In those functions, :class:`CaChannel.CaChannel` objects are created implicitly and cached
+in :data:`_channel_` dictionary.
+
+>>> import time
+>>> caput('catest', 1.23, wait=True)
+>>> caget('catest')
+1.23
+>>> caput('cabo', 'Busy')
+>>> caget('cabo')
+1
+>>> caget('cabo', as_string=True)
+'Busy'
+>>> caput('cawavec', 'this can be a long string')
+>>> caget('cawavec', as_string=True)
+'this '
+>>> caput('cawave', range(4))
+>>> caget('cawave', count=4)
+[0.0, 1.0, 2.0, 3.0]
+"""
+
+
 import collections
 import datetime
 import itertools
@@ -59,15 +84,6 @@ def caget(name, as_string=False, count=None):
     :param bool as_string: retrieve enum and char type as string
     :param int count: number of element to request
     :return: pv value
-
-    >>> caget('catest')
-    0.0
-    >>> caget('cabo', as_string=True)
-    'Done'
-    >>> caget('cawavec', as_string=True)
-    ''
-    >>> caget('cawave', count=4)
-    [0.0, 0.0, 0.0, 0.0]
     """
     chan = _get_or_create_channel(name)
 
@@ -90,15 +106,10 @@ def caput(name, value, wait=False, timeout=None):
     :param value: value to write
     :param bool wait: wait for completion
     :param float timeout: seconds to wait
-
-    >>> caput('catest', 0, wait=True)
-    >>> caput('cabo', 'Done')
-    >>> caput('cawavec', 'this can be a long string')
-    >>> caput('cawave', [0, 0, 0 ,0])
     """
     chan = _get_or_create_channel(name)
 
-    def put_callback(epics_args, user_args):
+    def put_callback(_, user_args):
         user_args[0].set()
 
     if wait:
@@ -110,17 +121,6 @@ def caput(name, value, wait=False, timeout=None):
         chan.putw(value)
 
 
-def caunmonitor(name):
-    """
-    remove installed callback
-
-    :param name: pv name
-    """
-    chan = _channels_.get(name)
-    if chan is not None:
-        chan.clear_event()
-
-
 def camonitor(name, as_string=False, count=None, callback=None):
     """
     set a *callback* to be invoked when pv value or alarm status change.
@@ -128,8 +128,30 @@ def camonitor(name, as_string=False, count=None, callback=None):
     :param str name: pv name
     :param bool as_string: retrieve enum and char type as string
     :param int count: number of element to request
-    :param callback: callback function. This will remove any previous installed callback.
-                     If *None* is specified, the default behavior is to print to the console.
+    :param callback: callback function. If *None* is specified, the default callback is to print to the console.
+                     If *callback* is not a valid *callable*, any previous callback is removed.
+
+    >>> camonitor('cacalc')
+    >>> time.sleep(2) # doctest: +ELLIPSIS
+    cacalc ...
+    >>> def monitor_callback(epics_args, _):
+    ...     for k in sorted(epics_args):
+    ...         print(k, epics_args[k])
+    >>> camonitor('cacalc', callback=monitor_callback)
+    >>> time.sleep(2) # doctest: +ELLIPSIS
+    chid ...
+    count 1
+    pv_nseconds ...
+    pv_seconds ...
+    pv_severity 0
+    pv_status 0
+    pv_value ...
+    status ECA.NORMAL
+    type DBR.TIME_DOUBLE
+    chid ...
+    >>> camonitor('cacalc', callback=())
+    >>> time.sleep(2)
+
     """
     chan = _get_or_create_channel(name)
 
@@ -148,6 +170,11 @@ def camonitor(name, as_string=False, count=None, callback=None):
 
         print('%s %s %s' % (name, strfmt, value))
 
+    if callback is not None and not callable(callback):
+        chan.clear_event()
+        chan.flush_io()
+        return
+
     if callback is None:
         callback = monitor_callback
 
@@ -160,6 +187,19 @@ def cainfo(name):
     print pv information
 
     :param name: pv name
+
+    >>> caput('cabo', 1)
+    >>> cainfo('cabo') # doctest: +ELLIPSIS
+    cabo
+        State:          Connected
+        Host:           ...
+        Data type:      DBF_ENUM
+        Element count:  1
+        Access:         RW
+        Status:         STATE
+        Severity:       MINOR
+        Enumerates:     ('Done', 'Busy')
+
     """
     chan = _get_or_create_channel(name)
 
@@ -175,8 +215,7 @@ def cainfo(name):
             access += 'W'
 
     message = \
-        """
-%s
+        """%s
     State:          %s
     Host:           %s
     Data type:      %s
@@ -205,5 +244,6 @@ def cainfo(name):
 
 
 if __name__ == '__main__':
+    import time
     import doctest
     doctest.testmod()
