@@ -61,7 +61,7 @@ def caget(name, as_string=False, count=None):
     :return: pv value
 
     >>> caget('catest')
-    0
+    0.0
     >>> caget('cabo', as_string=True)
     'Done'
     >>> caget('cawavec', as_string=True)
@@ -90,6 +90,7 @@ def caput(name, value, wait=False, timeout=None):
     :param value: value to write
     :param bool wait: wait for completion
     :param float timeout: seconds to wait
+
     >>> caput('catest', 0, wait=True)
     >>> caput('cabo', 'Done')
     >>> caput('cawavec', 'this can be a long string')
