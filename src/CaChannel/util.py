@@ -143,8 +143,8 @@ def camonitor(name, as_string=False, count=None, callback=None):
     count 1
     pv_nseconds ...
     pv_seconds ...
-    pv_severity 0
-    pv_status 0
+    pv_severity AlarmSeverity.No
+    pv_status AlarmCondition.No
     pv_value ...
     status ECA.NORMAL
     type DBR.TIME_DOUBLE
