@@ -202,3 +202,8 @@ def cainfo(name):
     Enumerates:     %s""" % (ctrl['pv_statestrings'],)
 
     print(message)
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
