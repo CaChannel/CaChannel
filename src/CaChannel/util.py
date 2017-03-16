@@ -13,12 +13,15 @@ _channels_ = {}
 
 def _ints_to_string(integers):
     if isinstance(integers, collections.Sequence):
+        stripped = itertools.takewhile(lambda x: x != 0, integers)
         if sys.hexversion < 0x03000000:
-            value = ''.join([chr(c) for c in itertools.takewhile(lambda x: x != 0, integers)])
+            value = ''.join([chr(c) for c in stripped])
         else:
-            value = bytes(integers).decode()
+            value = bytes(stripped).decode()
     elif isinstance(integers, numbers.Integral):
-        if sys.hexversion < 0x03000000:
+        if integers == 0:
+            value = ''
+        elif sys.hexversion < 0x03000000:
             value = chr(integers)
         else:
             value = bytes([integers]).decode()
