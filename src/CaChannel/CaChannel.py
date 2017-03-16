@@ -240,7 +240,7 @@ class CaChannel:
         >>> chan.search('catest')
         >>> status = chan.pend_io()
         >>> chan.state()
-        2
+        <ChannelState.CONN: 2>
         """
         if self._chid is not None:
             self.clear_channel()
@@ -411,9 +411,9 @@ class CaChannel:
         >>> for k,v in sorted(chan.getValue().items()):
         ...    print(k, v)
         pv_nostrings 2
-        pv_severity 1
+        pv_severity AlarmSeverity.Minor
         pv_statestrings ('Done', 'Busy')
-        pv_status 7
+        pv_status AlarmCondition.State
         pv_value 1
         """
         dbrvalue = self._dbrvalue.get()
@@ -567,8 +567,8 @@ class CaChannel:
         pv_lodislim -20.0
         pv_lowarnlim -10.0
         pv_precision 4
-        pv_severity 2
-        pv_status 3
+        pv_severity AlarmSeverity.Major
+        pv_status AlarmCondition.HiHi
         pv_units mm
         pv_upalarmlim 20.0
         pv_upctrllim 0.0
@@ -581,9 +581,9 @@ class CaChannel:
         >>> chan.array_get_callback(ca.DBR_CTRL_ENUM, 1, getCB)
         >>> status = chan.pend_event(1)
         pv_nostrings 2
-        pv_severity 0
+        pv_severity AlarmSeverity.No
         pv_statestrings ('Done', 'Busy')
-        pv_status 0
+        pv_status AlarmCondition.No
         pv_value 0
         """
         use_numpy = keywords.get('use_numpy', PACKAGE.USE_NUMPY)
@@ -631,21 +631,21 @@ class CaChannel:
 
         >>> def eventCB(epicsArgs, _):
         ...     print('pv_value', epicsArgs['pv_value'])
-        ...     print('pv_status', int(epicsArgs['pv_status']))
-        ...     print('pv_severity', int(epicsArgs['pv_severity']))
+        ...     print('pv_status', epicsArgs['pv_status'])
+        ...     print('pv_severity', epicsArgs['pv_severity'])
         >>> chan = CaChannel('cabo')
         >>> chan.searchw()
         >>> chan.putw(1)
         >>> chan.add_masked_array_event(ca.DBR_STS_ENUM, None, None, eventCB)
         >>> status = chan.pend_event(1)
         pv_value 1
-        pv_status 7
-        pv_severity 1
+        pv_status AlarmCondition.State
+        pv_severity AlarmSeverity.Minor
         >>> chan.add_masked_array_event(ca.DBR_STS_STRING, None, None, eventCB)
         >>> status = chan.pend_event(1)
         pv_value Busy
-        pv_status 7
-        pv_severity 1
+        pv_status AlarmCondition.State
+        pv_severity AlarmSeverity.Minor
         >>> chan.clear_event()
         """
         if self._evid is not None:
@@ -764,13 +764,13 @@ class CaChannel:
         >>> chan.searchw()
         >>> ftype = chan.field_type()
         >>> ftype
-        6
+        <DBF.DOUBLE: 6>
         >>> ca.dbf_text(ftype)
         'DBF_DOUBLE'
         >>> ca.DBF_DOUBLE == ftype
         True
         """
-        return int(ca.field_type(self._chid))
+        return ca.field_type(self._chid)
 
     def element_count(self):
         """
@@ -781,7 +781,7 @@ class CaChannel:
         >>> chan.element_count()
         1
         """
-        return int(ca.element_count(self._chid))
+        return ca.element_count(self._chid)
 
     def name(self):
         """
@@ -810,15 +810,12 @@ class CaChannel:
 
         >>> chan = CaChannel('catest')
         >>> chan.state()
-        4
+        <ChannelState.NEVER_SEARCH: 4>
         >>> chan.searchw()
         >>> chan.state()
-        2
+        <ChannelState.CONN: 2>
         """
-        if self._chid is None:
-            return int(ca.cs_never_search)
-        else:
-            return int(ca.state(self._chid))
+        return ca.state(self._chid)
 
     def host_name(self):
         """
@@ -1065,8 +1062,8 @@ class CaChannel:
                     new_key = key
                 epicsArgs['pv_' + new_key] = value[key]
             if 'pv_status' in epicsArgs:
-                epicsArgs['pv_status'] = int(epicsArgs['pv_status'])
-                epicsArgs['pv_severity'] = int(epicsArgs['pv_severity'])
+                epicsArgs['pv_status'] = epicsArgs['pv_status']
+                epicsArgs['pv_severity'] = epicsArgs['pv_severity']
             # convert stamp(datetime) to seconds and nanoseconds
             if 'pv_stamp' in epicsArgs:
                 fraction, integer = math.modf(epicsArgs['pv_stamp'])
