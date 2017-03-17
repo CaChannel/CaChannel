@@ -208,6 +208,7 @@ class CaChannel:
         >>> chan.search_and_connect('cabo', connCB, chan)
         >>> status = chan.pend_event(3)
         cabo is connected
+        >>> chan.clear_channel()
         """
         if self._chid is not None:
             self.clear_channel()

@@ -944,9 +944,11 @@ public:
 
 static void connection_callback(struct connection_handler_args args)
 {
-    PyGILState_STATE gstate = PyGILState_Ensure();
-
     ChannelData *pData = (ChannelData *) ca_puser(args.chid);
+    if (pData == NULL)
+        return;
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
 
     if(PyCallable_Check(pData->pCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
@@ -1008,12 +1010,14 @@ static PyObject *Py_ca_clear_channel(PyObject *self, PyObject *args)
 
 
     int status;
+    ChannelData *pData;
 
     Py_BEGIN_ALLOW_THREADS
-    ChannelData *pData = (ChannelData *) ca_puser(chid);
+    pData = (ChannelData *) ca_puser(chid);
     status = ca_clear_channel(chid);
-    delete pData;
     Py_END_ALLOW_THREADS
+
+    delete pData;
 
     return IntToIntEnum("ECA", status);
 }
@@ -1025,9 +1029,11 @@ static PyObject *Py_ca_clear_channel(PyObject *self, PyObject *args)
 
 static void get_callback(struct event_handler_args args)
 {
-    PyGILState_STATE gstate = PyGILState_Ensure();
-
     ChannelData *pData= (ChannelData *)args.usr;
+    if (pData == NULL)
+        return;
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
 
     if (PyCallable_Check(pData->pCallback)) {
         PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
@@ -1318,9 +1324,11 @@ static PyObject *Py_ca_clear_subscription(PyObject *self, PyObject *args)
 
 static void access_rights_handler(struct access_rights_handler_args args)
 {
-    PyGILState_STATE gstate = PyGILState_Ensure();
-
     ChannelData *pData= (ChannelData *)ca_puser(args.chid);
+    if (pData == NULL)
+        return;
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
 
     if (PyCallable_Check(pData->pAccessEventCallback)) {
         PyObject *pArgs = Py_BuildValue(
@@ -1355,6 +1363,9 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
     Py_BEGIN_ALLOW_THREADS
     pData= (ChannelData *)ca_puser(chid);
     Py_END_ALLOW_THREADS
+
+    if (pData == NULL)
+        return IntToIntEnum("ECA", ECA_BADFUNCPTR);
 
     /* release previous callback */
     Py_XDECREF(pData->pAccessEventCallback);
