@@ -103,7 +103,8 @@ Connect
     .. automethod:: CaChannel.search
     .. automethod:: CaChannel.search_and_connect
     .. automethod:: CaChannel.searchw
-    .. automethod:: CaChannel.clear_channel()
+    .. automethod:: CaChannel.clear_channel
+    .. automethod:: CaChannel.change_connection_event
 
 Read
 ~~~~

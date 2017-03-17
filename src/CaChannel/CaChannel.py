@@ -5,7 +5,6 @@ based on caffi
 # python 2 -> 3 compatible layer
 from __future__ import print_function, absolute_import
 from functools import wraps
-import math
 import traceback
 
 import CaChannel as PACKAGE
@@ -171,6 +170,7 @@ class CaChannel:
     #   search_and_connect
     #   search
     #   clear_channel
+    #   change_connection_event
 
     @attach_ca_context
     def search_and_connect(self, pvName, callback, *user_args):
@@ -276,6 +276,40 @@ class CaChannel:
 
             self.clear_event()
             ca.clear_channel(chid)
+
+    @attach_ca_context
+    def change_connection_event(self, callback, *user_args):
+        """Change the connection callback function
+
+        :param callback:   function called when connection completes and connection status changes later on.
+                           The previous connection callback will be replaced. If an invalid callback is given,
+                           no connection callback will be used.
+        :param user_args:  user provided arguments that are passed to callback when it is invoked.
+        :type callback:    callable
+
+        >>> chan = CaChannel('catest')
+        >>> chan.search() # connect without callback
+        >>> def connCB(epicsArgs, _):
+        ...     chid = epicsArgs[0]
+        ...     connection_state = epicsArgs[1]
+        ...     if connection_state == ca.CA_OP_CONN_UP:
+        ...         print(ca.name(chid), "is connected")
+        >>> chan.change_connection_event(connCB) # install connection callback
+        >>> status = chan.pend_event(3)
+        catest is connected
+        >>> chan.change_connection_event(None) # remove connection callback
+
+        """
+
+        if callable(callback):
+            self._callbacks['connCB'] = (callback, user_args)
+            status = ca.change_connection_event(self._chid, self._conn_callback)
+        else:
+            self._callbacks['connCB'] = None
+            status = ca.change_connection_event(self._chid)
+
+        if status != ca.ECA_NORMAL:
+            raise CaChannelException(status)
 
     #
     # Write methods

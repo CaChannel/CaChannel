@@ -50,6 +50,7 @@ static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kw
 
 static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_clear_channel(PyObject *self, PyObject *args);
+static PyObject *Py_ca_change_connection_event(PyObject *self, PyObject *args);
 static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_put(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObject *kws);
@@ -239,6 +240,7 @@ static PyMethodDef CA_Methods[] = {
     /* Channel creation */
     {"create_channel", (PyCFunction)Py_ca_create_channel,   METH_VARARGS|METH_KEYWORDS, "Create a CA channel connection"},
     {"clear_channel",       Py_ca_clear_channel,    METH_VARARGS, "Shutdown a CA channel connection"},
+    {"change_connection_event",  Py_ca_change_connection_event,    METH_VARARGS, "change connection callback function"},
     {"get",          (PyCFunction)Py_ca_get,              METH_VARARGS|METH_KEYWORDS, "Read PV's value"},
     {"put",          (PyCFunction)Py_ca_put,              METH_VARARGS|METH_KEYWORDS, "Write a value to PV"},
     {"create_subscription", (PyCFunction)Py_ca_create_subscription,METH_VARARGS|METH_KEYWORDS,"Subscribe for state changes"},
@@ -1018,6 +1020,48 @@ static PyObject *Py_ca_clear_channel(PyObject *self, PyObject *args)
     Py_END_ALLOW_THREADS
 
     delete pData;
+
+    return IntToIntEnum("ECA", status);
+}
+
+
+static PyObject *Py_ca_change_connection_event(PyObject *self, PyObject *args)
+{
+    PyObject *pChid;
+    PyObject *pCallback = NULL;
+    if(!PyArg_ParseTuple(args, "O|O", &pChid, &pCallback))
+        return NULL;
+
+    chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
+    if (chid == NULL)
+        return NULL;
+
+    ChannelData *pData;
+    Py_BEGIN_ALLOW_THREADS
+    pData = (ChannelData *)ca_puser(chid);
+    Py_END_ALLOW_THREADS
+
+    if (pData == NULL)
+        return IntToIntEnum("ECA", ECA_BADFUNCPTR);
+
+    /* release previous callback */
+    Py_XDECREF(pData->pCallback);
+    pData->pCallback = NULL;
+
+    caCh *pfunc = NULL;
+    if (PyCallable_Check(pCallback)) {
+        /* store callback */
+        pData->pCallback = pCallback;
+        Py_XINCREF(pCallback);
+
+        pfunc = connection_callback;
+    }
+
+    int status;
+
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_change_connection_event(chid, pfunc);
+    Py_END_ALLOW_THREADS
 
     return IntToIntEnum("ECA", status);
 }

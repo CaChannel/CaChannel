@@ -6,6 +6,7 @@ ChangeLog
 
 - Rewrite low level :py:mod:`ca` module with the same API as in package `caffi <https://pypi.python.org/pypi/caffi>`_.
 - Added method :py:meth:`CaChannel.CaChannel.replace_access_rights_event`
+- Added method :py:meth:`CaChannel.CaChannel.change_connection_event`
 - Added :class:`ca.ECA`, :class:`ca.DBF`, :class:`ca.DBR`, :class:`ca.ChannelState` to represent their C macros :data:`ca.ECA_XXX`,
   :data:`ca.DBF_XXX`, :data:`ca.DBR_XXX`, :data:`ca.cs_xxx`.
   For Python < 3.4,  this requires module `enum34 <https://pypi.python.org/pypi/enum34>`_.
