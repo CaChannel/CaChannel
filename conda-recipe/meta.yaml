@@ -48,6 +48,7 @@ test:
     - setuptools
     - epics-base
     - numpy
+    - enum34 # [py2k]
 
 about:
   home: https://pypi.python.org/pypi/CaChannel
