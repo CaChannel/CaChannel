@@ -135,6 +135,8 @@ _version = imp.load_source('_version', 'src/CaChannel/_version.py')
 if build_ca_ext:
     ext_module, package_data = create_exension()
     requirements = []
+    if sys.hexversion < 0x03040000:
+        requirements += ['enum34']
 else:
     ext_module = []
     package_data = []
