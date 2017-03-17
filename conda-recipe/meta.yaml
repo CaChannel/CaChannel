@@ -19,6 +19,7 @@ requirements:
     - setuptools
     - numpy
     - epics-base
+    - enum34 # [py2k]
 
   run:
     - python
