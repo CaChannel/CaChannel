@@ -519,7 +519,9 @@ class CaChannel:
         +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
         | pv_severity     |   int         |   PV alarm severity                |          |       X      |     X         |   X         | X             |
         +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
-        | pv_seconds      |   float       |   timestamp                        |          |              |     X         |   X         | X             |
+        | pv_seconds      |   int         |   seconds part of timestamp        |          |              |     X         |   X         | X             |
+        +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
+        | pv_nseconds     |   int         |   nanoseconds part of timestamp    |          |              |     X         |   X         | X             |
         +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
         | pv_nostrings    |   int         |   ENUM PV's number of states       |          |              |               |   X         | X             |
         +-----------------+---------------+------------------------------------+----------+--------------+---------------+-------------+---------------+
@@ -1064,11 +1066,10 @@ class CaChannel:
             if 'pv_status' in epicsArgs:
                 epicsArgs['pv_status'] = epicsArgs['pv_status']
                 epicsArgs['pv_severity'] = epicsArgs['pv_severity']
-            # convert stamp(datetime) to seconds and nanoseconds
+            # convert stamp dict
             if 'pv_stamp' in epicsArgs:
-                fraction, integer = math.modf(epicsArgs['pv_stamp'])
-                epicsArgs['pv_seconds'] = int(integer) - ca.POSIX_TIME_AT_EPICS_EPOCH
-                epicsArgs['pv_nseconds'] = int(fraction * 1e9)
+                epicsArgs['pv_seconds'] = epicsArgs['pv_stamp']['seconds'] - ca.POSIX_TIME_AT_EPICS_EPOCH
+                epicsArgs['pv_nseconds'] = epicsArgs['pv_stamp']['nanoseconds']
                 del epicsArgs['pv_stamp']
         else:
             epicsArgs['pv_value'] = value

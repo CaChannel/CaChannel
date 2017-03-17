@@ -25,6 +25,7 @@ static PyObject *MODULE = NULL;
 
 #if PY_MAJOR_VERSION >= 3
     #define PyInt_FromLong PyLong_FromLong
+    #define PyInt_FromSsize_t PyLong_FromSsize_t
     #define PyString_Check PyUnicode_Check
     #define PyString_FromString PyUnicode_FromString
     #define PyString_AsString PyUnicode_AsUTF8
@@ -2232,7 +2233,30 @@ typedef dbr_char_t *dbr_char_t_ptr ;
         }\
     }
 
-#define TS2secs(ts) ((double)ts.secPastEpoch + POSIX_TIME_AT_EPICS_EPOCH + (double) ts.nsec*1.0e-9)
+
+static PyObject *TS2Stamp(const epicsTimeStamp& ts)
+{
+    PyObject *o;
+    PyObject *pStamp = PyDict_New();
+
+    /* upcast seconds to 64bit integers to avoid Unix Millennium Bug */
+    Py_ssize_t seconds = (Py_ssize_t)ts.secPastEpoch + POSIX_TIME_AT_EPICS_EPOCH;
+    o = PyInt_FromSsize_t(seconds);
+    PyDict_SetItemString(pStamp, "seconds", o);
+    Py_XDECREF(o);
+
+    o = PyInt_FromLong(ts.nsec);
+    PyDict_SetItemString(pStamp, "nanoseconds", o);
+    Py_XDECREF(o);
+
+    /* this conversion could cause precision loss. If that is a concern, the nanoseconds field should be used */
+    o = PyFloat_FromDouble((double)ts.secPastEpoch + POSIX_TIME_AT_EPICS_EPOCH + (double) ts.nsec*1.0e-9);
+    PyDict_SetItemString(pStamp, "timestamp", o);
+    Py_XDECREF(o);
+
+    return pStamp;
+}
+
 
 PyObject * CBufferToPythonDict(chtype type,
                     unsigned long count,
@@ -2410,11 +2434,11 @@ PyObject * CBufferToPythonDict(chtype type,
     {
         struct dbr_time_string  *cval=(struct dbr_time_string  *)val;
         FormatDBRStringtoValue(count, string,  cval->value, dbr_string_t_ptr, PyString_FromString);
-        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
                 "status",   IntToIntEnum("AlarmCondition", cval->status),
-                "stamp",    TS2secs(cval->stamp));
+                "stamp",    TS2Stamp(cval->stamp));
     }
         break;
     case DBR_TIME_SHORT:
@@ -2426,11 +2450,11 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,   &(cval->value), dbr_short_t,      PyInt_FromLong, NPY_SHORT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
                 "status",   IntToIntEnum("AlarmCondition", cval->status),
-                "stamp",    TS2secs(cval->stamp));
+                "stamp",    TS2Stamp(cval->stamp));
     }
         break;
     case DBR_TIME_FLOAT:
@@ -2442,11 +2466,11 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,   &(cval->value), dbr_float_t,      PyFloat_FromDouble, NPY_FLOAT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
                 "status",   IntToIntEnum("AlarmCondition", cval->status),
-                "stamp",    TS2secs(cval->stamp));
+                "stamp",    TS2Stamp(cval->stamp));
     }
         break;
     case DBR_TIME_ENUM:
@@ -2458,11 +2482,11 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,  &(cval->value), dbr_enum_t,        PyInt_FromLong, NPY_USHORT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
                 "status",   IntToIntEnum("AlarmCondition", cval->status),
-                "stamp",    TS2secs(cval->stamp));
+                "stamp",    TS2Stamp(cval->stamp));
     }
         break;
     case DBR_TIME_CHAR:
@@ -2474,11 +2498,11 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,  &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
                 "status",   IntToIntEnum("AlarmCondition", cval->status),
-                "stamp",    TS2secs(cval->stamp));
+                "stamp",    TS2Stamp(cval->stamp));
     }
         break;
     case DBR_TIME_LONG:
@@ -2490,11 +2514,11 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,  &(cval->value), dbr_long_t,        PyInt_FromLong, NPY_INT)
         #endif
-        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
                 "status",   IntToIntEnum("AlarmCondition", cval->status),
-                "stamp",    TS2secs(cval->stamp));
+                "stamp",    TS2Stamp(cval->stamp));
     }
         break;
     case DBR_TIME_DOUBLE:
@@ -2506,11 +2530,11 @@ PyObject * CBufferToPythonDict(chtype type,
         else
             FormatDBRtoValueArray(count,    &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
         #endif
-        arglist=Py_BuildValue("{s:O,s:N,s:N,s:d}",
+        arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
                 "status",   IntToIntEnum("AlarmCondition", cval->status),
-                "stamp",    TS2secs(cval->stamp));
+                "stamp",    TS2Stamp(cval->stamp));
     }
         break;
 
