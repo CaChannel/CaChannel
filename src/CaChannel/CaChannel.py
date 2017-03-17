@@ -85,7 +85,6 @@ class CaChannel:
     def __del__(self):
         try:
             ca.attach_context(CONTEXT)
-            self.clear_event()
             self.clear_channel()
             self.flush_io()
         except:
@@ -269,8 +268,13 @@ class CaChannel:
 
         """
         if self._chid is not None:
-            ca.clear_channel(self._chid)
+            chid = self._chid
             self._chid = None
+            self._dbrvalue = None
+            self._callbacks = {}
+
+            self.clear_event()
+            ca.clear_channel(chid)
 
     #
     # Write methods
@@ -416,6 +420,9 @@ class CaChannel:
         pv_status AlarmCondition.State
         pv_value 1
         """
+        if self._dbrvalue is None:
+            return
+
         dbrvalue = self._dbrvalue.get()
         if isinstance(dbrvalue, dict):
             value = {}
