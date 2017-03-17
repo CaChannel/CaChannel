@@ -70,7 +70,8 @@ class TestCa(unittest.TestCase):
             return
 
         try:
-            runpy.run_path('tests/ca_test.py', run_name='__main__')
+            if sys.hexversion >= 0x02070000:
+                runpy.run_path('tests/ca_test.py', run_name='__main__')
         except SystemExit as e:
             ecode = e.code
         else:
