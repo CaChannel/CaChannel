@@ -83,7 +83,6 @@ class CaChannel:
 
     def __del__(self):
         try:
-            ca.attach_context(CONTEXT)
             self.clear_channel()
             self.flush_io()
         except:
@@ -254,7 +253,6 @@ class CaChannel:
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
-    @attach_ca_context
     def clear_channel(self):
         """Close a channel created by one of the search functions.
 
@@ -277,7 +275,6 @@ class CaChannel:
             self.clear_event()
             ca.clear_channel(chid)
 
-    @attach_ca_context
     def change_connection_event(self, callback, *user_args):
         """Change the connection callback function
 
@@ -317,7 +314,6 @@ class CaChannel:
     #   array_put_callback
     #
 
-    @attach_ca_context
     def array_put(self, value, req_type=None, count=None):
         """Write a value or array of values to a channel
 
@@ -363,7 +359,6 @@ class CaChannel:
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
-    @attach_ca_context
     def array_put_callback(self, value, req_type, count, callback, *user_args):
         """Write a value or array of values to a channel and execute the user
         supplied callback after the put has completed.
@@ -474,7 +469,6 @@ class CaChannel:
                     value = value.tolist()
         return value
 
-    @attach_ca_context
     def array_get(self, req_type=None, count=None, **keywords):
         """Read a value or array of values from a channel.
 
@@ -514,7 +508,6 @@ class CaChannel:
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
-    @attach_ca_context
     def array_get_callback(self, req_type, count, callback, *user_args, **keywords):
         """Read a value or array of values from a channel and execute the user
         supplied callback after the get has completed.
@@ -641,7 +634,6 @@ class CaChannel:
     #   add_masked_array_event
     #   clear_event
     #
-    @attach_ca_context
     def add_masked_array_event(self, req_type, count, mask, callback, *user_args, **keywords):
         """Specify a callback function to be executed whenever changes occur to a PV.
 
@@ -713,7 +705,6 @@ class CaChannel:
         if status != ca.ECA_NORMAL:
             raise CaChannelException(status)
 
-    @attach_ca_context
     def clear_event(self):
         """Remove previously installed callback function.
 
