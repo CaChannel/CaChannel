@@ -10,12 +10,6 @@ import traceback
 import CaChannel as PACKAGE
 from . import ca
 
-# create default preemptive enabled context
-CONTEXT = ca.current_context()
-if CONTEXT is None:
-    ca.create_context(True)
-    CONTEXT = ca.current_context()
-
 
 class CaChannelException(Exception):
     def __init__(self, status):
@@ -26,17 +20,6 @@ class CaChannelException(Exception):
 
     def __str__(self):
         return ca.message(self.status)
-
-
-# A wrapper to automatically attach to default CA context
-def attach_ca_context(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if ca.current_context() != CONTEXT:
-            ca.attach_context(CONTEXT)
-        return func(*args, **kwargs)
-
-    return wrapper
 
 
 class CaChannel:
@@ -71,7 +54,22 @@ class CaChannel:
     'Done'
     """
 
+    __context = None
+
     ca_timeout = 3.0
+
+    # A wrapper to automatically attach to default CA context
+    def attach_ca_context(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if CaChannel.__context is None:
+                ca.create_context(True)
+                CaChannel.__context = ca.current_context()
+            else:
+                ca.attach_context(CaChannel.__context)
+            return func(*args, **kwargs)
+
+        return wrapper
 
     def __init__(self, pvName=None):
         self._pvname = pvName
