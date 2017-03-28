@@ -400,7 +400,17 @@ MOD_INIT(_ca) {
     "    ENUM   = DBF_ENUM\n"
     "    CHAR   = DBF_CHAR\n"
     "    LONG   = DBF_LONG\n"
-    "    DOUBLE = DBF_DOUBLE\n");
+    "    DOUBLE = DBF_DOUBLE\n"
+    "\n"
+    "    def toSTS(self):\n"
+    "        return dbf_type_to_DBR_STS(self.value)\n"
+    "    def toTIME(self):\n"
+    "        return dbf_type_to_DBR_TIME(self.value)\n"
+    "    def toGR(self):\n"
+    "        return dbf_type_to_DBR_GR(self.value)\n"
+    "    def toCTRL(self):\n"
+    "        return dbf_type_to_DBR_CTRL(self.value)\n"
+    );
 
     PyModule_AddIntMacro(pModule, DBR_STRING);
     PyModule_AddIntMacro(pModule, DBR_SHORT);
