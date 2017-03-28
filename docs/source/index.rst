@@ -1,7 +1,15 @@
 Welcome to CaChannel's documentation!
 =====================================
 
-Contents:
+Overview
+--------
+
+:class:`CaChannel.CaChannel` wraps the low level :mod:`ca` functions into a Python class. It provides methods
+to operate on the remote process variable over channel access connection.
+
+
+Contents
+--------
 
 .. toctree::
  :maxdepth: 2
