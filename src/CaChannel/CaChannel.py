@@ -4,7 +4,11 @@ based on caffi
 """
 # python 2 -> 3 compatible layer
 from __future__ import print_function, absolute_import
+import collections
 from functools import wraps
+import itertools
+import numbers
+import sys
 import traceback
 
 import CaChannel as PACKAGE
@@ -952,6 +956,8 @@ class CaChannel:
         >>> chan.putw('123')
         >>> chan.getw(count=4)
         [49, 50, 51, 0]
+        >>> chan.getw(req_type=ca.DBR_STRING)
+        '123'
         >>> chan = CaChannel('cawaves')
         >>> chan.searchw()
         >>> chan.putw(['string 1','string 2'])
@@ -967,9 +973,14 @@ class CaChannel:
         If the request type is omitted the data is returned to the user as the Python type corresponding to the native format.
         Multi-element data has all the elements returned as items in a list and must be accessed using a numerical type.
         Access using non-numerical types is restricted to the first element in the data field.
+
         :data:`ca.DBF_ENUM` fields can be read using :data:`ca.DBR_ENUM` and :data:`ca.DBR_STRING` types.
         :data:`ca.DBR_STRING` reads of a field of type :data:`ca.DBF_ENUM` returns the string corresponding
         to the current enumerated value.
+
+        :data:`ca.DBF_CHAR` fields can be read using :data:`ca.DBR_CHAR` and :data:`ca.DBR_STRING` types.
+        :data:`ca.DBR_CHAR` returns a scalar or a sequnece of integers. :data:`ca.DBR_STRING` assumes each integer as a
+        character and assemble a string.
 
         :param req_type:    database request type. Defaults to be the native data type.
         :param count:       number of data values to read, Defaults to be the native count.
@@ -989,11 +1000,38 @@ class CaChannel:
 
         :raises CaChannelException: if timeout error happens
         """
+        # char waveform can be requested as string
+        char_as_string = False
+        if self.field_type() == ca.DBF_CHAR:
+            if req_type == ca.DBR_STRING:
+                char_as_string = True
+                req_type = ca.DBR_CHAR
+            elif req_type == ca.DBR_STS_STRING:
+                char_as_string = True
+                req_type = ca.DBR_STS_CHAR
+            elif req_type == ca.DBR_TIME_STRING:
+                char_as_string = True
+                req_type = ca.DBR_TIME_CHAR
+            elif req_type == ca.DBR_GR_STRING:
+                char_as_string = True
+                req_type = ca.DBR_GR_CHAR
+            elif req_type == ca.DBR_CTRL_STRING:
+                char_as_string = True
+                req_type = ca.DBR_CTRL_CHAR
+
         self.array_get(req_type, count, **keywords)
         timeout = self.getTimeout()
         self.pend_io(timeout)
 
         value = self.getValue()
+
+        # convert char
+        if char_as_string:
+            if isinstance(value, dict):
+                value['pv_value'] = CaChannel._ints_to_string(value['pv_value'])
+            else:
+                value = CaChannel._ints_to_string(value)
+
         return value
 
     #
@@ -1110,6 +1148,27 @@ class CaChannel:
 
         return epicsArgs
 
+    @staticmethod
+    def _ints_to_string(integers):
+        if isinstance(integers, str):
+            value = integers
+        elif isinstance(integers, collections.Sequence):
+            stripped = itertools.takewhile(lambda c: c != 0, integers)
+            if sys.hexversion < 0x03000000:
+                value = ''.join([chr(c) for c in stripped])
+            else:
+                value = bytes(stripped).decode()
+        elif isinstance(integers, numbers.Integral):
+            if integers == 0:
+                value = ''
+            elif sys.hexversion < 0x03000000:
+                value = chr(integers)
+            else:
+                value = bytes([integers]).decode()
+        else:
+            value = None
+
+        return value
 
 if __name__ == "__main__":
     import doctest
