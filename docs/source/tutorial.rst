@@ -17,7 +17,7 @@ When an exception occurs the offending CA status return is printed using print c
         chan.putw(12)
         chan.getw()
     except CaChannelException as e:
-        print e.status
+        print(e)
 
 
 Multiple Synchronous Actions
@@ -37,7 +37,7 @@ Multiple channel access connection requests.
         chan2.search()
         chan2.pend_io()
     except CaChannelException as e:
-        print e.status
+        print(e)
 
 Write
 ^^^^^
@@ -56,7 +56,7 @@ Multiple channel access write requests.
         chan2.array_put(1)
         chan2.flush_io()
     except CaChannelException as e:
-        print e.status
+        print(e)
 
 Asynchronouse Actions
 ---------------------
@@ -77,25 +77,25 @@ Note: The callback function is not executed in the main thread. It runs in an au
     import time
     from CaChannel import ca, CaChannel, CaChannelException
     def connectCB(epics_args, user_args):
-        print "connectCB: Python connect callback function"
-        print type(epics_args)
-        print epics_args
-        print user_args
-        status = epics_args[1]
-        if status == 6:
-            print "connectCB: Connection is up"
-        elif status == 7:
-            print "connectCB: Connection is down"
+        print("connectCB: Python connect callback function")
+        print(type(epics_args))
+        print(epics_args)
+        print(user_args)
+        state = epics_args[1]
+        if state == ca.CA_OP_CONN_UP:
+            print("connectCB: Connection is up")
+        elif state == ca.CA_OP_CONN_DOWN:
+            print("connectCB: Connection is down")
 
     def putCB(epics_args, user_args):
-        print "putCB: Python put callback function"
-        print type(epics_args)
-        print epics_args
-        print ca.name(epics_args['chid'])
-        print ca.dbr_text(epics_args['type'])
-        print epics_args['count']
-        print ca.message(epics_args['status'])
-        print user_args
+        print("putCB: Python put callback function")
+        print(type(epics_args))
+        print(epics_args)
+        print(ca.name(epics_args['chid']))
+        print(epics_args['type'])
+        print(epics_args['count'])
+        print(epics_args['status'])
+        print(user_args)
 
     chan = CaChannel()
     chan.search_and_connect('catest', connectCB)
@@ -113,27 +113,25 @@ Watch for changes in value or alarm state of a process variable. A callback is e
 
 ::
 
-    from CaChannel import CaChannel
-    from CaChannel import CaChannelException
-    import ca
-    import time
     import sys
+    import time
+    from CaChannel import ca, CaChannel, CaChannelException
     def eventCB(epics_args, user_args):
-        print "eventCb: Python callback function"
-        print type(epics_args)
-        print epics_args
-        print ca.message(epics_args[’status’])
-        print "new value = ", epics_args[’pv_value’]
-        print ca.alarmSeverityString(epics_args[’pv_severity’])
-        print ca.alarmStatusString(epics_args[’pv_status’])
+        print("eventCb: Python callback function"
+        print(type(epics_args))
+        print(epics_args)
+        print(epics_args['status'])
+        print("new value =", epics_args['pv_value'])
+        print(epics_args['pv_severity'])
+        print(epics_args['pv_status'])
 
     chan = CaChannel()
     chan.searchw('catest')
     chan.add_masked_array_event(
-        ca.dbf_type_to_DBR_STS(chan.field_type()),
+        ca.DBR_STS_DOUBLE,
         None,
-        ca.DBE_VALUE | ca.DBE_ALARM,
+        None,
         eventCB)
-    
+    chan.flush_io()
     time.sleep(5)
 
