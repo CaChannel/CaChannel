@@ -1,5 +1,6 @@
 
 #include <Python.h>
+#include <map>
 
 #define epicsAlarmGLOBAL
 #include <alarm.h>
@@ -13,6 +14,12 @@
 
 static bool has_numpy = false;
 static PyObject *MODULE = NULL;
+struct context_callback {
+    PyObject *pExceptionCallback;
+    PyObject *pPrintfHandler;
+    context_callback() : pExceptionCallback(NULL), pPrintfHandler(NULL) {}
+};
+static std::map<struct ca_client_context*, context_callback> CONTEXTS;
 
 #ifndef MIN
      #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
@@ -841,9 +848,19 @@ static PyObject *Py_ca_create_context(PyObject *self, PyObject *args)
 
 static PyObject *Py_ca_destroy_context(PyObject *self, PyObject *args)
 {
+    struct ca_client_context * pContext = NULL;
     Py_BEGIN_ALLOW_THREADS
+    pContext = ca_current_context();
     ca_context_destroy();
     Py_END_ALLOW_THREADS
+
+    /* remove it from the cache map associtaed with exception callback */
+    std::map<struct ca_client_context *, struct context_callback>::iterator it = CONTEXTS.find(pContext);
+    if (it != CONTEXTS.end()) {
+        Py_XDECREF(it->second.pExceptionCallback);
+        Py_XDECREF(it->second.pPrintfHandler);
+        CONTEXTS.erase(it);
+    }
 
     Py_RETURN_NONE;
 }
@@ -1432,11 +1449,11 @@ static PyObject *Py_ca_replace_access_rights_event(PyObject *self, PyObject *arg
     return IntToIntEnum("ECA", status);
 }
 
-static PyObject *pExceptionCallback = NULL;
-
 static void exception_handler(struct exception_handler_args args)
 {
     PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject *pExceptionCallback = (PyObject *)args.usr;
 
     if (PyCallable_Check(pExceptionCallback)) {
         PyObject *pChid;
@@ -1477,23 +1494,30 @@ static PyObject *Py_ca_add_exception_event(PyObject *self, PyObject *args)
     if(!PyArg_ParseTuple(args, "|O", &pCallback))
         return NULL;
 
-    /* release previous callback */
-    Py_XDECREF(pExceptionCallback);
-    pExceptionCallback = NULL;
-
     caExceptionHandler *handler = NULL;
     if (PyCallable_Check(pCallback)) {
-        /* store callback */
-        Py_XINCREF(pCallback);
-        pExceptionCallback = pCallback;
-
-        handler = exception_handler; 
+        handler = exception_handler;
+    } else {
+        pCallback = NULL;
     }
 
     int status;
     Py_BEGIN_ALLOW_THREADS
-    status = ca_add_exception_event(handler, NULL);
+    status = ca_add_exception_event(handler, pCallback);
     Py_END_ALLOW_THREADS
+
+    if (status == ECA_NORMAL) {
+        /* now a valid ca context is guaranteed */
+        ca_client_context *pContext = ca_current_context();
+
+        /* dereference the previous user callback */
+        PyObject *pOldCallback = CONTEXTS[pContext].pExceptionCallback;
+        Py_XDECREF(pOldCallback);
+
+        /* reference the user callback so that it will not be garbage collected */
+        CONTEXTS[pContext].pExceptionCallback = pCallback;
+        Py_XINCREF(pCallback);
+    }
 
     return IntToIntEnum("ECA", status);
 }
