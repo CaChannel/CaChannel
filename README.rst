@@ -16,8 +16,8 @@ After that has been accomplished, CaChannel interface was re-implemented using t
 
 In 2015-16, with all previous experiences, the ``CaChannel.ca`` module was rewritten from scratch using Python/C API.
 The new ``CaChannel.ca`` module has a compatible API with ``caffi.ca``. Because of that, the CaChannel interface can use
-``caffi.ca`` by setting environment variable ``CACHANNEL_BACKEND=caffi``. This is also the fallback backend if the C extension
-fails to import.
+``caffi.ca`` by setting environment variable ``CACHANNEL_BACKEND=caffi``. This is also the fallback backend if no EPICS installation
+exists or the C extension fails to import.
 
 Check out `CaChannel documents <https://cachannel.readthedocs.org>`_ to get started.
 
