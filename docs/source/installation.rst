@@ -12,10 +12,12 @@ Binary Installers
 The binary packages are distributed at `PyPI <https://pypi.python.org/pypi/CaChannel>`_.
 They have EPICS 3.14.12.6 libraries statically builtin.
 If we do not have a *wheel* or *egg* package for your system, *pip* or *easy_install* will try to
-build from source. And then you would need EPICS base installed, see :ref:`getting-epics`.
+build from source. If you have a valid EPICS base installation, as described by :ref:`getting-epics`,
+the C extension will be compiled. Otherwise it will instead use `caffi <https://pypi.python.org/pypi/caffi>`_
+as the backend.
 
-OS X
-~~~~
+macOS
+~~~~~
 
 Make sure you have `pip <https://pypi.python.org/pypi/pip>`_ and 
 `wheel <https://pypi.python.org/pypi/wheel>`_  installed, and run::
@@ -79,7 +81,7 @@ In general please follow `the official installation instruction <http://www.aps.
     |         | 64bit | windows-x64        |
     +---------+-------+--------------------+
     |         | PPC   | darwin-ppcx86      |
-    |  OS X   +-------+--------------------+
+    | macOS   +-------+--------------------+
     |         | Intel | darwin-x86         |
     +---------+-------+--------------------+
 
@@ -105,7 +107,7 @@ As soon as the epics base libraries are ready, it is simple,
               # export EPICS_BASE=<epics base path>
               # export EPICS_HOST_ARCH=<epics host arch>
               # python setup.py install
- 
+
 Build Anaconda Package
 ~~~~~~~~~~~~~~~~~~~~~~
 If you want to build as Anaconda packages, *conda* directory
