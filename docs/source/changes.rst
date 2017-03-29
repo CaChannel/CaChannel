@@ -10,6 +10,7 @@ ChangeLog
 - Added :class:`ca.ECA`, :class:`ca.DBF`, :class:`ca.DBR`, :class:`ca.ChannelState` to represent their C macros :data:`ca.ECA_XXX`,
   :data:`ca.DBF_XXX`, :data:`ca.DBR_XXX`, :data:`ca.cs_xxx`.
   For Python < 3.4,  this requires module `enum34 <https://pypi.python.org/pypi/enum34>`_.
+- Changed method :py:meth:`CaChannel.CaChannel.getw` to return string if *req_type* is DBR_STRING for a char waveform.
 - Configure continous integration/deployment on Travis/AppVeyor.
 - Drop Python 2.4 and 2.5 support.
 

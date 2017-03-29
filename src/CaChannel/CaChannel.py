@@ -999,6 +999,11 @@ class CaChannel:
                             same as the first argument passed to user's callback by :meth:`array_get_callback`.
 
         :raises CaChannelException: if timeout error happens
+
+        .. versionchanged:: 3.0
+           If *req_type* is DBR_STRING for a char type PV, a string will be returned from composing
+           each element as a character.
+
         """
         # char waveform can be requested as string
         char_as_string = False
