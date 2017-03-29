@@ -7,7 +7,7 @@ Test Suits
 
 2. Test ``CaChannel.py`` with doctest::
  
-  $ python CaChannel -v
+  $ python -m CaChannel.CaChannel -v
 
 3. Other tests from original caPython/CaChannel.
   
