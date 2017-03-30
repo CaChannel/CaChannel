@@ -81,6 +81,7 @@ static PyObject *Py_ca_state(PyObject *self, PyObject *args);
 static PyObject *Py_ca_host_name(PyObject *self, PyObject *args);
 static PyObject *Py_ca_read_access(PyObject *self, PyObject *args);
 static PyObject *Py_ca_write_access(PyObject *self, PyObject *args);
+static PyObject *Py_ca_version(PyObject *self, PyObject *args);
 
 static PyObject *Py_ca_sg_create(PyObject *self, PyObject *args);
 static PyObject *Py_ca_sg_delete(PyObject *self, PyObject *args);
@@ -263,6 +264,7 @@ static PyMethodDef CA_Methods[] = {
     {"host_name",       Py_ca_host_name,        METH_VARARGS, "Host to which the channel is connected"},
     {"read_access",     Py_ca_read_access,      METH_VARARGS, "PV's readability"},
     {"write_access",    Py_ca_write_access,     METH_VARARGS, "PV's writability"},
+    {"version",         Py_ca_version,          METH_VARARGS, "CA version string"},
     /* Execution */
     {"pend",        Py_ca_pend,         METH_VARARGS, "call pend_io if early is True otherwise pend_event is called"},
     {"flush_io",    Py_ca_flush_io,     METH_VARARGS, "flush IO requests"},
@@ -1969,6 +1971,10 @@ static PyObject *Py_ca_write_access(PyObject *self, PyObject *args)
     return PyBool_FromLong(access);
 }
 
+static PyObject *Py_ca_version(PyObject *self, PyObject *args)
+{
+    return PyString_FromString(ca_version());
+}
 
 /*******************************************************
  *                    Utility                          *
