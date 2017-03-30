@@ -920,7 +920,7 @@ static PyObject *Py_ca_current_context(PyObject *self, PyObject *args)
 
 static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kws)
 {
-    PyObject *pObject = NULL;
+    PyObject *pObject = Py_None;
     int level = 0;
 
     const char *kwlist[] = {"context", "level",  NULL};
@@ -928,16 +928,14 @@ static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kw
     if (!PyArg_ParseTupleAndKeywords(args, kws, "|Oi", (char **)kwlist, &pObject, &level))
         return NULL;
 
-    struct ca_client_context *pContext = NULL;
-    if(pObject == NULL) {
+    if (pObject == Py_None) {
         Py_BEGIN_ALLOW_THREADS
-        pContext = ca_current_context();
+        ca_client_status(level);
         Py_END_ALLOW_THREADS
-    }
-    else
-        pContext = (struct ca_client_context *)CAPSULE_EXTRACT(pObject, "ca_client_context");
-
-    if (pContext != NULL) {
+    } else {
+        struct ca_client_context *pContext = (struct ca_client_context *)CAPSULE_EXTRACT(pObject, "ca_client_context");
+        if (pContext == NULL)
+            return NULL;
         Py_BEGIN_ALLOW_THREADS
         ca_context_status(pContext, level);
         Py_END_ALLOW_THREADS
