@@ -1009,20 +1009,19 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *
     int status;
 
     ChannelData *pData = new ChannelData(pCallback);
+    caCh *pFunc = NULL;
     if(PyCallable_Check(pCallback)) {
-        Py_BEGIN_ALLOW_THREADS
-        status = ca_create_channel(pName, &connection_callback, pData, priority, &chid);
-        Py_END_ALLOW_THREADS
-        if (status != ECA_NORMAL) delete pData;
-    } else {
-        Py_BEGIN_ALLOW_THREADS
-        status = ca_create_channel(pName, NULL, pData, priority, &chid);
-        Py_END_ALLOW_THREADS
+        pFunc = connection_callback;
     }
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_create_channel(pName, pFunc, pData, priority, &chid);
+    Py_END_ALLOW_THREADS
 
     if (status == ECA_NORMAL) {
         return Py_BuildValue("NN", IntToIntEnum("ECA", status), CAPSULE_BUILD(chid, "chid", NULL));
     } else {
+        delete pData;
+        Py_INCREF(Py_None);
         return Py_BuildValue("NO", IntToIntEnum("ECA", status), Py_None);
     }
 }
