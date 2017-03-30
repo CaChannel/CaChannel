@@ -1214,6 +1214,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         if (status != ECA_NORMAL) {
             delete pData;
         }
+        Py_INCREF(Py_None);
         return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     } else {
         // prepare the storage
@@ -1225,6 +1226,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
             return Py_BuildValue("(NN)", IntToIntEnum("ECA", status), DBRValue_New(dbrtype, count, pValue, use_numpy));
         } else {
             free(pValue);
+            Py_INCREF(Py_None);
             return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
         }
     }
@@ -1234,13 +1236,12 @@ static void put_callback(struct event_handler_args args)
 {
     PyGILState_STATE gstate = PyGILState_Ensure();
 
-    ChannelData *pData= (ChannelData *)args.usr;
+    ChannelData *pData = (ChannelData *)args.usr;
 
     if (PyCallable_Check(pData->pCallback)) {
-        PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
         PyObject *pArgs = Py_BuildValue(
-            "({s:O,s:N,s:i,s:N})",
-            "chid", pChid,
+            "({s:N,s:N,s:i,s:N})",
+            "chid", CAPSULE_BUILD(args.chid, "chid", NULL),
             "type", IntToIntEnum("DBR", args.type),
             "count", args.count,
             "status", IntToIntEnum("ECA", args.status)
@@ -1253,7 +1254,6 @@ static void put_callback(struct event_handler_args args)
             PyErr_Print();
         }
         Py_XDECREF(ret);
-        Py_XDECREF(pChid);
         Py_XDECREF(pArgs);
     }
 
@@ -1367,6 +1367,7 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObj
         return Py_BuildValue("(NN)", IntToIntEnum("ECA", status), CAPSULE_BUILD(pData, "evid", NULL));
     } else {
         delete pData;
+        Py_INCREF(Py_None);
         return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     }
 }
@@ -1662,6 +1663,7 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
         return Py_BuildValue("(NN)", IntToIntEnum("ECA", status), DBRValue_New(dbrtype, count, pValue, use_numpy));
     } else {
         free(pValue);
+        Py_INCREF(Py_None);
         return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     }
 }
@@ -2062,12 +2064,12 @@ static PyObject *Py_ca_message(PyObject *self, PyObject *args)
 
 static PyObject *Py_dbf_type_is_valid(PyObject *self, PyObject *args)
 {
-    int dbftype;
+    int field_type;
 
-    if(!PyArg_ParseTuple(args, "i", &dbftype))
+    if(!PyArg_ParseTuple(args, "i", &field_type))
          return NULL;
 
-    return PyBool_FromLong(dbf_type_is_valid(dbftype));
+    return PyBool_FromLong(dbf_type_is_valid(field_type));
 }
 
 static PyObject *Py_dbf_type_to_DBR(PyObject *self, PyObject *args)
