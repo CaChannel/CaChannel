@@ -10,7 +10,12 @@ Prefix: %{_prefix}
 Vendor: Xiaoqiang Wang <xiaoqiang.wang AT psi DOT ch>
 Url: http://pypi.python.org/pypi/cachannel
 
-BuildRequires: python-devel python-setuptools epics-base numpy 
+BuildRequires: python-devel python-setuptools numpy
+# If EPICS_BASE is defined from environment, then epics-base package is not required
+%if "%{?getenv:EPICS_BASE}"==""
+BuildRequires: epics-base
+%endif
+
 Requires: python-enum34
 
 %description
