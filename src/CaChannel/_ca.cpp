@@ -81,6 +81,7 @@ static PyObject *Py_ca_state(PyObject *self, PyObject *args);
 static PyObject *Py_ca_host_name(PyObject *self, PyObject *args);
 static PyObject *Py_ca_read_access(PyObject *self, PyObject *args);
 static PyObject *Py_ca_write_access(PyObject *self, PyObject *args);
+static PyObject *Py_ca_version(PyObject *self, PyObject *args);
 
 static PyObject *Py_ca_sg_create(PyObject *self, PyObject *args);
 static PyObject *Py_ca_sg_delete(PyObject *self, PyObject *args);
@@ -263,6 +264,7 @@ static PyMethodDef CA_Methods[] = {
     {"host_name",       Py_ca_host_name,        METH_VARARGS, "Host to which the channel is connected"},
     {"read_access",     Py_ca_read_access,      METH_VARARGS, "PV's readability"},
     {"write_access",    Py_ca_write_access,     METH_VARARGS, "PV's writability"},
+    {"version",         Py_ca_version,          METH_VARARGS, "CA version string"},
     /* Execution */
     {"pend",        Py_ca_pend,         METH_VARARGS, "call pend_io if early is True otherwise pend_event is called"},
     {"flush_io",    Py_ca_flush_io,     METH_VARARGS, "flush IO requests"},
@@ -918,7 +920,7 @@ static PyObject *Py_ca_current_context(PyObject *self, PyObject *args)
 
 static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kws)
 {
-    PyObject *pObject = NULL;
+    PyObject *pObject = Py_None;
     int level = 0;
 
     const char *kwlist[] = {"context", "level",  NULL};
@@ -926,16 +928,14 @@ static PyObject *Py_ca_show_context(PyObject *self, PyObject *args, PyObject *kw
     if (!PyArg_ParseTupleAndKeywords(args, kws, "|Oi", (char **)kwlist, &pObject, &level))
         return NULL;
 
-    struct ca_client_context *pContext = NULL;
-    if(pObject == NULL) {
+    if (pObject == Py_None) {
         Py_BEGIN_ALLOW_THREADS
-        pContext = ca_current_context();
+        ca_client_status(level);
         Py_END_ALLOW_THREADS
-    }
-    else
-        pContext = (struct ca_client_context *)CAPSULE_EXTRACT(pObject, "ca_client_context");
-
-    if (pContext != NULL) {
+    } else {
+        struct ca_client_context *pContext = (struct ca_client_context *)CAPSULE_EXTRACT(pObject, "ca_client_context");
+        if (pContext == NULL)
+            return NULL;
         Py_BEGIN_ALLOW_THREADS
         ca_context_status(pContext, level);
         Py_END_ALLOW_THREADS
@@ -1009,20 +1009,19 @@ static PyObject *Py_ca_create_channel(PyObject *self, PyObject *args, PyObject *
     int status;
 
     ChannelData *pData = new ChannelData(pCallback);
+    caCh *pFunc = NULL;
     if(PyCallable_Check(pCallback)) {
-        Py_BEGIN_ALLOW_THREADS
-        status = ca_create_channel(pName, &connection_callback, pData, priority, &chid);
-        Py_END_ALLOW_THREADS
-        if (status != ECA_NORMAL) delete pData;
-    } else {
-        Py_BEGIN_ALLOW_THREADS
-        status = ca_create_channel(pName, NULL, pData, priority, &chid);
-        Py_END_ALLOW_THREADS
+        pFunc = connection_callback;
     }
+    Py_BEGIN_ALLOW_THREADS
+    status = ca_create_channel(pName, pFunc, pData, priority, &chid);
+    Py_END_ALLOW_THREADS
 
     if (status == ECA_NORMAL) {
         return Py_BuildValue("NN", IntToIntEnum("ECA", status), CAPSULE_BUILD(chid, "chid", NULL));
     } else {
+        delete pData;
+        Py_INCREF(Py_None);
         return Py_BuildValue("NO", IntToIntEnum("ECA", status), Py_None);
     }
 }
@@ -1215,6 +1214,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         if (status != ECA_NORMAL) {
             delete pData;
         }
+        Py_INCREF(Py_None);
         return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     } else {
         // prepare the storage
@@ -1226,6 +1226,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
             return Py_BuildValue("(NN)", IntToIntEnum("ECA", status), DBRValue_New(dbrtype, count, pValue, use_numpy));
         } else {
             free(pValue);
+            Py_INCREF(Py_None);
             return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
         }
     }
@@ -1235,13 +1236,12 @@ static void put_callback(struct event_handler_args args)
 {
     PyGILState_STATE gstate = PyGILState_Ensure();
 
-    ChannelData *pData= (ChannelData *)args.usr;
+    ChannelData *pData = (ChannelData *)args.usr;
 
     if (PyCallable_Check(pData->pCallback)) {
-        PyObject *pChid = CAPSULE_BUILD(args.chid, "chid", NULL);
         PyObject *pArgs = Py_BuildValue(
-            "({s:O,s:N,s:i,s:N})",
-            "chid", pChid,
+            "({s:N,s:N,s:i,s:N})",
+            "chid", CAPSULE_BUILD(args.chid, "chid", NULL),
             "type", IntToIntEnum("DBR", args.type),
             "count", args.count,
             "status", IntToIntEnum("ECA", args.status)
@@ -1254,7 +1254,6 @@ static void put_callback(struct event_handler_args args)
             PyErr_Print();
         }
         Py_XDECREF(ret);
-        Py_XDECREF(pChid);
         Py_XDECREF(pArgs);
     }
 
@@ -1368,6 +1367,7 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObj
         return Py_BuildValue("(NN)", IntToIntEnum("ECA", status), CAPSULE_BUILD(pData, "evid", NULL));
     } else {
         delete pData;
+        Py_INCREF(Py_None);
         return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     }
 }
@@ -1663,6 +1663,7 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
         return Py_BuildValue("(NN)", IntToIntEnum("ECA", status), DBRValue_New(dbrtype, count, pValue, use_numpy));
     } else {
         free(pValue);
+        Py_INCREF(Py_None);
         return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     }
 }
@@ -1969,6 +1970,10 @@ static PyObject *Py_ca_write_access(PyObject *self, PyObject *args)
     return PyBool_FromLong(access);
 }
 
+static PyObject *Py_ca_version(PyObject *self, PyObject *args)
+{
+    return PyString_FromString(ca_version());
+}
 
 /*******************************************************
  *                    Utility                          *
@@ -2059,12 +2064,12 @@ static PyObject *Py_ca_message(PyObject *self, PyObject *args)
 
 static PyObject *Py_dbf_type_is_valid(PyObject *self, PyObject *args)
 {
-    int dbftype;
+    int field_type;
 
-    if(!PyArg_ParseTuple(args, "i", &dbftype))
+    if(!PyArg_ParseTuple(args, "i", &field_type))
          return NULL;
 
-    return PyBool_FromLong(dbf_type_is_valid(dbftype));
+    return PyBool_FromLong(dbf_type_is_valid(field_type));
 }
 
 static PyObject *Py_dbf_type_to_DBR(PyObject *self, PyObject *args)
