@@ -1,6 +1,7 @@
 include README.rst
 include LICENSE
 include MANIFEST.in
+include python-CaChannel.spec
 include src/_ca.cpp
 include src/*.py
 prune */build
