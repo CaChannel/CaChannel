@@ -16,6 +16,10 @@ BuildRequires: python-devel python-setuptools numpy
 BuildRequires: epics-base
 %endif
 
+# Do not check .so files in the python_sitearch directory
+# or any files in the application's directory for provides
+%global __provides_exclude_from ^(%{python_sitearch}|%{python3_sitearch})/.*\\.so$
+
 Requires: python-enum34
 
 %description
