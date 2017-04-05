@@ -1000,6 +1000,18 @@ class CaChannel:
 
         :raises CaChannelException: if timeout error happens
 
+        >>> chan = CaChannel('catest')
+        >>> chan.searchw()
+        >>> chan.putw(0)
+        >>> value = chan.getw(ca.DBR_TIME_DOUBLE)
+        >>> for k,v in sorted(value.items()): # doctest: +ELLIPSIS
+        ...    print(k, v)
+        pv_nseconds ...
+        pv_seconds ...
+        pv_severity AlarmSeverity.No
+        pv_status AlarmCondition.No
+        pv_value 0.0
+
         .. versionchanged:: 3.0
            If *req_type* is DBR_XXX_STRING for a char type PV, a string will be returned from composing
            each element as a character.
@@ -1015,7 +1027,7 @@ class CaChannel:
         }
         char_as_string = False
         if self.field_type() == ca.DBF_CHAR and req_type in dbr_string_to_char:
-            req_type = dbr_string_to_char.get[req_type]
+            req_type = dbr_string_to_char[req_type]
             char_as_string = True
 
         self.array_get(req_type, count, **keywords)
@@ -1119,14 +1131,15 @@ class CaChannel:
             'strs':   'statestrings'
         }
         if isinstance(value, dict):
-            # convert stamp dict
-            if 'stamp' in value:
-                epicsArgs['seconds'] = value['stamp']['seconds'] - ca.POSIX_TIME_AT_EPICS_EPOCH
-                epicsArgs['nseconds'] = value['stamp']['nanoseconds']
-            # dbr fields get 'pv_prefix'
             for key in value:
-                new_key = key_map.get(key, key)
-                epicsArgs['pv_' + new_key] = value[key]
+                # convert stamp dict
+                if key == 'stamp':
+                    epicsArgs['pv_seconds'] = value['stamp']['seconds'] - ca.POSIX_TIME_AT_EPICS_EPOCH
+                    epicsArgs['pv_nseconds'] = value['stamp']['nanoseconds']
+                else:
+                    # dbr fields get 'pv_prefix'
+                    new_key = key_map.get(key, key)
+                    epicsArgs['pv_' + new_key] = value[key]
         else:
             epicsArgs['pv_value'] = value
 
