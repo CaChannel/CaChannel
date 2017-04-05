@@ -1,6 +1,6 @@
 """
 CaChannel class having identical API as of caPython/CaChannel class,
-based on caffi
+based on `caffi.ca API <https://caffi.readthedocs.io/en/latest/api.html>`.
 """
 # python 2 -> 3 compatible layer
 from __future__ import print_function, absolute_import
@@ -1001,28 +1001,22 @@ class CaChannel:
         :raises CaChannelException: if timeout error happens
 
         .. versionchanged:: 3.0
-           If *req_type* is DBR_STRING for a char type PV, a string will be returned from composing
+           If *req_type* is DBR_XXX_STRING for a char type PV, a string will be returned from composing
            each element as a character.
 
         """
         # char waveform can be requested as string
+        dbr_string_to_char = {
+            ca.DBR_STRING: ca.DBR_CHAR,
+            ca.DBR_STS_STRING: ca.DBR_STS_CHAR,
+            ca.DBR_TIME_STRING: ca.DBR_TIME_CHAR,
+            ca.DBR_GR_STRING: ca.DBR_GR_CHAR,
+            ca.DBR_CTRL_STRING: ca.DBR_CTRL_CHAR
+        }
         char_as_string = False
-        if self.field_type() == ca.DBF_CHAR:
-            if req_type == ca.DBR_STRING:
-                char_as_string = True
-                req_type = ca.DBR_CHAR
-            elif req_type == ca.DBR_STS_STRING:
-                char_as_string = True
-                req_type = ca.DBR_STS_CHAR
-            elif req_type == ca.DBR_TIME_STRING:
-                char_as_string = True
-                req_type = ca.DBR_TIME_CHAR
-            elif req_type == ca.DBR_GR_STRING:
-                char_as_string = True
-                req_type = ca.DBR_GR_CHAR
-            elif req_type == ca.DBR_CTRL_STRING:
-                char_as_string = True
-                req_type = ca.DBR_CTRL_CHAR
+        if self.field_type() == ca.DBF_CHAR and req_type in dbr_string_to_char:
+            req_type = dbr_string_to_char.get[req_type]
+            char_as_string = True
 
         self.array_get(req_type, count, **keywords)
         timeout = self.getTimeout()
