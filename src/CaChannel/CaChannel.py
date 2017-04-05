@@ -1105,40 +1105,28 @@ class CaChannel:
 
     @staticmethod
     def _format_value(value, epicsArgs, use_numpy):
-        # dbr value fields are prefixed with 'pv_'
+        # dbr fields get renamed for CaChannel API
+        key_map = {
+            'lower_alarm_limit':   'loalarmlim',
+            'lower_ctrl_limit':    'loctrllim',
+            'lower_disp_limit':    'lodislim',
+            'lower_warning_limit': 'lowarnlim',
+            'upper_alarm_limit':   'upalarmlim',
+            'upper_ctrl_limit':    'upctrllim',
+            'upper_disp_limit':    'updislim',
+            'upper_warning_limit': 'upwarnlim',
+            'no_str': 'nostrings',
+            'strs':   'statestrings'
+        }
         if isinstance(value, dict):
-            for key in value:
-                if key == 'lower_alarm_limit':
-                    new_key = 'loalarmlim'
-                elif key == 'lower_ctrl_limit':
-                    new_key = 'loctrllim'
-                elif key == 'lower_disp_limit':
-                    new_key = 'lodislim'
-                elif key == 'lower_warning_limit':
-                    new_key = 'lowarnlim'
-                elif key == 'upper_alarm_limit':
-                    new_key = 'upalarmlim'
-                elif key == 'upper_ctrl_limit':
-                    new_key = 'upctrllim'
-                elif key == 'upper_disp_limit':
-                    new_key = 'updislim'
-                elif key == 'upper_warning_limit':
-                    new_key = 'upwarnlim'
-                elif key == 'no_str':
-                    new_key = 'nostrings'
-                elif key == 'strs':
-                    new_key = 'statestrings'
-                else:
-                    new_key = key
-                epicsArgs['pv_' + new_key] = value[key]
-            if 'pv_status' in epicsArgs:
-                epicsArgs['pv_status'] = epicsArgs['pv_status']
-                epicsArgs['pv_severity'] = epicsArgs['pv_severity']
             # convert stamp dict
-            if 'pv_stamp' in epicsArgs:
-                epicsArgs['pv_seconds'] = epicsArgs['pv_stamp']['seconds'] - ca.POSIX_TIME_AT_EPICS_EPOCH
-                epicsArgs['pv_nseconds'] = epicsArgs['pv_stamp']['nanoseconds']
-                del epicsArgs['pv_stamp']
+            if 'stamp' in value:
+                epicsArgs['seconds'] = value['stamp']['seconds'] - ca.POSIX_TIME_AT_EPICS_EPOCH
+                epicsArgs['nseconds'] = value['stamp']['nanoseconds']
+            # dbr fields get 'pv_prefix'
+            for key in value:
+                new_key = key_map.get(key, key)
+                epicsArgs['pv_' + new_key] = value[key]
         else:
             epicsArgs['pv_value'] = value
 
