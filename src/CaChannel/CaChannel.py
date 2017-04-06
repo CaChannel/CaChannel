@@ -1137,7 +1137,7 @@ class CaChannel:
                     epicsArgs['pv_seconds'] = value['stamp']['seconds'] - ca.POSIX_TIME_AT_EPICS_EPOCH
                     epicsArgs['pv_nseconds'] = value['stamp']['nanoseconds']
                 else:
-                    # dbr fields get 'pv_prefix'
+                    # dbr fields get renamed and 'pv_' prefix
                     new_key = key_map.get(key, key)
                     epicsArgs['pv_' + new_key] = value[key]
         else:
