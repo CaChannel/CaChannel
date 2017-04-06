@@ -1,6 +1,6 @@
 package:
   name: cachannel
-  version: 3.0.0rc2
+  version: 3.0.0
 
 source:
   # build from source tree (for conda-build > 1.9)
