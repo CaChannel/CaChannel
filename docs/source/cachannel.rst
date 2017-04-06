@@ -20,7 +20,7 @@ Process variables (PV) are accessible though channel access. Interactions with E
    :synopsis: Low level operation to channel access C library
 
 This is a module to present the interface of low level channel access C library.
-It has the same API as module `caffi.ca <http://caffi.readthedocs.io/en/latest/api.html>`_.
+It has the same API as module :mod:`caffi.ca`.
 
 Data Types
 ^^^^^^^^^^
