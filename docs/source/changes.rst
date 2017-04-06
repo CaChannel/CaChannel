@@ -1,7 +1,7 @@
 ChangeLog
 =========
 
-3.0.0 (XX-03-2017)
+3.0.0 (07-04-2017)
 ------------------
 
 - Rewrite low level :py:mod:`ca` module with the same API as in package `caffi <https://pypi.python.org/pypi/caffi>`_.
