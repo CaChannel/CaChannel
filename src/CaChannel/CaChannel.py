@@ -204,10 +204,10 @@ class CaChannel:
         ...     if connection_state == ca.CA_OP_CONN_UP:
         ...         print(ca.name(chid), "is connected")
         >>> chan.search_and_connect(None, connCB, chan)
-        >>> status = chan.pend_event(3)
+        >>> status = chan.pend_event(3) # doctest: +SKIP
         catest is connected
         >>> chan.search_and_connect('cabo', connCB, chan)
-        >>> status = chan.pend_event(3)
+        >>> status = chan.pend_event(3) # doctest: +SKIP
         cabo is connected
         >>> chan.clear_channel()
         """
@@ -294,7 +294,7 @@ class CaChannel:
         ...     if connection_state == ca.CA_OP_CONN_UP:
         ...         print(ca.name(chid), "is connected")
         >>> chan.change_connection_event(connCB) # install connection callback
-        >>> status = chan.pend_event(3)
+        >>> status = chan.pend_event(3) # doctest: +SKIP
         catest is connected
         >>> chan.change_connection_event(None) # remove connection callback
 
