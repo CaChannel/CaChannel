@@ -25,6 +25,10 @@ static std::map<struct ca_client_context*, context_callback> CONTEXTS;
      #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #endif
 
+#ifndef MAX
+     #define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
+#endif
+
 #ifndef PyModule_AddIntMacro
     #define PyModule_AddIntMacro(m, c) PyModule_AddIntConstant(m, #c, c)
 #endif
@@ -1218,7 +1222,8 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     } else {
         // prepare the storage
-        void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > element_count) ? element_count : count));
+        count = MAX(0, element_count);
+        void * pValue = malloc(dbr_size_n(dbrtype, count));
         Py_BEGIN_ALLOW_THREADS
         status = ca_array_get(dbrtype, count, chid, pValue);
         Py_END_ALLOW_THREADS
@@ -1650,10 +1655,10 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
     if (pCount == Py_None)
         count = element_count;
     else
-        count = (unsigned long)PyLong_AsUnsignedLong(pCount);
+        count = MAX(0, MIN(element_count, (unsigned long)PyLong_AsUnsignedLong(pCount)));
 
     // prepare the storage
-    void * pValue = malloc(dbr_size_n(dbrtype, (count==0 || count > element_count) ? element_count : count));
+    void * pValue = malloc(dbr_size_n(dbrtype, count));
     int status;
     Py_BEGIN_ALLOW_THREADS
     status = ca_sg_array_get(gid, dbrtype, count, chid, pValue);
