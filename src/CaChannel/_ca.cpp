@@ -1222,7 +1222,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     } else {
         // prepare the storage
-        count = MAX(0, element_count);
+        count = MAX(0, count);
         void * pValue = malloc(dbr_size_n(dbrtype, count));
         Py_BEGIN_ALLOW_THREADS
         status = ca_array_get(dbrtype, count, chid, pValue);
