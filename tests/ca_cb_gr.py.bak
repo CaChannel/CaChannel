@@ -30,56 +30,56 @@ import sys
 
 def connectCb(epics_args, user_args):
     print("connectCb: Python connect callback function")
-    print((type(epics_args)))
+    print(type(epics_args))
     print(epics_args)
     print(user_args)
     
 def putCb(epics_args, user_args):
     print("putCb: Python put callback function")
-    print((type(epics_args)))
+    print(type(epics_args))
     print(epics_args)
-    print((ca.name(epics_args['chid'])))
-    print((ca.dbr_text(epics_args['type'])))
-    print((epics_args['count']))
-    print((ca.message(epics_args['status'])))
+    print(ca.name(epics_args['chid']))
+    print(ca.dbr_text(epics_args['type']))
+    print(epics_args['count'])
+    print(ca.message(epics_args['status']))
     print(user_args)
 
 def getCb(epics_args, user_args):
     print("getCb: Python get callback function")
-    print((type(epics_args)))
+    print(type(epics_args))
     print(epics_args)
-    print(("pvName = ", ca.name(epics_args['chid'])))
-    print(("type = ", ca.dbr_text(epics_args['type'])))
-    print(("count = ", epics_args['count']))
-    print(("status = ", ca.message(epics_args['status'])))
-    print(("user args = ", user_args))
-    print(("value(s) = ", epics_args['pv_value']))
+    print("pvName = ", ca.name(epics_args['chid']))
+    print("type = ", ca.dbr_text(epics_args['type']))
+    print("count = ", epics_args['count'])
+    print("status = ", ca.message(epics_args['status']))
+    print("user args = ", user_args)
+    print("value(s) = ", epics_args['pv_value'])
 #    print ca.alarmSeverityString(epics_args['pv_severity'])
 #    print ca.alarmStatusString(epics_args['pv_status'])
 
 def getCb1(epics_args, user_args):
     print("getCb: Python get callback function")
-    print((type(epics_args)))
+    print(type(epics_args))
     print(epics_args)
-    print(("pvName = ", ca.name(epics_args['chid'])))
-    print(("type = ", ca.dbr_text(epics_args['type'])))
-    print(("count = ", epics_args['count']))
-    print(("status = ", ca.message(epics_args['status'])))
-    print(("user args = ", user_args))
-    print(("value(s) = ", epics_args['pv_value']))
+    print("pvName = ", ca.name(epics_args['chid']))
+    print("type = ", ca.dbr_text(epics_args['type']))
+    print("count = ", epics_args['count'])
+    print("status = ", ca.message(epics_args['status']))
+    print("user args = ", user_args)
+    print("value(s) = ", epics_args['pv_value'])
 
 def getCb2(epics_args, user_args):
     print("getCb: Python get callback function")
-    print((type(epics_args)))
+    print(type(epics_args))
     print(epics_args)
-    print(("pvName = ", ca.name(epics_args['chid'])))
-    print(("type = ", ca.dbr_text(epics_args['type'])))
-    print(("count = ", epics_args['count']))
-    print(("status = ", ca.message(epics_args['status'])))
-    print(("user args = ", user_args))
-    print(("value(s) = ", epics_args['pv_value']))
-    print((ca.alarmSeverityString(epics_args['pv_severity'])))
-    print((ca.alarmStatusString(epics_args['pv_status'])))
+    print("pvName = ", ca.name(epics_args['chid']))
+    print("type = ", ca.dbr_text(epics_args['type']))
+    print("count = ", epics_args['count'])
+    print("status = ", ca.message(epics_args['status']))
+    print("user args = ", user_args)
+    print("value(s) = ", epics_args['pv_value'])
+    print(ca.alarmSeverityString(epics_args['pv_severity']))
+    print(ca.alarmStatusString(epics_args['pv_status']))
 
 
 def main():
@@ -106,7 +106,7 @@ def main():
         for i in range(20):
             chan.pend_event()
     except CaChannelException as status:
-        print((ca.message(status)))
+        print(ca.message(status))
 
 
     try:
@@ -128,6 +128,6 @@ def main():
         for i in range(20):
             cawave.pend_event()
     except CaChannelException as status:
-        print((ca.message(status)))
+        print(ca.message(status))
 
 main()

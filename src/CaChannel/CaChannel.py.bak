@@ -3,7 +3,7 @@ CaChannel class having identical API as of caPython/CaChannel class,
 based on `caffi.ca API <https://caffi.readthedocs.io/en/latest/api.html>`.
 """
 # python 2 -> 3 compatible layer
-
+from __future__ import print_function, absolute_import
 import collections
 from functools import wraps
 import itertools
@@ -156,7 +156,7 @@ class CaChannel:
 
         .. versionadded:: 3.0
         """
-        if isinstance(callback, collections.Callable):
+        if callable(callback):
             self._callbacks['accessCB'] = (callback, user_args)
             ca.replace_access_rights_event(self._chid, self._access_callback)
         else:
@@ -300,7 +300,7 @@ class CaChannel:
 
         """
 
-        if isinstance(callback, collections.Callable):
+        if callable(callback):
             self._callbacks['connCB'] = (callback, user_args)
             status = ca.change_connection_event(self._chid, self._conn_callback)
         else:

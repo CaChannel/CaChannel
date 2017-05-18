@@ -258,7 +258,7 @@ def getCallback(epicsArgs, userArgs):
     been received.  It copies all of the attributes in the epicsArgs dictionary
     to the callBack attribute of the epicsPV object.
     """
-    for key in list(epicsArgs.keys()):
+    for key in epicsArgs.keys():
         setattr(userArgs[0], key, epicsArgs[key])
     if userArgs[0].monitorState == 1: userArgs[0].monitorState = 2
     userArgs[0].newMonitor = 1
