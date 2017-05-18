@@ -97,7 +97,7 @@ def create_exension():
         if subprocess.call('nm %s | grep -q rl_' % os.path.join(EPICSBASE, 'lib', HOSTARCH, 'libCom.a'), shell=True) == 0:
             libraries += ['readline']
     else:
-        print(("Platform", UNAME, ARCH, " Not Supported"))
+        print("Platform", UNAME, ARCH, " Not Supported")
         sys.exit(1)
 
     include_dirs = [os.path.join(EPICSBASE, "include"),

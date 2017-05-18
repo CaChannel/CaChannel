@@ -168,9 +168,9 @@ def camonitor(name, as_string=False, count=None, callback=None):
         if as_string and req_type == ca.DBR_CHAR:
             value = _ints_to_string(value)
 
-        print(('%s %s %s' % (name, strfmt, value)))
+        print('%s %s %s' % (name, strfmt, value))
 
-    if callback is not None and not isinstance(callback, collections.Callable):
+    if callback is not None and not callable(callback):
         chan.clear_event()
         chan.flush_io()
         return

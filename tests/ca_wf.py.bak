@@ -24,7 +24,7 @@ from CaChannel import *
 
 def getCallback(epicsArgs, userArgs):
     data=epicsArgs['pv_value']
-    print(('In callback', data))
+    print('In callback', data)
 
 def main():
     try:
@@ -40,13 +40,13 @@ def main():
         #cawave.pend_io()
         
         cawave.putw(l)
-        print((cawave.getw()))
+        print(cawave.getw())
         
         cawave.add_masked_array_event(None, None, ca.DBE_VALUE, getCallback, 0)
         cawave.pend_event()
         #cawave.clear_event()
 
     except CaChannelException as status:
-        print((ca.message(status)))
+        print(ca.message(status))
     
 main()

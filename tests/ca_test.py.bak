@@ -31,7 +31,7 @@ class CaCreateTest(CaTest):
     def test_create_callback(self):
         epicsArgs = {}
         def connectionCB(args):
-            for k,v in list(args.items()):
+            for k,v in args.items():
                 epicsArgs[k] = v
 
         status, chid = ca.create_channel(self.chanName, connectionCB)
@@ -88,7 +88,7 @@ class CaGetTest(CaTest):
         done = [False]
 
         def getCB(args):
-            for k,v in list(args.items()):
+            for k,v in args.items():
                 epicsArgs[k] = v
             done[0] = True
 
@@ -105,7 +105,7 @@ class CaGetTest(CaTest):
         done = [False]
 
         def monCB(args):
-            for k,v in list(args.items()):
+            for k,v in args.items():
                 epicsArgs[k] = v
             done[0] = True
 
@@ -194,7 +194,7 @@ class CaPutTest(CaTest):
         done = [False]
 
         def putCB(args):
-            for k,v in list(args.items()):
+            for k,v in args.items():
                 epicsArgs[k] = v
             done[0] = True
 
