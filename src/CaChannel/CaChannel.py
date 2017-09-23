@@ -717,6 +717,7 @@ class CaChannel:
         if self._evid is not None:
             status = ca.clear_subscription(self._evid)
             self._evid = None
+            self._callbacks['eventCB'] = None
             if status != ca.ECA_NORMAL:
                 raise CaChannelException(status)
 
