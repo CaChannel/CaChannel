@@ -1081,6 +1081,8 @@ class CaChannel:
             callbackFunc(epicsArgs, userArgs)
         except:
             traceback.print_exc()
+        finally:
+            self._callbacks['putCB'] = None
 
     def _get_callback(self, epicsArgs):
         callback = self._callbacks.get('getCB')
@@ -1092,6 +1094,8 @@ class CaChannel:
             callbackFunc(epicsArgs, userArgs)
         except:
             traceback.print_exc()
+        finally:
+            self._callbacks['getCB'] = None
 
     def _event_callback(self, epicsArgs):
         callback = self._callbacks.get('eventCB')
