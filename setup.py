@@ -145,7 +145,7 @@ else:
 setup(name="CaChannel",
       version=_version.__version__,
       author="Xiaoqiang Wang",
-      author_email="xiaoqiang.wang AT psi DOT ch",
+      author_email="xiaoqiang.wang@psi.ch",
       description="CaChannel Interface to EPICS",
       long_description=open('README.rst').read(),
       url="http://pypi.python.org/pypi/cachannel",
