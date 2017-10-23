@@ -1222,7 +1222,7 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         return Py_BuildValue("(NO)", IntToIntEnum("ECA", status), Py_None);
     } else {
         // prepare the storage
-        count = MAX(0, count);
+        count = MAX(1, count);
         void * pValue = malloc(dbr_size_n(dbrtype, count));
         Py_BEGIN_ALLOW_THREADS
         status = ca_array_get(dbrtype, count, chid, pValue);
@@ -1655,7 +1655,7 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
     if (pCount == Py_None)
         count = element_count;
     else
-        count = MAX(0, MIN(element_count, (unsigned long)PyLong_AsUnsignedLong(pCount)));
+        count = MAX(1, MIN(element_count, (unsigned long)PyLong_AsUnsignedLong(pCount)));
 
     // prepare the storage
     void * pValue = malloc(dbr_size_n(dbrtype, count));
