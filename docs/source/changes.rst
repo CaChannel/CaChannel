@@ -1,6 +1,14 @@
 ChangeLog
 =========
 
+3.0.1 (23-10-2017)
+------------------
+
+- Allow *count=0* in :py:meth:`ca.get` if callback is provided.
+- Dereference user supplied callbacks
+  - get/put callbacks after being called.
+  - event callback in :py:meth:`CaChannel.CaChannel.clear_event`.
+
 3.0.0 (06-04-2017)
 ------------------
 
