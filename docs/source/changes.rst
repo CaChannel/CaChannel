@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+3.0.3 (08-12-2017)
+------------------
+
+- Fix :py:meth:`ca.put` with non-ascii input string.
+- Change that it returns a :py:class:`bytes` object from non-utf8 C string. It fails with an obscure exception message before.
+- Change TravisCI to use conda-forge/linux-anvil docker image, but give the defaults channel higher priority.
+
 3.0.2 (23-10-2017)
 ------------------
 
