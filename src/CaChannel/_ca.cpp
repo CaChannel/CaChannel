@@ -3019,7 +3019,7 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
                 value_count = (unsigned long)(buff_size + 1);
                 PyObject *pCharList = PyList_New(value_count);
                 for(int i=0; i<buff_size && pBuff!=NULL; i++) {
-                    PyList_SetItem(pCharList, i, PyInt_FromLong(pBuff[i]));
+                    PyList_SetItem(pCharList, i, PyInt_FromLong((unsigned char)pBuff[i]));
                 }
                 PyList_SetItem(pCharList, buff_size, PyInt_FromLong(0));
                 // the new list replaces string/bytes object
@@ -3069,16 +3069,18 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
         dbr_string_t *ptr = (dbr_string_t *) pbuf;
         if (count == 1) {
             char *str = NULL;
-            PyArg_Parse(pValue, "z", &str);
+            Py_ssize_t size = 0;
+            PyArg_Parse(pValue, "z#", &str, &size);
             if (str != NULL)
                 strncpy(ptr[0], str, sizeof(dbr_string_t));
         } else {
             for(unsigned long i=0; i<count; i++) {
                 PyObject *item = PySequence_GetItem(pValue, i);
                 char *str = NULL;
-	            PyArg_Parse(item, "z", &str);
-	            if (str != NULL)
-	                strncpy(ptr[i], str, sizeof(dbr_string_t));
+                Py_ssize_t size = 0;
+                PyArg_Parse(item, "z#", &str, &size);
+                if (str != NULL)
+                    strncpy(ptr[i], str, sizeof(dbr_string_t));
                 Py_XDECREF(item);
             }
         }
