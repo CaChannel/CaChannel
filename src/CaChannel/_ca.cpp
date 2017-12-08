@@ -166,7 +166,7 @@ static PyObject *DBRValue_get(DBRValueObject *self)
 static PyObject* DBRValue_getattro(DBRValueObject *self, PyObject* name)
 {
     PyObject *pResult = NULL;
-	char* attr = PyString_AsString(name);
+    char* attr = PyString_AsString(name);
     if (strcmp(attr, "use_numpy") == 0) {
         pResult = Py_BuildValue("i", self->use_numpy);
     } else {
@@ -178,11 +178,11 @@ static PyObject* DBRValue_getattro(DBRValueObject *self, PyObject* name)
 static int DBRValue_setattro(DBRValueObject *self, PyObject* name, PyObject* value)
 {
     int error = 0;
-	char* attr = PyString_AsString(name);
+    char* attr = PyString_AsString(name);
     if (strcmp(attr, "use_numpy") == 0) {
         self->use_numpy = (PyLong_AsLong(value) != 0);
     } else {
-		error = PyObject_GenericSetAttr((PyObject*)self, name, value);
+    error = PyObject_GenericSetAttr((PyObject*)self, name, value);
     }
     return error;
 }
@@ -214,12 +214,12 @@ static PyTypeObject DBRValueType = {
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
     "DBRValue object",         /* tp_doc */
-    0,		                   /* tp_traverse */
-    0,		                   /* tp_clear */
-    0,		                   /* tp_richcompare */
-    0,		                   /* tp_weaklistoffset */
-    0,		                   /* tp_iter */
-    0,		                   /* tp_iternext */
+    0,                         /* tp_traverse */
+    0,                         /* tp_clear */
+    0,                         /* tp_richcompare */
+    0,                         /* tp_weaklistoffset */
+    0,                         /* tp_iter */
+    0,                         /* tp_iternext */
     DBRValue_methods,          /* tp_methods */
 };
 
@@ -1002,8 +1002,8 @@ static void connection_callback(struct connection_handler_args args)
             PyErr_Print();
         }
         Py_XDECREF(ret);
-	    Py_XDECREF(pArgs);
-	    Py_XDECREF(pChid);
+        Py_XDECREF(pArgs);
+        Py_XDECREF(pChid);
     }
 
     PyGILState_Release(gstate);
