@@ -11,16 +11,13 @@ Vendor: Xiaoqiang Wang <xiaoqiang.wang AT psi DOT ch>
 Url: http://pypi.python.org/pypi/cachannel
 
 BuildRequires: python-devel python-setuptools numpy
-# If EPICS_BASE is defined from environment, then epics-base package is not required
-%if "%{?getenv:EPICS_BASE}"==""
 BuildRequires: epics-base
-%endif
 
 # Do not check .so files in the python_sitearch directory
 # or any files in the application's directory for provides
 %global __provides_exclude_from ^(%{python_sitearch}|%{python3_sitearch})/.*\\.so$
 
-Requires: python-enum34
+Requires: python-enum34 epics-base
 
 %description
 CaChannel - EPICS Channel Access in Python
