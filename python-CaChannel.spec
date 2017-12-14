@@ -44,7 +44,7 @@ Check out `CaChannel documents <https://cachannel.readthedocs.org>`_ to get star
 env CFLAGS="$RPM_OPT_FLAGS" python setup.py build
 
 %install
-python setup.py install --single-version-externally-managed -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
+EPICS_SHARED=YES python setup.py install --single-version-externally-managed -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 
 %clean
 rm -rf $RPM_BUILD_ROOT

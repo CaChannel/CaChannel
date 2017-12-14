@@ -22,6 +22,7 @@ build_ca_ext=True
 # define EPICS base path and host arch
 EPICSBASE = os.environ.get("EPICS_BASE")
 HOSTARCH = os.environ.get("EPICS_HOST_ARCH")
+SHARED = os.environ.get("EPICS_SHARED")
 # guess from EPICS root environment variable
 if not EPICSBASE:
     EPICSROOT = os.environ.get("EPICS")
@@ -53,14 +54,15 @@ def create_exension():
         UNAME = "WIN32"
         static = False
         if HOSTARCH in ['win32-x86', 'windows-x64', 'win32-x86-debug', 'windows-x64-debug']:
-            dlls = ['Com.dll', 'ca.dll']
-            for dll in dlls:
-                dllpath = os.path.join(EPICSBASE, 'bin', HOSTARCH, dll)
-                if not os.path.exists(dllpath):
-                    static = True
-                    break
-                shutil.copy(dllpath,
-                            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'CaChannel'))
+            if not SHARED:
+                dlls = ['Com.dll', 'ca.dll']
+                for dll in dlls:
+                    dllpath = os.path.join(EPICSBASE, 'bin', HOSTARCH, dll)
+                    if not os.path.exists(dllpath):
+                        static = True
+                        break
+                    shutil.copy(dllpath,
+                                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'CaChannel'))
             macros += [('_CRT_SECURE_NO_WARNINGS', 'None'), ('EPICS_CALL_DLL', '')]
             cflags += ['/Z7']
             CMPL = 'msvc'
@@ -88,14 +90,16 @@ def create_exension():
     elif UNAME.lower() == "darwin":
         CMPL = 'clang'
         HOSTARCH = 'darwin-x86'
-        extra_objects = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'lib%s.a' % lib) for lib in libraries]
-        libraries = []
+        if not SHARED:
+            extra_objects = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'lib%s.a' % lib) for lib in libraries]
+            libraries = []
     elif UNAME.lower() == "linux":
         CMPL = 'gcc'
-        extra_objects = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'lib%s.a' % lib) for lib in libraries]
-        libraries = ['rt']
-        if subprocess.call('nm %s | grep -q rl_' % os.path.join(EPICSBASE, 'lib', HOSTARCH, 'libCom.a'), shell=True) == 0:
-            libraries += ['readline']
+        if not SHARED:
+            extra_objects = [os.path.join(EPICSBASE, 'lib', HOSTARCH, 'lib%s.a' % lib) for lib in libraries]
+            libraries = ['rt']
+            if subprocess.call('nm %s | grep -q rl_' % os.path.join(EPICSBASE, 'lib', HOSTARCH, 'libCom.a'), shell=True) == 0:
+                libraries += ['readline']
     else:
         print("Platform", UNAME, ARCH, " Not Supported")
         sys.exit(1)
@@ -125,7 +129,7 @@ def create_exension():
                           libraries=libraries,
                           library_dirs=[os.path.join(EPICSBASE, "lib", HOSTARCH)])
 
-    if UNAME not in ["WIN32", "Darwin", "Linux"]:
+    if UNAME == "Linux" and SHARED:
         ca_module.runtime_library_dirs = [os.path.join(EPICSBASE, "lib", HOSTARCH)]
 
     return [ca_module], dlls
