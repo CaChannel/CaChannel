@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+3.0.4 (15-12-2017)
+------------------
+
+- Change to link EPICS dynamic libraries if environment variable ``EPICS_SHARED`` is defined.
+
 3.0.3 (08-12-2017)
 ------------------
 
