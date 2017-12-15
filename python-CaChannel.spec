@@ -1,6 +1,6 @@
 Summary: CaChannel Interface to EPICS
 Name: python-CaChannel
-Version: 3.0.3
+Version: 3.0.4
 Release: 1%{?dist}
 Source0: https://pypi.io/packages/source/C/CaChannel/CaChannel-%{version}.tar.gz
 License: BSD
@@ -17,6 +17,7 @@ BuildRequires: epics-base
 # or any files in the application's directory for provides
 %global __provides_exclude_from ^(%{python_sitearch}|%{python3_sitearch})/.*\\.so$
 
+AutoReq: 0
 Requires: python-enum34 epics-base
 
 %description
@@ -38,10 +39,10 @@ Check out `CaChannel documents <https://cachannel.readthedocs.org>`_ to get star
 %setup -n CaChannel-%{version}
 
 %build
-env CFLAGS="$RPM_OPT_FLAGS" python setup.py build
+env CFLAGS="$RPM_OPT_FLAGS" EPICS_SHARED="YES" python setup.py build
 
 %install
-EPICS_SHARED=YES python setup.py install --single-version-externally-managed -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
+python setup.py install --single-version-externally-managed -O1 --root=$RPM_BUILD_ROOT --record=INSTALLED_FILES
 
 %clean
 rm -rf $RPM_BUILD_ROOT
