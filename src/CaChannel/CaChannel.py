@@ -173,14 +173,6 @@ class CaChannel:
         The possible fields available are as defined in the C "struct exception_handler_args"
         and are: chid, type, count, state, op, ctx, file, lineNo
 
-            "type", IntToIntEnum("DBR", args.type),
-            "count", args.count,
-            "state", IntToIntEnum("ECA", args.stat),
-            "op", IntToIntEnum("CA_OP", args.op),
-            "ctx", CharToPyStringOrBytes(args.ctx),
-            "file", CharToPyStringOrBytes(args.pFile),
-            "lineNo", args.lineNo
-
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
         >>> def exceptionCB(epicsArgs, _):
