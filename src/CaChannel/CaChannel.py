@@ -342,14 +342,14 @@ class CaChannel:
         >>> chan.flush_io()
         >>> chan.getw()
         1
-        >>> chan = CaChannel('cawave')
+        >>> chan = CaChannel('cawavec')
         >>> chan.searchw()
         >>> chan.array_put([1,2,3])
         >>> chan.flush_io()
         >>> chan.getw()
-        [1.0, 2.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        [1, 2, 3, 0, 0]
         >>> chan.getw(count=3, use_numpy=True)
-        array([ 1.,  2.,  3.])
+        array([1, 2, 3], dtype=int8)
         >>> chan = CaChannel('cawavec')
         >>> chan.searchw()
         >>> chan.array_put('1234',count=3)
