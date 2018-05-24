@@ -59,6 +59,7 @@ class CaChannel:
     """
 
     __context = None
+    __callbacks = {}
 
     ca_timeout = 3.0
 
@@ -129,7 +130,8 @@ class CaChannel:
 
         return timeout
 
-    def replace_printf_handler(self, callback=None, user_args=None):
+    @classmethod
+    def replace_printf_handler(cls, callback=None, user_args=None):
         """
         Install or replace the callback used for formatted CA diagnostic message output.
         The default is to send to stderr.
@@ -146,13 +148,14 @@ class CaChannel:
 
         """
         if callable(callback):
-            self._callbacks['printfCB'] = (callback, user_args)
-            ca.replace_printf_handler(self._printf_callback)
+            cls.__callbacks['printfCB'] = (callback, user_args)
+            ca.replace_printf_handler(cls._printf_callback)
         else:
-            self._callbacks['printfCB'] = None
+            cls.__callbacks['printfCB'] = None
             ca.replace_printf_handler(None)
 
-    def add_exception_event(self, callback=None, user_args=None):
+    @classmethod
+    def add_exception_event(cls, callback=None, user_args=None):
         """
         Install or replace the currently installed CA context global exception handler callback.
 
@@ -162,7 +165,7 @@ class CaChannel:
         The default exception handler prints a diagnostic message on the client's standard out and
         terminates execution if the error condition is severe.
 
-        Note that certain fields returned in thecallback args are not applicable in the context of
+        Note that certain fields returned in the callback args are not applicable in the context of
         some error messages. For instance, a failed get will supply the address in the client task
         where the returned value was requested to be written. For other failed operations the value
         of the addr field should not be used.
@@ -182,10 +185,10 @@ class CaChannel:
 
         """
         if callable(callback):
-            self._callbacks['exceptionCB'] = (callback, user_args)
-            ca.add_exception_event(self._exception_callback)
+            cls.__callbacks['exceptionCB'] = (callback, user_args)
+            ca.add_exception_event(cls._exception_callback)
         else:
-            self._callbacks['exceptionCB'] = None
+            cls.__callbacks['exceptionCB'] = None
             ca.add_exception_event(None)
 
     def replace_access_rights_event(self, callback=None, user_args=None):
@@ -1120,8 +1123,9 @@ class CaChannel:
         except:
             traceback.print_exc()
 
-    def _printf_callback(self, message):
-        callback = self._callbacks.get('printfCB')
+    @classmethod
+    def _printf_callback(cls, message):
+        callback = cls.__callbacks.get('printfCB')
         if callback is None:
             return
         callbackFunc, userArgs = callback
@@ -1130,8 +1134,9 @@ class CaChannel:
         except:
             traceback.print_exc()
 
-    def _exception_callback(self, epicsArgs):
-        callback = self._callbacks.get('exceptionCB')
+    @classmethod
+    def _exception_callback(cls, epicsArgs):
+        callback = cls.__callbacks.get('exceptionCB')
         if callback is None:
             return
         callbackFunc, userArgs = callback
