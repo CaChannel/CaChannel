@@ -131,6 +131,7 @@ class CaChannel:
         return timeout
 
     @classmethod
+    @attach_ca_context
     def replace_printf_handler(cls, callback=None, user_args=None):
         """
         Install or replace the callback used for formatted CA diagnostic message output.
@@ -156,6 +157,7 @@ class CaChannel:
             ca.replace_printf_handler(None)
 
     @classmethod
+    @attach_ca_context
     def add_exception_event(cls, callback=None, user_args=None):
         """
         Install or replace the currently installed CA context global exception handler callback.
