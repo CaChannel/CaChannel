@@ -143,8 +143,8 @@ class CaChannel:
         >>> chan.searchw()
         >>> def printfCB(message, _):
         ...     print('CA message:', message)
-        >>> chan.replace_printf_handler(printfCB)  # add callback
-        >>> chan.replace_printf_handler() # clear the callback
+        >>> chan.replace_printf_handler(printfCB)  # add callback # doctest: +SKIP
+        >>> chan.replace_printf_handler() # clear the callback # doctest: +SKIP
 
         .. versionadded:: 3.1
         """
@@ -181,8 +181,8 @@ class CaChannel:
         >>> chan.searchw()
         >>> def exceptionCB(epicsArgs, _):
         ...     print('op:', epicsArgs['op'], 'file:', epicsArgs['file'], 'line:', epicsArgs['lineNo'])
-        >>> chan.add_exception_event(exceptionCB) # add callback
-        >>> chan.add_exception_event() # clear the callback
+        >>> chan.add_exception_event(exceptionCB) # add callback # doctest: +SKIP
+        >>> chan.add_exception_event() # clear the callback # doctest: +SKIP
 
         .. versionadded:: 3.1
         """
