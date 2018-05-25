@@ -547,12 +547,12 @@ class CaChannel:
         :param count:       number of data values to read, Defaults to be the native count.
         :param keywords:    optional arguments assigned by keywords
 
-                            ===========   =====
+                            ===========   ===================================================
                             keyword       value
-                            ===========   =====
+                            ===========   ===================================================
                             use_numpy     True if waveform should be returned as numpy array.
                                           Default :data:`CaChannel.USE_NUMPY`.
-                            ===========   =====
+                            ===========   ===================================================
         :type req_type: int, None
         :type count: int, None
         :raises CaChannelException: if error happens
@@ -586,12 +586,12 @@ class CaChannel:
         :param user_args:   user provided arguments that are passed to callback when it is invoked.
         :param keywords:    optional arguments assigned by keywords
 
-                            ===========   =====
+                            ===========   ===================================================
                             keyword       value
-                            ===========   =====
+                            ===========   ===================================================
                             use_numpy     True if waveform should be returned as numpy array.
                                           Default :data:`CaChannel.USE_NUMPY`.
-                            ===========   =====
+                            ===========   ===================================================
         :type req_type:     int, None
         :type count:        int, None
         :type callback:     callable
@@ -716,12 +716,12 @@ class CaChannel:
         :param user_args:   user provided arguments that are passed to callback when it is invoked.
         :param keywords:    optional arguments assigned by keywords
 
-                            ===========   =====
+                            ===========   ===================================================
                             keyword       value
-                            ===========   =====
+                            ===========   ===================================================
                             use_numpy     True if waveform should be returned as numpy array.
                                           Default :data:`CaChannel.USE_NUMPY`.
-                            ===========   =====
+                            ===========   ===================================================
         :type req_type: int, None
         :type count: int, None
         :type mask: int, None
@@ -1053,12 +1053,12 @@ class CaChannel:
         :param count:       number of data values to read, Defaults to be the native count.
         :param keywords:    optional arguments assigned by keywords
 
-                            ===========   =====
+                            ===========   ===================================================
                             keyword       value
-                            ===========   =====
+                            ===========   ===================================================
                             use_numpy     True if waveform should be returned as numpy array.
                                           Default :data:`CaChannel.USE_NUMPY`.
-                            ===========   =====
+                            ===========   ===================================================
         :type req_type:     int, None
         :type count:        int, None
         :return:            If *req_type* is plain request type, only the value is returned.
