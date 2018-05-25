@@ -59,6 +59,7 @@ class CaChannel:
     """
 
     __context = None
+    __callbacks = {}
 
     ca_timeout = 3.0
 
@@ -128,6 +129,67 @@ class CaChannel:
             timeout = self._timeout
 
         return timeout
+
+    @classmethod
+    def replace_printf_handler(cls, callback=None, user_args=None):
+        """
+        Install or replace the callback used for formatted CA diagnostic message output.
+        The default is to send to stderr.
+
+        :param callable callback: function called.
+        :param user_args: user provided arguments that are passed to callback when it is invoked.
+
+        >>> chan = CaChannel('catest')
+        >>> chan.searchw()
+        >>> def printfCB(message, _):
+        ...     print('CA message:', message)
+        >>> chan.replace_printf_handler(printfCB)  # add callback
+        >>> chan.replace_printf_handler() # clear the callback
+
+        """
+        if callable(callback):
+            cls.__callbacks['printfCB'] = (callback, user_args)
+            ca.replace_printf_handler(cls._printf_callback)
+        else:
+            cls.__callbacks['printfCB'] = None
+            ca.replace_printf_handler(None)
+
+    @classmethod
+    def add_exception_event(cls, callback=None, user_args=None):
+        """
+        Install or replace the currently installed CA context global exception handler callback.
+
+        When an error occurs in the server asynchronous to the clients thread then information
+        about this type of error is passed from the server to the client in an exception message.
+        When the client receives this exception message an exception handler callback is called.
+        The default exception handler prints a diagnostic message on the client's standard out and
+        terminates execution if the error condition is severe.
+
+        Note that certain fields returned in the callback args are not applicable in the context of
+        some error messages. For instance, a failed get will supply the address in the client task
+        where the returned value was requested to be written. For other failed operations the value
+        of the addr field should not be used.
+
+        :param callable callback: function called.
+        :param user_args: user provided arguments that are passed to callback when it is invoked.
+
+        The possible fields available are as defined in the C "struct exception_handler_args"
+        and are: chid, type, count, state, op, ctx, file, lineNo
+
+        >>> chan = CaChannel('catest')
+        >>> chan.searchw()
+        >>> def exceptionCB(epicsArgs, _):
+        ...     print('op:', epicsArgs['op'], 'file:', epicsArgs['file'], 'line:', epicsArgs['lineNo'])
+        >>> chan.add_exception_event(exceptionCB) # add callback
+        >>> chan.add_exception_event() # clear the callback
+
+        """
+        if callable(callback):
+            cls.__callbacks['exceptionCB'] = (callback, user_args)
+            ca.add_exception_event(cls._exception_callback)
+        else:
+            cls.__callbacks['exceptionCB'] = None
+            ca.add_exception_event(None)
 
     def replace_access_rights_event(self, callback=None, user_args=None):
         """
@@ -1053,6 +1115,28 @@ class CaChannel:
 
     def _access_callback(self, epicsArgs):
         callback = self._callbacks.get('accessCB')
+        if callback is None:
+            return
+        callbackFunc, userArgs = callback
+        try:
+            callbackFunc(epicsArgs, userArgs)
+        except:
+            traceback.print_exc()
+
+    @classmethod
+    def _printf_callback(cls, message):
+        callback = cls.__callbacks.get('printfCB')
+        if callback is None:
+            return
+        callbackFunc, userArgs = callback
+        try:
+            callbackFunc(message, userArgs)
+        except:
+            traceback.print_exc()
+
+    @classmethod
+    def _exception_callback(cls, epicsArgs):
+        callback = cls.__callbacks.get('exceptionCB')
         if callback is None:
             return
         callbackFunc, userArgs = callback
