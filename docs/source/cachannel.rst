@@ -146,6 +146,8 @@ Misc
     .. automethod:: CaChannel.setTimeout
     .. automethod:: CaChannel.getTimeout
     .. automethod:: CaChannel.replace_access_rights_event
+    .. automethod:: CaChannel.add_exception_event
+    .. automethod:: CaChannel.replace_printf_handler
 
 :mod:`epicsPV`
 --------------
