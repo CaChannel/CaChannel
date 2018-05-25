@@ -146,6 +146,7 @@ class CaChannel:
         >>> chan.replace_printf_handler(printfCB)  # add callback
         >>> chan.replace_printf_handler() # clear the callback
 
+        .. versionadded:: 3.1
         """
         if callable(callback):
             cls.__callbacks['printfCB'] = (callback, user_args)
@@ -183,6 +184,7 @@ class CaChannel:
         >>> chan.add_exception_event(exceptionCB) # add callback
         >>> chan.add_exception_event() # clear the callback
 
+        .. versionadded:: 3.1
         """
         if callable(callback):
             cls.__callbacks['exceptionCB'] = (callback, user_args)
