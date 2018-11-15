@@ -1,7 +1,7 @@
 ChangeLog
 =========
 
-3.1.0 (XX-06-2018)
+3.1.0 (15-10-2018)
 ------------------
 
 - Added class methods :py:meth:`CaChannel.CaChannel.add_exception_event` and :py:meth:`CaChannel.CaChannel.replace_printf_handler`.
