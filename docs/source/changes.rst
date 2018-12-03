@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+3.1.1 (03-12-2018)
+------------------
+
+- Fix compilation error on Python 3.7.
+- Fix compilation error on epics base > 3.14.
+
 3.1.0 (15-10-2018)
 ------------------
 
