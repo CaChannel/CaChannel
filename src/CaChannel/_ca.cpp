@@ -2005,7 +2005,7 @@ static PyObject *Py_alarmStatusString(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_IndexError, "Alarm status code out of range");
         return NULL;
     }
-    return CharToPyStringOrBytes(alarmStatusString[status]);
+    return CharToPyStringOrBytes(epicsAlarmConditionStrings[status]);
 }
 
 static PyObject *Py_alarmSeverityString(PyObject *self, PyObject *args)
@@ -2020,7 +2020,7 @@ static PyObject *Py_alarmSeverityString(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    return CharToPyStringOrBytes(alarmSeverityString[severity]);
+    return CharToPyStringOrBytes(epicsAlarmSeverityStrings[severity]);
 }
 
 static PyObject *Py_dbf_text(PyObject *self, PyObject *args)
