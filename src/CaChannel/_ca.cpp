@@ -166,7 +166,7 @@ static PyObject *DBRValue_get(DBRValueObject *self)
 static PyObject* DBRValue_getattro(DBRValueObject *self, PyObject* name)
 {
     PyObject *pResult = NULL;
-    char* attr = PyString_AsString(name);
+    const char* attr = PyString_AsString(name);
     if (strcmp(attr, "use_numpy") == 0) {
         pResult = Py_BuildValue("i", self->use_numpy);
     } else {
@@ -178,7 +178,7 @@ static PyObject* DBRValue_getattro(DBRValueObject *self, PyObject* name)
 static int DBRValue_setattro(DBRValueObject *self, PyObject* name, PyObject* value)
 {
     int error = 0;
-    char* attr = PyString_AsString(name);
+    const char* attr = PyString_AsString(name);
     if (strcmp(attr, "use_numpy") == 0) {
         self->use_numpy = (PyLong_AsLong(value) != 0);
     } else {
