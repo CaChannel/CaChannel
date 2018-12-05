@@ -4,12 +4,15 @@ based on `caffi.ca API <https://caffi.readthedocs.io/en/latest/api.html>`.
 """
 # python 2 -> 3 compatible layer
 from __future__ import print_function, absolute_import
-import collections
 from functools import wraps
 import itertools
 import numbers
 import sys
 import traceback
+if sys.hexversion < 0x03000000:
+    from collections import Sequence
+else:
+    from collections.abc import Sequence
 
 import CaChannel as PACKAGE
 from . import ca
@@ -1245,7 +1248,7 @@ class CaChannel:
     def _ints_to_string(integers):
         if isinstance(integers, str):
             value = integers
-        elif isinstance(integers, collections.Sequence):
+        elif isinstance(integers, Sequence):
             stripped = itertools.takewhile(lambda c: c != 0, integers)
             if sys.hexversion < 0x03000000:
                 value = ''.join([chr(c) for c in stripped])
