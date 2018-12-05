@@ -7,13 +7,9 @@
 #undef epicsAlarmGLOBAL
 #include <cadef.h>
 
-#ifdef WITH_NUMPY
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/arrayobject.h>
-#endif
-
-static bool has_numpy = false;
+static bool HAS_NUMPY = false;
 static PyObject *MODULE = NULL;
+static PyObject *NUMPY = NULL;
 struct context_callback {
     PyObject *pExceptionCallback;
     PyObject *pPrintfHandler;
@@ -124,7 +120,7 @@ static PyObject *Py_ca_message(PyObject *self, PyObject *args);
 static PyObject *Py_alarmSeverityString(PyObject *self, PyObject *args);
 static PyObject *Py_alarmStatusString(PyObject *self, PyObject *args);
 
-static PyObject *CBufferToPythonDict(chtype type, unsigned long count, const void *val, int use_numpy);
+static PyObject *CBufferToPythonDict(chtype type, unsigned long count, const void *val, bool use_numpy);
 static void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount,
                        chtype &dbrtype, unsigned long &count);
 
@@ -382,17 +378,13 @@ MOD_INIT(_ca) {
 
     PyType_Ready(&DBRValueType);
 
-    #ifdef WITH_NUMPY
-    if (_import_array() < 0) {
+    NUMPY = PyImport_ImportModule("numpy");
+    if (NUMPY == NULL) {
         PyErr_Clear();
     } else {
-        has_numpy = true;
+        HAS_NUMPY = true;
     }
-    PyModule_AddIntConstant(pModule, "WITH_NUMPY", 1);
-    #else
-    PyModule_AddIntConstant(pModule, "WITH_NUMPY", 0);
-    #endif
-    PyModule_AddIntConstant(pModule, "HAS_NUMPY", has_numpy);
+    PyModule_AddIntConstant(pModule, "HAS_NUMPY", HAS_NUMPY);
 
     PyModule_AddIntMacro(pModule, TYPENOTCONN);
     PyModule_AddIntMacro(pModule, DBF_STRING);
@@ -2274,74 +2266,54 @@ static PyObject *Py_dbr_type_is_DOUBLE(PyObject *self, PyObject *args)
     Convert from C dbr value to Python dictionary
 */
 
-typedef dbr_string_t *dbr_string_t_ptr;
-typedef dbr_char_t *dbr_char_t_ptr ;
+template<typename DBRTYPE>
+PyObject *ValueToNumpyArray(void *vp, Py_ssize_t count, const char *nptype)
+{
+    PyObject *value = NULL;
 
-#define FormatPlaintoValue(COUNT, VAL, PYTYPE, FORMAT) \
+    /* Create an empty numpy array with the given type and size */
+    value = PyObject_CallMethod(NUMPY, (char*)"empty", (char*)"is", count, nptype);
+    if (value == NULL) {
+        PyErr_Print();
+        return NULL;
+    }
+
+    /* Get the buffer object from numpy array */
+    Py_buffer buffer = {0};
+    if (PyObject_CheckBuffer(value) && PyObject_GetBuffer(value, &buffer, PyBUF_CONTIG) == 0) {
+        memcpy(buffer.buf, vp, count*sizeof(DBRTYPE));
+        PyBuffer_Release(&buffer);
+    }
+    #if PY_MAJOR_VERSION < 3
+    /* Fall back to legacy buffer protocol on Python 2 */
+    else if(PyObject_AsWriteBuffer(value, &buffer.buf, &buffer.len) == 0) {
+        memcpy(buffer.buf, vp, count*sizeof(DBRTYPE));
+    }
+    #endif
+    else {
+        Py_XDECREF(value);
+        value = NULL;
+    }
+
+    return value;
+}
+
+#define FormatValue(VP, DBRTYPE, COUNT, FORMAT, NPTYPE, HAS_USE_NUMPY) \
     {\
-        register unsigned long cur;\
-        if(COUNT==1)\
-            value = FORMAT(*(PYTYPE*)VAL);\
-        else{\
-            register PYTYPE *vp = (PYTYPE *) VAL;\
-            value = PyList_New(count);\
-            for (cur=0;cur < count; cur++){\
-                PyObject *ent=FORMAT(*(vp++));\
-                PyList_SetItem(value,cur,ent);\
+        register DBRTYPE *vp=(DBRTYPE *)(VP);\
+        if(COUNT == 1)\
+            value = FORMAT(*vp);\
+        else {\
+            if (HAS_USE_NUMPY) \
+                value = ValueToNumpyArray<DBRTYPE>((void *)VP, COUNT, (const char *)NPTYPE); \
+            /* If not having/using numpy or failing in numpy array conversion, create a list object */\
+            if (value == NULL) {\
+                value = PyList_New(count);\
+                for (unsigned long i=0;i < count; i++)\
+                    PyList_SetItem(value, i, FORMAT(*(vp+i)));\
             }\
         }\
     }
-#define FormatDBRtoValue(COUNT, DBRTYPE, VP, PYTYPE, FORMAT) \
-    {\
-        register unsigned long cur;\
-        if(COUNT==1)\
-            value = FORMAT((PYTYPE) cval->value);\
-        else{\
-            value = PyList_New(count);\
-            register dbr_##DBRTYPE##_t *vp=(dbr_##DBRTYPE##_t *)(VP);\
-            for (cur=0;cur < count; cur++){\
-                PyObject *ent=FORMAT((PYTYPE) *(vp++));\
-                PyList_SetItem(value,cur,ent);\
-            }\
-        }\
-    }
-
-#define FormatPlaintoValueArray(COUNT, VAL, PYTYPE, FORMAT, NPTYPE) \
-    {\
-        if(COUNT==1)\
-            value = FORMAT(*((PYTYPE*)VAL));\
-        else{\
-            npy_intp ndims[]  = {COUNT};\
-            value =  PyArray_SimpleNew(1, ndims, NPTYPE); \
-            memcpy(PyArray_DATA((PyArrayObject*)value), VAL, COUNT*sizeof(PYTYPE)); \
-        }\
-    }
-#define FormatDBRtoValueArray(COUNT, VP, PYTYPE, FORMAT,  NPTYPE) \
-    {\
-        if(COUNT==1)\
-            value = FORMAT((PYTYPE) cval->value);\
-        else{\
-            npy_intp ndims[]  = {COUNT};\
-            value =  PyArray_SimpleNew(1, ndims, NPTYPE); \
-            memcpy(PyArray_DATA((PyArrayObject*)value), VP, COUNT*sizeof(PYTYPE)); \
-        }\
-    }
-
-#define FormatDBRStringtoValue(COUNT, DBRTYPE, VP, PYTYPE, FORMAT) \
-    {\
-        register unsigned long cur;\
-        if(COUNT==1)\
-            value = FORMAT(*(PYTYPE) cval->value);\
-        else{\
-            value = PyList_New(count);\
-            register dbr_##DBRTYPE##_t *vp=(dbr_##DBRTYPE##_t *)(VP);\
-            for (cur=0;cur < count; cur++){\
-                PyObject *ent=FORMAT(*(PYTYPE) *(vp++));\
-                PyList_SetItem(value,cur,ent);\
-            }\
-        }\
-    }
-
 
 static PyObject *TS2Stamp(const epicsTimeStamp& ts)
 {
@@ -2370,69 +2342,41 @@ static PyObject *TS2Stamp(const epicsTimeStamp& ts)
 PyObject * CBufferToPythonDict(chtype type,
                     unsigned long count,
                     const void *val,
-                    int use_numpy)
+                    bool use_numpy)
 {
     PyObject *arglist = NULL;
     PyObject *value   = NULL;
+    
+    bool has_use_numpy = use_numpy && HAS_NUMPY;
 
     /* build arglist, value is inserted */
     switch(type){
     case DBR_STRING:
-        FormatPlaintoValue(count, val, dbr_string_t, CharToPyStringOrBytes);
+        FormatValue(val, dbr_string_t, count, CharToPyStringOrBytes, "", false);
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_SHORT:
-        if(use_numpy == 0 || has_numpy == 0)
-            FormatPlaintoValue(count, val, dbr_short_t,  PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatPlaintoValueArray(count, val, dbr_short_t,  PyInt_FromLong,  NPY_SHORT)
-        #endif
+        FormatValue(val, dbr_short_t, count, PyInt_FromLong,     "i2", has_use_numpy)
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_FLOAT:
-        if(use_numpy == 0 || has_numpy == 0)
-            FormatPlaintoValue(count, val, dbr_float_t,  PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-            FormatPlaintoValueArray(count, val, dbr_float_t,  PyFloat_FromDouble,  NPY_FLOAT)
-        #endif
+        FormatValue(val, dbr_float_t, count, PyFloat_FromDouble, "f4", has_use_numpy)
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_ENUM:
-        if(use_numpy == 0 || has_numpy == 0)
-            FormatPlaintoValue(count, val, dbr_enum_t,   PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatPlaintoValueArray(count, val, dbr_enum_t,  PyInt_FromLong,  NPY_USHORT)
-        #endif
+        FormatValue(val, dbr_enum_t,  count, PyInt_FromLong,     "u2", has_use_numpy)
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_CHAR:
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatPlaintoValue(count, val, dbr_char_t,   PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatPlaintoValueArray(count, val, dbr_char_t,   PyInt_FromLong,  NPY_BYTE)
-        #endif
+        FormatValue(val, dbr_char_t,  count, PyInt_FromLong,     "u1", has_use_numpy)
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_LONG:
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatPlaintoValue(count, val, dbr_long_t,   PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatPlaintoValueArray(count, val, dbr_long_t,   PyInt_FromLong,  NPY_INT)
-        #endif
+        FormatValue(val, dbr_long_t,  count, PyInt_FromLong,     "i4", has_use_numpy)
         arglist = Py_BuildValue("O", value);
         break;
     case DBR_DOUBLE:
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatPlaintoValue(count, val, dbr_double_t, PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-            FormatPlaintoValueArray(count, val, dbr_double_t, PyFloat_FromDouble, NPY_DOUBLE)
-        #endif
+        FormatValue(val, dbr_double_t,count, PyFloat_FromDouble, "f8", has_use_numpy)
         arglist = Py_BuildValue("O", value);
         break;
 
@@ -2441,7 +2385,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_STRING:
     {
         struct dbr_sts_string  *cval=(struct dbr_sts_string  *)val;
-        FormatDBRStringtoValue(count, string,  cval->value , dbr_string_t_ptr, CharToPyStringOrBytes);
+        FormatValue(&(cval->value), dbr_string_t, count, CharToPyStringOrBytes, "", false);
         arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2451,12 +2395,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_SHORT:
     {
         struct dbr_sts_short  *cval=(struct dbr_sts_short  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, short, &(cval->value), dbr_short_t,   PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count, &(cval->value), dbr_short_t,   PyInt_FromLong, NPY_SHORT)
-        #endif
+        FormatValue(&(cval->value), dbr_short_t,  count, PyInt_FromLong,     "i2", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2466,12 +2405,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_FLOAT:
     {
         struct dbr_sts_float  *cval=(struct dbr_sts_float  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, float, &(cval->value), dbr_float_t, PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count, &(cval->value), dbr_float_t, PyFloat_FromDouble, NPY_FLOAT)
-        #endif
+        FormatValue(&(cval->value), dbr_float_t,  count, PyFloat_FromDouble, "f4", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2481,12 +2415,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_ENUM:
     {
         struct dbr_sts_enum  *cval=(struct dbr_sts_enum  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, enum, &(cval->value),  dbr_enum_t,     PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,  &(cval->value), dbr_enum_t,      PyInt_FromLong, NPY_USHORT)
-        #endif
+        FormatValue(&(cval->value), dbr_enum_t,   count, PyInt_FromLong,     "u2", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2496,12 +2425,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_CHAR:
     {
         struct dbr_sts_char  *cval=(struct dbr_sts_char  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, char, &(cval->value), dbr_char_t,     PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,  &(cval->value), dbr_char_t,     PyInt_FromLong, NPY_BYTE)
-        #endif
+        FormatValue(&(cval->value), dbr_char_t,   count, PyInt_FromLong,     "u1", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2511,12 +2435,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_LONG:
     {
         struct dbr_sts_long  *cval=(struct dbr_sts_long  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, long, &(cval->value), dbr_long_t,     PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,  &(cval->value), dbr_long_t,     PyInt_FromLong, NPY_INT)
-        #endif
+        FormatValue(&(cval->value), dbr_long_t,   count, PyInt_FromLong,     "i4", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2526,12 +2445,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_STS_DOUBLE:
     {
         struct dbr_sts_double  *cval=(struct dbr_sts_double  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, double, &(cval->value), dbr_double_t, PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,    &(cval->value), dbr_double_t, PyFloat_FromDouble, NPY_DOUBLE)
-        #endif
+        FormatValue(&(cval->value), dbr_double_t, count, PyFloat_FromDouble, "f8", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2542,7 +2456,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_STRING:
     {
         struct dbr_time_string  *cval=(struct dbr_time_string  *)val;
-        FormatDBRStringtoValue(count, string,  cval->value, dbr_string_t_ptr, CharToPyStringOrBytes);
+        FormatValue(&(cval->value), dbr_string_t, count, CharToPyStringOrBytes, "", false)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2553,12 +2467,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_SHORT:
     {
         struct dbr_time_short  *cval=(struct dbr_time_short  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, short, &(cval->value), dbr_short_t,      PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,   &(cval->value), dbr_short_t,      PyInt_FromLong, NPY_SHORT)
-        #endif
+        FormatValue(&(cval->value), dbr_short_t,  count, PyInt_FromLong,     "i2", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2569,12 +2478,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_FLOAT:
     {
         struct dbr_time_float  *cval=(struct dbr_time_float  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, float, &(cval->value), dbr_float_t,      PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,   &(cval->value), dbr_float_t,      PyFloat_FromDouble, NPY_FLOAT)
-        #endif
+        FormatValue(&(cval->value), dbr_float_t,  count, PyFloat_FromDouble, "f4", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2585,12 +2489,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_ENUM:
     {
         struct dbr_time_enum  *cval=(struct dbr_time_enum  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, enum, &(cval->value), dbr_enum_t,        PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,  &(cval->value), dbr_enum_t,        PyInt_FromLong, NPY_USHORT)
-        #endif
+        FormatValue(&(cval->value), dbr_enum_t,   count, PyInt_FromLong,     "u2", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2601,12 +2500,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_CHAR:
     {
         struct dbr_time_char  *cval=(struct dbr_time_char  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, char, &(cval->value), dbr_char_t,        PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,  &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
-        #endif
+        FormatValue(&(cval->value), dbr_char_t,   count, PyInt_FromLong,     "u1", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2617,12 +2511,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_LONG:
     {
         struct dbr_time_long  *cval=(struct dbr_time_long  *)val;
-        if (use_numpy == 0  || has_numpy == 0)
-            FormatDBRtoValue(count, long, &(cval->value), dbr_long_t,        PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,  &(cval->value), dbr_long_t,        PyInt_FromLong, NPY_INT)
-        #endif
+        FormatValue(&(cval->value), dbr_long_t,   count, PyInt_FromLong,     "i4", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2633,12 +2522,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_TIME_DOUBLE:
     {
         struct dbr_time_double  *cval=(struct dbr_time_double  *)val;
-        if (use_numpy == 0  || has_numpy == 0)
-            FormatDBRtoValue(count, double, &(cval->value), dbr_double_t,    PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,    &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
-        #endif
+        FormatValue(&(cval->value), dbr_double_t, count, PyFloat_FromDouble, "f8", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2650,12 +2534,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_SHORT:
     {
         struct dbr_gr_short  *cval=(struct dbr_gr_short  *)val;
-        if (use_numpy == 0  || has_numpy == 0)
-            FormatDBRtoValue(count, short,  &(cval->value), dbr_short_t,     PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-             FormatDBRtoValueArray(count,   &(cval->value), dbr_short_t,     PyInt_FromLong, NPY_SHORT)
-        #endif
+        FormatValue(&(cval->value), dbr_short_t,  count, PyInt_FromLong,     "i2", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:i,s:i,s:i,s:i,s:i,s:i}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2673,12 +2552,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_FLOAT:
     {
         struct dbr_gr_float  *cval=(struct dbr_gr_float  *)val;
-        if (use_numpy == 0  || has_numpy == 0)
-            FormatDBRtoValue(count, float,  &(cval->value), dbr_float_t,     PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,    &(cval->value), dbr_float_t,     PyFloat_FromDouble, NPY_FLOAT)
-        #endif
+        FormatValue(&(cval->value), dbr_float_t,  count, PyFloat_FromDouble, "f4", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:f,s:f,s:f,s:f,s:f,s:f,s:i}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2697,12 +2571,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_ENUM:
     {
         struct dbr_gr_enum  *cval=(struct dbr_gr_enum  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, enum,  &(cval->value), dbr_enum_t,       PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,   &(cval->value), dbr_enum_t,       PyInt_FromLong, NPY_USHORT)
-        #endif
+        FormatValue(&(cval->value), dbr_enum_t,   count, PyInt_FromLong,     "u2", has_use_numpy)
         char (*strs)[][MAX_ENUM_STRING_SIZE]=(char (*)[][MAX_ENUM_STRING_SIZE]) &cval->strs;
         unsigned long nstr=cval->no_str,i;
         PyObject *ptup=PyTuple_New(nstr);
@@ -2722,12 +2591,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_CHAR:
     {
         struct dbr_gr_char  *cval=(struct dbr_gr_char  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, char,  &(cval->value), dbr_char_t,        PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,   &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
-        #endif
+        FormatValue(&(cval->value), dbr_char_t,   count, PyInt_FromLong,     "u1", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:b,s:b,s:b,s:b,s:b,s:b}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2745,12 +2609,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_LONG:
     {
         struct dbr_gr_long  *cval=(struct dbr_gr_long  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, long,  &(cval->value), dbr_long_t,       PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,   &(cval->value), dbr_long_t,       PyInt_FromLong, NPY_INT)
-        #endif
+        FormatValue(&(cval->value), dbr_long_t,   count, PyInt_FromLong,     "i4", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:i,s:i,s:i,s:i,s:i,s:i}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2769,12 +2628,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_GR_DOUBLE:
     {
         struct dbr_gr_double  *cval=(struct dbr_gr_double  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, double,  &(cval->value), dbr_double_t,    PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,     &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
-        #endif
+        FormatValue(&(cval->value), dbr_double_t, count, PyFloat_FromDouble, "f8", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:d,s:d,s:d,s:d,s:d,s:d,s:i}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2794,12 +2648,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_SHORT:
     {
         struct dbr_ctrl_short  *cval=(struct dbr_ctrl_short  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, short,  &(cval->value), dbr_short_t,      PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,    &(cval->value), dbr_short_t,      PyInt_FromLong, NPY_SHORT)
-        #endif
+        FormatValue(&(cval->value), dbr_short_t,  count, PyInt_FromLong,     "i2", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2819,12 +2668,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_FLOAT:
     {
         struct dbr_ctrl_float  *cval=(struct dbr_ctrl_float  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, float,  &(cval->value), dbr_float_t,      PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-             FormatDBRtoValueArray(count,   &(cval->value), dbr_float_t,      PyFloat_FromDouble, NPY_FLOAT)
-        #endif
+        FormatValue(&(cval->value), dbr_float_t,  count, PyFloat_FromDouble, "f4", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:f,s:f,s:f,s:f,s:f,s:f,s:f,s:f,s:i}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2845,12 +2689,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_ENUM:
     {
         struct dbr_ctrl_enum  *cval=(struct dbr_ctrl_enum  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, enum,  &(cval->value), dbr_enum_t,        PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,   &(cval->value), dbr_enum_t,        PyInt_FromLong, NPY_USHORT)
-        #endif
+        FormatValue(&(cval->value), dbr_enum_t,   count, PyInt_FromLong,     "u2", has_use_numpy)
         char (*strs)[][MAX_ENUM_STRING_SIZE]=(char (*)[][MAX_ENUM_STRING_SIZE]) &cval->strs;
         unsigned long nstr=cval->no_str,i;
         PyObject *ptup=PyTuple_New(nstr);
@@ -2870,12 +2709,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_CHAR:
     {
         struct dbr_ctrl_char  *cval=(struct dbr_ctrl_char  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, char,  &(cval->value), dbr_char_t,        PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,   &(cval->value), dbr_char_t,        PyInt_FromLong, NPY_BYTE)
-        #endif
+        FormatValue(&(cval->value), dbr_char_t,   count, PyInt_FromLong,     "u1", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:b,s:b,s:b,s:b,s:b,s:b,s:b,s:b}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2895,12 +2729,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_LONG:
     {
         struct dbr_ctrl_long  *cval=(struct dbr_ctrl_long  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, long,  &(cval->value), dbr_long_t,        PyInt_FromLong)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,   &(cval->value), dbr_long_t,        PyInt_FromLong, NPY_INT)
-        #endif
+        FormatValue(&(cval->value), dbr_long_t,   count, PyInt_FromLong,     "i4", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2921,12 +2750,7 @@ PyObject * CBufferToPythonDict(chtype type,
     case DBR_CTRL_DOUBLE:
     {
         struct dbr_ctrl_double  *cval=(struct dbr_ctrl_double  *)val;
-        if (use_numpy == 0 || has_numpy == 0)
-            FormatDBRtoValue(count, double,  &(cval->value), dbr_double_t,    PyFloat_FromDouble)
-        #ifdef WITH_NUMPY
-        else
-            FormatDBRtoValueArray(count,     &(cval->value), dbr_double_t,    PyFloat_FromDouble, NPY_DOUBLE)
-        #endif
+        FormatValue(&(cval->value), dbr_double_t, count, PyFloat_FromDouble, "f8", has_use_numpy)
         arglist=Py_BuildValue("{s:O,s:N,s:N,s:N,s:d,s:d,s:d,s:d,s:d,s:d,s:d,s:d,s:i}",
                 "value",    value,
                 "severity", IntToIntEnum("AlarmSeverity", cval->severity),
@@ -2958,7 +2782,7 @@ PyObject * CBufferToPythonDict(chtype type,
     break;
     case DBR_CLASS_NAME:
     {
-        FormatPlaintoValue(count, val, dbr_string_t,  CharToPyStringOrBytes)
+        FormatValue(val, dbr_string_t,  count, CharToPyStringOrBytes, "", false)
         arglist = Py_BuildValue("O", value);
     }
     break;

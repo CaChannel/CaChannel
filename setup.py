@@ -109,15 +109,6 @@ def create_exension():
                     os.path.join(EPICSBASE, "include", "compiler", CMPL),
                     ]
 
-    # guess numpy path
-    try:
-        import numpy
-    except:
-        warnings.warn('numpy is not present. Large array read could suffer from low efficiency.')
-    else:
-        macros += [('WITH_NUMPY', None)]
-        include_dirs += [numpy.get_include()]
-
     ca_module = Extension('CaChannel._ca',
                           sources=['src/CaChannel/_ca.cpp'],
                           extra_compile_args=cflags,
