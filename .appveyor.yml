@@ -40,7 +40,7 @@ environment:
       EPICS_HOST_ARCH: "windows-x64"
 
 install:
-  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - %MINICONDA%\Scripts\activate.bat
   - conda config --set always_yes yes --set changeps1 no
   - conda config --add channels defaults
   - conda config --add channels %CONDA_CHANNEL%
