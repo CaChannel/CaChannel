@@ -418,7 +418,7 @@ class CaChannel:
         >>> chan.getw()
         [1, 2, 3, 0, 0]
         >>> chan.getw(count=3, use_numpy=True)
-        array([1, 2, 3], dtype=int8)
+        array([1, 2, 3], dtype=uint8)
         >>> chan = CaChannel('cawavec')
         >>> chan.searchw()
         >>> chan.array_put('1234',count=3)
