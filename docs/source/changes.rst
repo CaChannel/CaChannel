@@ -1,11 +1,12 @@
 ChangeLog
 =========
 
-3.1.1 (03-12-2018)
+3.1.1 (07-12-2018)
 ------------------
 
 - Fix compilation error on Python 3.7.
 - Fix compilation error on epics base > 3.14.
+- Change to use buffer object instead of numpy/c api to create numpy array.
 
 3.1.0 (15-10-2018)
 ------------------
