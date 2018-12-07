@@ -40,12 +40,13 @@ environment:
       EPICS_HOST_ARCH: "windows-x64"
 
 install:
-  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - "%MINICONDA%\\Scripts\\activate.bat"
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q --all
   - conda config --add channels defaults
   - conda config --add channels %CONDA_CHANNEL%
   - conda install conda-build epics-base numpy anaconda-client
+  - conda info
 
 build_script:
   - "%CMD_IN_ENV% conda build conda-recipe"
