@@ -44,7 +44,7 @@ class epicsPV(CaChannel):
          synchronously and without user-written callbacks.
     """
 
-    def __init__(self, pvName=None, wait=False):
+    def __init__(self, pvName=None, wait=True):
         """
         Create an EPICS channel if pvName is specified, and optionally wait for connection.
 
