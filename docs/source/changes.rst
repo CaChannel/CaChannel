@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+3.1.2 (29-01-2018)
+------------------
+
+- Fix epicsPV defaults to wait for connection completion.
+
 3.1.1 (07-12-2018)
 ------------------
 
