@@ -18,6 +18,18 @@ try:
 except:
     from distutils.core import setup, Extension
 
+# python 2/3 compatible way to load module from file
+def load_module(name, location):
+    if sys.hexversion < 0x03040000:
+        import imp
+        module = imp.load_source(name, location)
+    else:
+        import importlib
+        spec = importlib.util.spec_from_file_location(name, location)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    return module
+
 build_ca_ext=True
 # define EPICS base path and host arch
 EPICSBASE = os.environ.get("EPICS_BASE")
@@ -125,7 +137,7 @@ def create_exension():
 
     return [ca_module], dlls
 
-_version = imp.load_source('_version', 'src/CaChannel/_version.py')
+_version = load_module('_version', 'src/CaChannel/_version.py')
 
 if build_ca_ext:
     ext_module, package_data = create_exension()
