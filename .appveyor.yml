@@ -1,39 +1,13 @@
-image: Visual Studio 2017
-
 environment:
   matrix:
-    - PYTHON_VERSION: 2.7
+    - PYTHON_VERSION: 3
       PYTHON_ARCH: "32"
-      MINICONDA: C:\Miniconda
-      EPICS_HOST_ARCH: "win32-x86"
-    - PYTHON_VERSION: 2.7
+      MINICONDA: C:\Miniconda3
+      EPICS_HOST_ARCH: "win32-x86-static"
+    - PYTHON_VERSION: 3
       PYTHON_ARCH: "64"
-      MINICONDA: C:\Miniconda-x64
-      EPICS_HOST_ARCH: "windows-x64"
-    - PYTHON_VERSION: 3.5
-      PYTHON_ARCH: "32"
-      MINICONDA: C:\Miniconda35
-      EPICS_HOST_ARCH: "win32-x86"
-    - PYTHON_VERSION: 3.5
-      PYTHON_ARCH: "64"
-      MINICONDA: C:\Miniconda35-x64
-      EPICS_HOST_ARCH: "windows-x64"
-    - PYTHON_VERSION: 3.6
-      PYTHON_ARCH: "32"
-      MINICONDA: C:\Miniconda36
-      EPICS_HOST_ARCH: "win32-x86"
-    - PYTHON_VERSION: 3.6
-      PYTHON_ARCH: "64"
-      MINICONDA: C:\Miniconda36-x64
-      EPICS_HOST_ARCH: "windows-x64"
-    - PYTHON_VERSION: 3.7
-      PYTHON_ARCH: "32"
-      MINICONDA: C:\Miniconda37
-      EPICS_HOST_ARCH: "win32-x86"
-    - PYTHON_VERSION: 3.7
-      PYTHON_ARCH: "64"
-      MINICONDA: C:\Miniconda37-x64
-      EPICS_HOST_ARCH: "windows-x64"
+      MINICONDA: C:\Miniconda3-x64
+      EPICS_HOST_ARCH: "windows-x64-static"
 
 install:
   - "%MINICONDA%\\Scripts\\activate.bat"
@@ -44,10 +18,8 @@ install:
   - conda install conda-build epics-base numpy anaconda-client
   - conda info
   # patch vs2008 express
-  - if %PYTHON_VERSION% == 2.7 (
-        conda install -c conda-forge vs2008_express_vc_python_patch &&
-        setup_x64
-    )
+  - conda install -c conda-forge vs2008_express_vc_python_patch
+  - setup_x64
 
 build_script:
   - conda build conda-recipe
@@ -63,4 +35,3 @@ on_success:
   - set HOME=%USERPROFILE%
   - pip install twine
   - if %APPVEYOR_REPO_TAG% == true (twine upload -r mypypi --skip-existing %MINICONDA%\\conda-bld\\win-%PYTHON_ARCH%\\*.whl)
-

@@ -8,32 +8,16 @@ language: cpp
 matrix:
   include:
     - os: linux
-      dist: trusty
-      env: CONDA_PY=2.7 MY_MINICONDA_VERSION=latest
-    - os: linux
-      dist: trusty
-      env: CONDA_PY=3.5 MY_MINICONDA_VERSION=latest
-    - os: linux
-      dist: trusty
-      env: CONDA_PY=3.6 MY_MINICONDA_VERSION=latest
-    - os: linux
-      dist: trusty
-      env: CONDA_PY=3.7 MY_MINICONDA_VERSION=latest
+      env: MY_MINICONDA_VERSION=latest
     - os: osx
-      env: CONDA_PY=2.7 MY_MINICONDA_VERSION=4.5.4
-    - os: osx
-      env: CONDA_PY=3.5 MY_MINICONDA_VERSION=4.5.4
-    - os: osx
-      env: CONDA_PY=3.6 MY_MINICONDA_VERSION=4.5.4
-    - os: osx
-      env: CONDA_PY=3.7 MY_MINICONDA_VERSION=4.5.4
+      env: MY_MINICONDA_VERSION=4.5.4
 
 install:
   # Set the anaconda environment
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      curl https://repo.continuum.io/miniconda/Miniconda3-${MY_MINICONDA_VERSION}-MacOSX-x86_64.sh -o miniconda.sh;
+      curl https://repo.anaconda.com/miniconda/Miniconda3-${MY_MINICONDA_VERSION}-MacOSX-x86_64.sh -o miniconda.sh;
     else
-      curl https://repo.continuum.io/miniconda/Miniconda3-${MY_MINICONDA_VERSION}-Linux-x86_64.sh -o miniconda.sh;
+      curl https://repo.anaconda.com/miniconda/Miniconda3-${MY_MINICONDA_VERSION}-Linux-x86_64.sh -o miniconda.sh;
     fi
   - bash miniconda.sh -b -p $HOME/miniconda
   - source $HOME/miniconda/bin/activate
@@ -62,10 +46,8 @@ after_success:
         echo username=$PYPI_USER       >> ~/.pypirc;
         echo password=$PYPI_PASSWORD   >> ~/.pypirc;
         pip install twine;
-        if [[ $TRAVIS_OS_NAME == "linux" && $CONDA_PY == "2.7" ]]; then
-            twine upload -r mypypi --skip-existing $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64/CaChannel-*.tar.gz;
-        fi;
         if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+            twine upload -r mypypi --skip-existing $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64/CaChannel-*.tar.gz;
             twine upload -r mypypi --skip-existing $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64/CaChannel-*.egg;
         fi;
         if [[ $TRAVIS_OS_NAME == "osx" ]]; then
