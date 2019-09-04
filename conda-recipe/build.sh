@@ -22,7 +22,7 @@ case `uname` in
     Linux )
         CAREPEATER=$RECIPE_DIR/caRepeater.Linux$ARCH
         $PYTHON setup.py install sdist bdist_egg
-        cp dist/*.tar.gz ${OUTPUT_PATH}
+        cp -f dist/*.tar.gz ${OUTPUT_PATH}
         cp dist/*.egg ${OUTPUT_PATH}
         ;;
     * )
