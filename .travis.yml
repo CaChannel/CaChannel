@@ -9,60 +9,50 @@ matrix:
   include:
     - os: linux
       dist: trusty
-      env: CONDA_PY=2.7
+      env: CONDA_PY=2.7 MY_MINICONDA_VERSION=latest
     - os: linux
       dist: trusty
-      env: CONDA_PY=3.5
+      env: CONDA_PY=3.5 MY_MINICONDA_VERSION=latest
     - os: linux
       dist: trusty
-      env: CONDA_PY=3.6
+      env: CONDA_PY=3.6 MY_MINICONDA_VERSION=latest
     - os: linux
       dist: trusty
-      env: CONDA_PY=3.7
+      env: CONDA_PY=3.7 MY_MINICONDA_VERSION=latest
     - os: osx
-      env: CONDA_PY=2.7
+      env: CONDA_PY=2.7 MY_MINICONDA_VERSION=4.5.4
     - os: osx
-      env: CONDA_PY=3.5
+      env: CONDA_PY=3.5 MY_MINICONDA_VERSION=4.5.4
     - os: osx
-      env: CONDA_PY=3.6
+      env: CONDA_PY=3.6 MY_MINICONDA_VERSION=4.5.4
     - os: osx
-      env: CONDA_PY=3.7
+      env: CONDA_PY=3.7 MY_MINICONDA_VERSION=4.5.4
 
 install:
   # Set the anaconda environment
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      if [[ "$CONDA_PY" == "2.7" ]]; then
-        curl https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -o miniconda.sh;
-      else
-        curl https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o miniconda.sh;
-      fi;
-      bash miniconda.sh -b -p $HOME/miniconda;
-      export PATH="$HOME/miniconda/bin:$PATH";
-      hash -r;
-      conda config --set always_yes yes --set changeps1 no;
-      conda update -q --all;
-      conda config --add channels defaults;
-      conda config --add channels ${MY_CONDA_CHANNEL};
-      conda install conda-build numpy pip anaconda-client;
+      curl https://repo.continuum.io/miniconda/Miniconda3-${MY_MINICONDA_VERSION}-MacOSX-x86_64.sh -o miniconda.sh;
     else
-      curl https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -o miniconda.sh;
-      bash miniconda.sh -b -p $HOME/miniconda;
-      export PATH="$HOME/miniconda/bin:$PATH";
-      conda config --set always_yes yes --set changeps1 no;
-      conda config --add channels defaults;
-      conda install pip anaconda-client;
-      docker pull continuumio/anaconda-build-linux-64:latest;
-      mkdir -m 0777 -p $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64;
+      curl https://repo.continuum.io/miniconda/Miniconda3-${MY_MINICONDA_VERSION}-Linux-x86_64.sh -o miniconda.sh;
     fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - source $HOME/miniconda/bin/activate
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q --all
+  - conda config --add channels defaults
+  - conda install conda-build numpy pip anaconda-client
+  - conda info
 
 script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      conda build conda-recipe;
+      conda build -c ${MY_CONDA_CHANNEL} conda-recipe;
     else
+      mkdir -m 0777 -p $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64;
        ./conda_build_in_docker.sh `pwd` $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64 ${MY_CONDA_CHANNEL};
     fi
 
 after_success:
+    - ls $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64
     - if [[ ! -z "$TRAVIS_TAG" ]]; then
         anaconda -t $CONDA_TOKEN upload --force $HOME/miniconda/conda-bld/${TRAVIS_OS_NAME}-64/*.tar.bz2;
         echo [distutils]                > ~/.pypirc;
