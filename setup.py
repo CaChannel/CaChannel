@@ -20,7 +20,7 @@ except:
 
 # python 2/3 compatible way to load module from file
 def load_module(name, location):
-    if sys.hexversion < 0x03040000:
+    if sys.hexversion < 0x03050000:
         import imp
         module = imp.load_source(name, location)
     else:
