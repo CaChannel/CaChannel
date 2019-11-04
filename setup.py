@@ -7,7 +7,6 @@ Python2.6 or later should be used.
 import os
 import sys
 import platform
-import imp
 import shutil
 import subprocess
 import warnings
