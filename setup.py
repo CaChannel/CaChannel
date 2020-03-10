@@ -4,6 +4,7 @@ Setup file for Ca-Python using distutils package.
 Python2.6 or later should be used.
 """
 
+import filecmp
 import os
 import sys
 import platform
@@ -73,7 +74,7 @@ def create_exension():
                         static = True
                         break
                     dll_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'CaChannel', dll)
-                    if not os.path.exists(dll_filepath):
+                    if not os.path.exists(dll_filepath) or not filecmp.cmp(dllpath, dll_filepath):
                         shutil.copy(dllpath, dll_filepath)
             macros += [('_CRT_SECURE_NO_WARNINGS', 'None'), ('EPICS_CALL_DLL', '')]
             cflags += ['/Z7']
