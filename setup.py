@@ -72,8 +72,9 @@ def create_exension():
                     if not os.path.exists(dllpath):
                         static = True
                         break
-                    shutil.copy(dllpath,
-                                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'CaChannel'))
+                    dll_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src', 'CaChannel', dll)
+                    if not os.path.exists(dll_filepath):
+                        shutil.copy(dllpath, dll_filepath)
             macros += [('_CRT_SECURE_NO_WARNINGS', 'None'), ('EPICS_CALL_DLL', '')]
             cflags += ['/Z7']
             CMPL = 'msvc'
