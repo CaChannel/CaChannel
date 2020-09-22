@@ -188,6 +188,23 @@ static PyMethodDef DBRValue_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+#if PY_MAJOR_VERSION >= 3
+static PyType_Slot DBRValue_slots[] = {
+    {Py_tp_dealloc,  (void *)DBRValue_dealloc},
+    {Py_tp_methods,  (void *)DBRValue_methods},
+    {Py_tp_getattro, (void *)DBRValue_getattro},
+    {Py_tp_setattro, (void *)DBRValue_setattro},
+    {0, 0}
+};
+static PyType_Spec DBRValue_spec = {
+    "ca.DBRValue",
+    sizeof(DBRValueObject),     /*tp_basicsize*/
+    0,                          /*tp_itemsize*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    DBRValue_slots
+};
+static PyObject *DBRValueType;
+#else
 static PyTypeObject DBRValueType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "ca.DBRValue",             /*tp_name*/
@@ -218,12 +235,16 @@ static PyTypeObject DBRValueType = {
     0,                         /* tp_iternext */
     DBRValue_methods,          /* tp_methods */
 };
+#endif
 
 static PyObject *DBRValue_New(chtype dbrtype, unsigned long count, void *dbr, bool use_numpy)
 {
     DBRValueObject *self;
-
+#if PY_MAJOR_VERSION >= 3
+    self = PyObject_NEW(DBRValueObject, (PyTypeObject*)DBRValueType);
+#else
     self = PyObject_NEW(DBRValueObject, &DBRValueType);
+#endif
     if (self == NULL) {
         return NULL;
     }
@@ -376,7 +397,11 @@ MOD_INIT(_ca) {
     pModule=Py_InitModule("_ca", CA_Methods);
     #endif
 
+    #if PY_MAJOR_VERSION >= 3
+    DBRValueType = PyType_FromSpec(&DBRValue_spec);
+    #else
     PyType_Ready(&DBRValueType);
+    #endif
 
     NUMPY = PyImport_ImportModule("numpy");
     if (NUMPY == NULL) {
