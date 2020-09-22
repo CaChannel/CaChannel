@@ -1203,8 +1203,6 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
 {
     PyObject *pChid;
     PyObject *pType = Py_None;
-    chtype field_type = -1;
-    unsigned long element_count = 0;
     chtype dbrtype = -1;
     PyObject *pCount = Py_None;
     unsigned long count = 0;
@@ -1222,20 +1220,22 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
-    field_type = ca_field_type(chid);
-    element_count = ca_element_count(chid);
+    dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+    count = ca_element_count(chid);
     Py_END_ALLOW_THREADS
 
-    if (pType == Py_None)
-        dbrtype = dbf_type_to_DBR(field_type);
-    else
+    if (pType != Py_None) {
         dbrtype = PyLong_AsLong(pType);
+        if (PyErr_Occurred())
+            return NULL;
+    }
 
-    if (pCount == Py_None)
-        count = element_count;
-    else
-        count = MIN(element_count, PyLong_AsUnsignedLong(pCount));
-
+    if (pCount != Py_None) {
+        unsigned long req_count = PyLong_AsUnsignedLong(pCount);
+        if (PyErr_Occurred())
+            return NULL;
+        count = MIN(req_count, count);
+    }
     if (PyCallable_Check(pCallback)) {
         ChannelData *pData = new ChannelData(pCallback);
         pData->use_numpy = use_numpy;
@@ -1350,8 +1350,6 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObj
     PyObject *pType = Py_None;
     PyObject *pCount = Py_None;
     PyObject *pMask = Py_None;
-    chtype field_type = -1;
-    unsigned long element_count = 0;
     chtype dbrtype = -1;
     unsigned long count = 0;
     unsigned long mask = DBE_VALUE | DBE_ALARM;
@@ -1366,24 +1364,28 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObj
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
-    field_type = ca_field_type(chid);
-    element_count = ca_element_count(chid);
+    dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+    count = ca_element_count(chid);
     Py_END_ALLOW_THREADS
 
-    if (pType == Py_None)
-        dbrtype = dbf_type_to_DBR(field_type);
-    else
+    if (pType != Py_None) {
         dbrtype = PyLong_AsLong(pType);
+        if (PyErr_Occurred())
+            return NULL;
+    }
 
-    if (pCount == Py_None)
-        count = element_count;
-    else
-        count = PyLong_AsUnsignedLong(pCount);
+    if (pCount != Py_None) {
+        unsigned long req_count = PyLong_AsUnsignedLong(pCount);
+        if (PyErr_Occurred())
+            return NULL;
+        count = MIN(req_count, count);
+    }
 
-    if (pMask == Py_None)
-        mask = DBE_VALUE | DBE_ALARM;
-    else
+    if (pMask != Py_None) {
         mask = PyLong_AsLong(pMask);
+        if (PyErr_Occurred())
+            return NULL;
+    }
 
     ChannelData *pData = new ChannelData(pCallback);
     pData->use_numpy = use_numpy;
@@ -1654,8 +1656,6 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
     PyObject *pChid;
     PyObject *pType = Py_None;
     PyObject *pCount = Py_None;
-    chtype field_type = -1;
-    unsigned long element_count = 0;
     chtype dbrtype = -1;
     unsigned long count = 0;
     bool use_numpy = false;
@@ -1670,19 +1670,22 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
         return NULL;
     
     Py_BEGIN_ALLOW_THREADS
-    field_type = ca_field_type(chid);
-    element_count = ca_element_count(chid);
+    dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+    count = ca_element_count(chid);
     Py_END_ALLOW_THREADS
 
-    if (pType == Py_None)
-        dbrtype = dbf_type_to_DBR(field_type);
-    else
+    if (pType != Py_None) {
         dbrtype = PyLong_AsLong(pType);
+        if (PyErr_Occurred())
+            return NULL;
+    }
 
-    if (pCount == Py_None)
-        count = element_count;
-    else
-        count = MAX(1, MIN(element_count, (unsigned long)PyLong_AsUnsignedLong(pCount)));
+    if (pCount != Py_None) {
+        unsigned long req_count = PyLong_AsUnsignedLong(pCount);
+        if (PyErr_Occurred())
+            return NULL;
+        count = MAX(1, MIN(req_count, count));
+    }
 
     // prepare the storage
     void * pValue = malloc(dbr_size_n(dbrtype, count));
@@ -2834,18 +2837,24 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
                                 chtype &dbrtype, unsigned long &count)
 {
     void *pbuf = NULL;
-    chtype field_type = -1;
-    unsigned long element_count = 0;
 
     Py_BEGIN_ALLOW_THREADS
-    field_type = ca_field_type(chid);
-    element_count = ca_element_count(chid);
+    dbrtype = dbf_type_to_DBR(ca_field_type(chid));
+    count = ca_element_count(chid);
     Py_END_ALLOW_THREADS
 
-    if (pType == Py_None)
-        dbrtype = dbf_type_to_DBR(field_type);
-    else
+    if (pType != Py_None) {
         dbrtype = PyLong_AsLong(pType);
+        if (PyErr_Occurred())
+            return NULL;
+    }
+
+    if (pCount != Py_None) {
+        unsigned long req_count = PyLong_AsUnsignedLong(pCount);
+        if (PyErr_Occurred())
+            return NULL;
+        count = MIN(req_count, count);
+    }
 
     // incr refcnt and we will decr at the end
     Py_XINCREF(pValue);
@@ -2889,10 +2898,7 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
                 pValue = pFloatList;
             }
         }
-        if (pCount != Py_None)
-            value_count = MIN(value_count, PyLong_AsUnsignedLong(pCount));
-
-        count = MIN(element_count, value_count);
+        count = MIN(value_count, count);
 
         if (count == 1 && !(PyUnicode_Check(pValue) || PyBytes_Check(pValue)) ) {
             PyObject *item = PySequence_GetItem(pValue, 0);
