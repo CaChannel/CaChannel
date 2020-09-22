@@ -178,7 +178,7 @@ static int DBRValue_setattro(DBRValueObject *self, PyObject* name, PyObject* val
     if (strcmp(attr, "use_numpy") == 0) {
         self->use_numpy = (PyLong_AsLong(value) != 0);
     } else {
-    error = PyObject_GenericSetAttr((PyObject*)self, name, value);
+        error = PyObject_GenericSetAttr((PyObject*)self, name, value);
     }
     return error;
 }
