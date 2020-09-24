@@ -2328,7 +2328,7 @@ PyObject *ValueToNumpyArray(void *vp, Py_ssize_t count, const char *nptype)
 
 #define FormatValue(VP, DBRTYPE, COUNT, FORMAT, NPTYPE, HAS_USE_NUMPY) \
     {\
-        register DBRTYPE *vp=(DBRTYPE *)(VP);\
+        DBRTYPE *vp=(DBRTYPE *)(VP);\
         if(COUNT == 1)\
             value = FORMAT(*vp);\
         else {\
