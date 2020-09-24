@@ -852,17 +852,17 @@ MOD_INIT(_ca) {
  *                Int to IntEnum routine               *
  *******************************************************/
 
-static PyObject *IntToIntEnum(const char *type, int value)
+static PyObject *IntToIntEnum(const char *type, long value)
 {
     PyObject *pValue;
     PyObject *pEnum = PyObject_GetAttrString(MODULE, type);
 
     if (pEnum == NULL) {
         PyErr_Clear();
-        pValue = Py_BuildValue("i", value);
+        pValue = Py_BuildValue("l", value);
     }
     else
-        pValue = PyObject_CallFunction(pEnum, (char *)"i", value);
+        pValue = PyObject_CallFunction(pEnum, (char *)"l", value);
 
     Py_XDECREF(pEnum);
 
