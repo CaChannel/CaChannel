@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+3.1.3 (01-10-2020)
+------------------
+
+- Fix various places where conversion exceptions are not handled.
+- Improve Python 3 compatibility according to PEP 384.
+
 3.1.2 (29-01-2019)
 ------------------
 
