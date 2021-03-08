@@ -383,6 +383,26 @@ PyObject* CharToPyStringOrBytes(const char *buffer)
     return pString;
 }
 
+long PyObjectToLong(PyObject *o)
+{
+    if (!PyNumber_Check(o)) {
+        PyErr_SetString(PyExc_ValueError, "an integer is required");
+        return 0;
+    }
+
+    return PyLong_AsLong(PyNumber_Long(o));
+}
+
+unsigned long PyObjectToULong(PyObject *o)
+{
+    if (!PyNumber_Check(o)) {
+        PyErr_SetString(PyExc_ValueError, "a positive integer is required");
+        return 0;
+    }
+
+    return PyLong_AsUnsignedLong(PyNumber_Long(o));
+}
+
 /* entry point for Python module initializer */
 
 MOD_INIT(_ca) {
@@ -1226,13 +1246,13 @@ static PyObject *Py_ca_get(PyObject *self, PyObject *args, PyObject *kws)
     Py_END_ALLOW_THREADS
 
     if (pType != Py_None) {
-        dbrtype = PyLong_AsLong(pType);
+        dbrtype = PyObjectToLong(pType);
         if (PyErr_Occurred())
             return NULL;
     }
 
     if (pCount != Py_None) {
-        unsigned long req_count = PyLong_AsUnsignedLong(pCount);
+        unsigned long req_count = PyObjectToULong(pCount);
         if (PyErr_Occurred())
             return NULL;
         count = MIN(req_count, count);
@@ -1370,20 +1390,20 @@ static PyObject *Py_ca_create_subscription(PyObject *self, PyObject *args, PyObj
     Py_END_ALLOW_THREADS
 
     if (pType != Py_None) {
-        dbrtype = PyLong_AsLong(pType);
+        dbrtype = PyObjectToLong(pType);
         if (PyErr_Occurred())
             return NULL;
     }
 
     if (pCount != Py_None) {
-        unsigned long req_count = PyLong_AsUnsignedLong(pCount);
+        unsigned long req_count = PyObjectToULong(pCount);
         if (PyErr_Occurred())
             return NULL;
         count = MIN(req_count, count);
     }
 
     if (pMask != Py_None) {
-        mask = PyLong_AsLong(pMask);
+        mask = PyObjectToULong(pMask);
         if (PyErr_Occurred())
             return NULL;
     }
@@ -1676,13 +1696,13 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
     Py_END_ALLOW_THREADS
 
     if (pType != Py_None) {
-        dbrtype = PyLong_AsLong(pType);
+        dbrtype = PyObjectToLong(pType);
         if (PyErr_Occurred())
             return NULL;
     }
 
     if (pCount != Py_None) {
-        unsigned long req_count = PyLong_AsUnsignedLong(pCount);
+        unsigned long req_count = PyObjectToULong(pCount);
         if (PyErr_Occurred())
             return NULL;
         count = MAX(1, MIN(req_count, count));
@@ -2845,13 +2865,13 @@ void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject *pCount
     Py_END_ALLOW_THREADS
 
     if (pType != Py_None) {
-        dbrtype = PyLong_AsLong(pType);
+        dbrtype = PyObjectToLong(pType);
         if (PyErr_Occurred())
             return NULL;
     }
 
     if (pCount != Py_None) {
-        unsigned long req_count = PyLong_AsUnsignedLong(pCount);
+        unsigned long req_count = PyObjectToULong(pCount);
         if (PyErr_Occurred())
             return NULL;
         count = MIN(req_count, count);
