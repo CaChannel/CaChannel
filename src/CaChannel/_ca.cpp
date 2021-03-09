@@ -126,6 +126,47 @@ static void *setup_put(chanId chid, PyObject *pValue, PyObject *pType, PyObject 
                        chtype &dbrtype, unsigned long &count);
 
 /********************************************
+ *          Helper functions                *
+ ********************************************/
+static void add_IntEnum(PyObject * pModule, const char *buffer)
+{
+    PyObject *pModuleDict = PyModule_GetDict(pModule);
+    PyObject *pGlobalDict = PyEval_GetGlobals();
+
+    PyObject *pDict = PyDict_New();
+    PyDict_Update(pDict, pGlobalDict);
+    PyDict_Update(pDict, pModuleDict);
+
+    PyObject * pTemp = PyRun_String(buffer, Py_file_input, pDict, pModuleDict);
+    if (pTemp == NULL)
+        PyErr_Clear();
+    else
+        Py_XDECREF(pTemp);
+
+    Py_XDECREF(pDict);
+}
+
+static PyObject* CharToPyStringOrBytes(const char *buffer)
+{
+    PyObject * pString = PyString_FromString(buffer);
+    if (pString == NULL) {
+        PyErr_Clear();
+        pString = PyBytes_FromString(buffer);
+    }
+    return pString;
+}
+
+static long PyObjectToLong(PyObject *o)
+{
+    if (!PyNumber_Check(o)) {
+        PyErr_SetString(PyExc_ValueError, "an integer is required");
+        return 0;
+    }
+
+    return PyLong_AsLong(PyNumber_Long(o));
+}
+
+/********************************************
  *          DBRValue object type            *
  ********************************************/
 /*
@@ -353,45 +394,6 @@ static struct PyModuleDef CA_Module = {
 #else
     #define MOD_INIT(name) extern "C" void init##name(void)
 #endif
-
-
-void add_IntEnum(PyObject * pModule, const char *buffer)
-{
-    PyObject *pModuleDict = PyModule_GetDict(pModule);
-    PyObject *pGlobalDict = PyEval_GetGlobals();
-
-    PyObject *pDict = PyDict_New();
-    PyDict_Update(pDict, pGlobalDict);
-    PyDict_Update(pDict, pModuleDict);
-
-    PyObject * pTemp = PyRun_String(buffer, Py_file_input, pDict, pModuleDict);
-    if (pTemp == NULL)
-        PyErr_Clear();
-    else
-        Py_XDECREF(pTemp);
-
-    Py_XDECREF(pDict);
-}
-
-PyObject* CharToPyStringOrBytes(const char *buffer)
-{
-    PyObject * pString = PyString_FromString(buffer);
-    if (pString == NULL) {
-        PyErr_Clear();
-        pString = PyBytes_FromString(buffer);
-    }
-    return pString;
-}
-
-long PyObjectToLong(PyObject *o)
-{
-    if (!PyNumber_Check(o)) {
-        PyErr_SetString(PyExc_ValueError, "an integer is required");
-        return 0;
-    }
-
-    return PyLong_AsLong(PyNumber_Long(o));
-}
 
 unsigned long PyObjectToULong(PyObject *o)
 {
