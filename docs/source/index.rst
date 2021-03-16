@@ -43,3 +43,5 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+.. meta::
+  :keywords: EPICS, CA, Channel Access, CaChannel, Python
