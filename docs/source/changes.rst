@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+3.1.4 (xx-xx-2021)
+------------------
+
+- Fix :py:meth:`ca.put` and :py:meth:`ca.get` to accept numpy scalar number as *count* argument via number protocol.
+
 3.1.3 (01-10-2020)
 ------------------
 
