@@ -29,7 +29,7 @@ class CaChannelException(Exception):
         return ca.message(self.status)
 
 
-class CaChannel:
+class CaChannel(object):
     """CaChannel: A Python class with identical API as of caPython/CaChannel.
 
     This class implements the methods to operate on channel access so that you can find

@@ -17,7 +17,7 @@ import time
 import epicsPV
 
 
-class epicsMotor:
+class epicsMotor(object):
     """
     This module provides a class library for the EPICS motor record.
     It uses the :class:`epicsPV.epicsPV` class, which is in turn a subclass of :class:`CaChannel.CaChannel`
