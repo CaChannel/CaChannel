@@ -414,9 +414,11 @@ unsigned long PyObjectToULong(PyObject *o)
 MOD_INIT(_ca) {
     PyObject *pModule;
 
+    #if PY_VERSION_HEX >= 0x03090000
     if(!PyEval_ThreadsInitialized()) {
       PyEval_InitThreads();
     }
+    #endif
 
     #if PY_MAJOR_VERSION >= 3
     pModule=PyModule_Create(&CA_Module);
