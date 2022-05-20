@@ -1,10 +1,11 @@
 ChangeLog
 =========
 
-3.1.4 (xx-xx-2021)
+3.1.4 (20-05-2022)
 ------------------
 
 - Fix :py:meth:`ca.put` and :py:meth:`ca.get` to accept numpy scalar number as *count* argument via number protocol.
+- Remove deprecated function calls of PyEval_ThreadsInitialized and PyEval_InitThreads for Python 3.9+.
 
 3.1.3 (01-10-2020)
 ------------------
