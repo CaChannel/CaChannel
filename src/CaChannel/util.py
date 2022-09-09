@@ -37,7 +37,11 @@ _channels_ = {}
 
 
 def _ints_to_string(integers):
-    if isinstance(integers, collections.Sequence):
+    try:
+        sequence_type = collections.abc.Sequence # Python 3.10+
+    except AttributeError:
+        sequence_type = collections.Sequence
+    if isinstance(integers, sequence_type):
         stripped = itertools.takewhile(lambda x: x != 0, integers)
         if sys.hexversion < 0x03000000:
             value = ''.join([chr(c) for c in stripped])
