@@ -24,7 +24,7 @@ def load_module(name, location):
         import imp
         module = imp.load_source(name, location)
     else:
-        import importlib
+        import importlib.util
         spec = importlib.util.spec_from_file_location(name, location)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
