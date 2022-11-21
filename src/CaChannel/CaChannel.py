@@ -514,11 +514,14 @@ class CaChannel(object):
         >>> chan.array_get(req_type=ca.DBR_CTRL_ENUM)
         >>> chan.pend_io()
         >>> for k,v in sorted(chan.getValue().items()):
-        ...    print(k, v)
+        ...    if k in ['pv_severity', 'pv_status']:
+        ...        print(k, v.name)
+        ...    else:
+        ...        print(k, v)
         pv_nostrings 2
-        pv_severity AlarmSeverity.Minor
+        pv_severity Minor
         pv_statestrings ('Done', 'Busy')
-        pv_status AlarmCondition.State
+        pv_status State
         pv_value 1
         """
         if self._dbrvalue is None:
@@ -663,7 +666,9 @@ class CaChannel(object):
 
         >>> def getCB(epicsArgs, _):
         ...     for item in sorted(epicsArgs.keys()):
-        ...         if item.startswith('pv_'):
+        ...         if item in ['pv_severity', 'pv_status']:
+        ...             print(item,epicsArgs[item].name)
+        ...         elif item.startswith('pv_'):
         ...             print(item,epicsArgs[item])
         >>> chan = CaChannel('catest')
         >>> chan.searchw()
@@ -675,8 +680,8 @@ class CaChannel(object):
         pv_lodislim -20.0
         pv_lowarnlim -10.0
         pv_precision 4
-        pv_severity AlarmSeverity.Major
-        pv_status AlarmCondition.HiHi
+        pv_severity Major
+        pv_status HiHi
         pv_units mm
         pv_upalarmlim 20.0
         pv_upctrllim 0.0
@@ -689,9 +694,9 @@ class CaChannel(object):
         >>> chan.array_get_callback(ca.DBR_CTRL_ENUM, 1, getCB)
         >>> status = chan.pend_event(1)
         pv_nostrings 2
-        pv_severity AlarmSeverity.No
+        pv_severity No
         pv_statestrings ('Done', 'Busy')
-        pv_status AlarmCondition.No
+        pv_status No
         pv_value 0
         """
         use_numpy = keywords.get('use_numpy', PACKAGE.USE_NUMPY)
@@ -738,21 +743,21 @@ class CaChannel(object):
 
         >>> def eventCB(epicsArgs, _):
         ...     print('pv_value', epicsArgs['pv_value'])
-        ...     print('pv_status', epicsArgs['pv_status'])
-        ...     print('pv_severity', epicsArgs['pv_severity'])
+        ...     print('pv_status', epicsArgs['pv_status'].name)
+        ...     print('pv_severity', epicsArgs['pv_severity'].name)
         >>> chan = CaChannel('cabo')
         >>> chan.searchw()
         >>> chan.putw(1)
         >>> chan.add_masked_array_event(ca.DBR_STS_ENUM, None, None, eventCB)
         >>> status = chan.pend_event(1)
         pv_value 1
-        pv_status AlarmCondition.State
-        pv_severity AlarmSeverity.Minor
+        pv_status State
+        pv_severity Minor
         >>> chan.add_masked_array_event(ca.DBR_STS_STRING, None, None, eventCB)
         >>> status = chan.pend_event(1)
         pv_value Busy
-        pv_status AlarmCondition.State
-        pv_severity AlarmSeverity.Minor
+        pv_status State
+        pv_severity Minor
         >>> chan.clear_event()
         """
         if self._evid is not None:
@@ -1075,11 +1080,14 @@ class CaChannel(object):
         >>> chan.putw(0)
         >>> value = chan.getw(ca.DBR_TIME_DOUBLE)
         >>> for k,v in sorted(value.items()): # doctest: +ELLIPSIS
-        ...    print(k, v)
+        ...    if k in ['pv_severity', 'pv_status']:
+        ...        print(k, v.name)
+        ...    else:
+        ...        print(k, v)
         pv_nseconds ...
         pv_seconds ...
-        pv_severity AlarmSeverity.No
-        pv_status AlarmCondition.No
+        pv_severity No
+        pv_status No
         pv_value 0.0
 
         .. versionchanged:: 3.0
