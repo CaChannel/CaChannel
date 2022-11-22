@@ -1,6 +1,6 @@
 Summary: CaChannel Interface to EPICS
 Name: python-CaChannel
-Version: 3.1.4
+Version: 3.2.0
 Release: 1%{?dist}
 Source0: https://pypi.io/packages/source/C/CaChannel/CaChannel-%{version}.tar.gz
 License: BSD
