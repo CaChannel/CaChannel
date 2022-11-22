@@ -53,7 +53,7 @@ static std::map<struct ca_client_context*, context_callback> CONTEXTS;
     #define CAPSULE_EXTRACT(obj,name) PyCObject_AsVoidPtr(obj)
 #endif
 
-static PyObject *Py_ca_create_context(PyObject *self, PyObject *args);
+static PyObject *Py_ca_create_context(PyObject *self, PyObject *args, PyObject *kws);
 static PyObject *Py_ca_destroy_context(PyObject *self, PyObject *args);
 static PyObject *Py_ca_attach_context(PyObject *self, PyObject *args);
 static PyObject *Py_ca_detach_context(PyObject *self, PyObject *args);
@@ -325,7 +325,7 @@ static PyObject *DBRValue_New(chtype dbrtype, unsigned long count, void *dbr, bo
 /*  Method Table  */
 static PyMethodDef CA_Methods[] = {
     /* CA context */
-    {"create_context",      Py_ca_create_context,   METH_VARARGS, "Create a CA context"},
+    {"create_context", (PyCFunction)Py_ca_create_context,   METH_VARARGS|METH_KEYWORDS, "Create a CA context"},
     {"destroy_context",     Py_ca_destroy_context,  METH_VARARGS, "Destroy a CA context"},
     {"attach_context",      Py_ca_attach_context,   METH_VARARGS, "Detach a CA context"},
     {"detach_context",      Py_ca_detach_context,   METH_VARARGS, "Attach to a CA context"},
@@ -921,10 +921,11 @@ static PyObject *IntToIntEnum(const char *type, long value)
  *                    CA Context                       *
  *******************************************************/
 
-static PyObject *Py_ca_create_context(PyObject *self, PyObject *args)
+static PyObject *Py_ca_create_context(PyObject *self, PyObject *args, PyObject *kws)
 {
     int preemptive_callback = 1;
-    if(!PyArg_ParseTuple(args, "|i", &preemptive_callback))
+    const char *kwlist[] = {"preemptive_callback",  NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "|i", (char **)kwlist, &preemptive_callback))
         return NULL;
 
     int status;
