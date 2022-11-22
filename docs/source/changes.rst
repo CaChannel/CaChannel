@@ -1,6 +1,16 @@
 ChangeLog
 =========
 
+3.2.0 (22-11-2022)
+------------------
+
+- Fix build on Linux/macOS when only shared epics libraries exist. Although epics base always builds the static libraries
+  along with shared libraries on Linux/macOS, some epics base packges (conda/pypi) choose to exclude static libraries
+  to reduce package size.
+- Change :py:meth:`ca.create_context` optional argument to keyword argument. The new method signature is compatible with
+  `caffi <https://pypi.python.org/pypi/caffi>`_. This change is backwards compatible.
+- Support Python limited API 3.11. It is not enabled by default.
+
 3.1.4 (20-05-2022)
 ------------------
 
