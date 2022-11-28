@@ -32,10 +32,6 @@ test:
     - numpy
     - enum34 # [py2k]
 
-  source_files:
-    - tests/ca_test.py
-    - tests/test.db
-
 about:
   home: https://pypi.python.org/pypi/CaChannel
   license: BSD License
