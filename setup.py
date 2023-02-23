@@ -61,6 +61,7 @@ def create_exension():
     CMPL = 'gcc'
     UNAME = platform.system()
     ARCH = platform.architecture()[0]
+    DEBUG = True if 'debug' in HOSTARCH else False
     # platform dependent libraries and macros
     if UNAME.lower() == "windows":
         UNAME = "WIN32"
@@ -77,15 +78,18 @@ def create_exension():
                     if not os.path.exists(dll_filepath) or not filecmp.cmp(dllpath, dll_filepath):
                         shutil.copy(dllpath, dll_filepath)
             macros += [('_CRT_SECURE_NO_WARNINGS', 'None'), ('EPICS_CALL_DLL', '')]
+            if DEBUG:
+                cflags += ['/MDd', '/RTCsu']
             cflags += ['/Z7']
+            lflags += ['/DEBUG']
             CMPL = 'msvc'
         if HOSTARCH in ['win32-x86-static', 'windows-x64-static'] or static:
             libraries += ['ws2_32', 'user32', 'advapi32']
             macros += [('_CRT_SECURE_NO_WARNINGS', 'None'), ('EPICS_DLL_NO', '')]
             umacros += ['_DLL']
             cflags += ['/EHsc', '/Z7']
-            lflags += ['/LTCG']
-            if HOSTARCH[-5:] == 'debug':
+            lflags += ['/LTCG', '/DEBUG']
+            if DEBUG:
                 libraries += ['msvcrtd']
                 lflags += ['/NODEFAULTLIB:libcmtd.lib']
             else:
