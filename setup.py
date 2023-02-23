@@ -80,7 +80,7 @@ def create_exension():
             macros += [('_CRT_SECURE_NO_WARNINGS', 'None'), ('EPICS_CALL_DLL', '')]
             if DEBUG:
                 cflags += ['/MDd', '/Od', '/RTCsu']
-            cflags += ['/Z7']
+            cflags += ['/Z7', '/Od', '/RTCsu']
             lflags += ['/DEBUG']
             CMPL = 'msvc'
         if HOSTARCH in ['win32-x86-static', 'windows-x64-static'] or static:
