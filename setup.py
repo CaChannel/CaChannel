@@ -79,7 +79,7 @@ def create_exension():
                         shutil.copy(dllpath, dll_filepath)
             macros += [('_CRT_SECURE_NO_WARNINGS', 'None'), ('EPICS_CALL_DLL', '')]
             if DEBUG:
-                cflags += ['/MDd', '/RTCsu']
+                cflags += ['/MDd', '/Od', '/RTCsu']
             cflags += ['/Z7']
             lflags += ['/DEBUG']
             CMPL = 'msvc'
