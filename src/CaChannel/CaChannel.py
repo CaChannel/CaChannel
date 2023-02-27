@@ -71,12 +71,16 @@ class CaChannel(object):
 
     ca_timeout = 3.0
     
-    # create a unique thread id, combines native and pythoin oid as they can both get reused
+    # create a unique thread id, on all platforms on interest python "ident"
+    # and "native_id" are the same
     @staticmethod
     def get_thread_id(thread):
-        return str(thread.native_id) + "_" + str(thread.ident)
+        return str(thread.native_id)
 
-    # try to reuse contexts from threads that are no longer running
+    # try to reuse CA contexts from threads that are no longer running. The epics CA library
+    # creates a background thread to do callbacks and other work which can get lefr running as
+    # when the thread that created the CaChannel object terminates it does not destroy the 
+    # thread context it created
     @staticmethod
     def create_context():
         context = None
@@ -88,16 +92,14 @@ class CaChannel(object):
                     context = v
                     del CaChannel.__context_dict[k]
                     ca.attach_context(context)
-                    print(f"CaChannel: reuse ca context from {k} for {current_thread_id}")
                     break
             if context is None:
                 ca.create_context(True)
                 context = ca.current_context()
-                print(f"CaChannel: creating new ca context for {current_thread_id}")
             CaChannel.__context_dict[current_thread_id] = context
         return context
         
-    # A wrapper to automatically attach to default CA context
+    # A wrapper to automatically attach to the CA context
     def attach_ca_context(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
