@@ -2,35 +2,31 @@
 export EPICS_BASE=$PREFIX/epics
 
 PLATFORM=$(uname | tr '[:upper:]' '[:lower:]')
+MACHINE=$(uname -m)
 if [ $PLATFORM == "linux" ] ; then
-  export EPICS_HOST_ARCH=$(uname | tr '[:upper:]' '[:lower:]')-$(uname -m)
+  export EPICS_HOST_ARCH=linux-$MACHINE
 elif [ $PLATFORM == "darwin" ] ; then
-  export EPICS_HOST_ARCH=darwin-x86
+  if [ $MACHINE == "arm64" ]; then
+    export EPICS_HOST_ARCH=darwin-aarch64
+  elif [ $MACHINE == "x86_64" ]; then
+    export EPICS_HOST_ARCH=darwin-x86
+  else
+    echo "macOS CPU type '$MACHINE' not recognized"
+    exit 1
+  fi
 fi
+
 
 echo Using EPICS_BASE=$EPICS_BASE
 echo Using EPICS_HOST_ARCH=$EPICS_HOST_ARCH
 
 OUTPUT_PATH=$(dirname $(conda build --output conda-recipe))
 
-case `uname` in
-    Darwin )
-        CAREPEATER=$RECIPE_DIR/caRepeater.Darwin
-        $PYTHON setup.py install bdist_wheel
-        cp dist/*.whl ${OUTPUT_PATH}
-        ;;
-    Linux )
-        CAREPEATER=$RECIPE_DIR/caRepeater.Linux$ARCH
-        $PYTHON setup.py install sdist bdist_egg
-        cp -f dist/*.tar.gz ${OUTPUT_PATH}
-        cp dist/*.egg ${OUTPUT_PATH}
-        ;;
-    * )
-        echo "Not Supported"
-esac
-
-# Add more build steps here, if they are necessary.
-
-# See
-# http://docs.continuum.io/conda/build.html
-# for a list of environment variables that are set during the build process.
+if [ $PLATFORM == "linux" ]; then
+    $PYTHON setup.py sdist
+    cp -f dist/*.tar.gz ${OUTPUT_PATH}
+    $PYTHON -m pip install .
+elif [ $PLATFORM == "darwin" ]; then
+    $PYTHON -m pip install .
+    cp dist/*.whl ${OUTPUT_PATH}
+fi
