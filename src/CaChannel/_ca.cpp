@@ -1682,13 +1682,13 @@ static PyObject *Py_ca_sg_create(PyObject *self, PyObject *args)
     status = ca_sg_create(&gid);
     Py_END_ALLOW_THREADS
 
-    return Py_BuildValue("(Nl)", IntToIntEnum("ECA", status), gid);
+    return Py_BuildValue("(NI)", IntToIntEnum("ECA", status), gid);
 }
 
 static PyObject *Py_ca_sg_delete(PyObject *self, PyObject *args)
 {
     CA_SYNC_GID gid;
-    if(!PyArg_ParseTuple(args, "l", &gid))
+    if(!PyArg_ParseTuple(args, "I", &gid))
         return NULL;
 
     int status;
@@ -1711,7 +1711,7 @@ static PyObject *Py_ca_sg_get(PyObject *self, PyObject *args, PyObject *kws)
 
     const char *kwlist[] = {"gid", "chid", "chtype", "count", "use_numpy", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "lO|OOb", (char **)kwlist, &gid, &pChid, &pType, &pCount, &use_numpy))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "IO|OOb", (char **)kwlist, &gid, &pChid, &pType, &pCount, &use_numpy))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -1766,7 +1766,7 @@ static PyObject *Py_ca_sg_put(PyObject *self, PyObject *args, PyObject *kws)
 
     const char *kwlist[] = {"gid", "chid", "value", "chtype", "count", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kws, "lOO|OO", (char **)kwlist, &gid, &pChid, &pValue, &pType, &pCount))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "IOO|OO", (char **)kwlist, &gid, &pChid, &pValue, &pType, &pCount))
         return NULL;
 
     chanId chid = (chanId) CAPSULE_EXTRACT(pChid, "chid");
@@ -1795,7 +1795,7 @@ static PyObject *Py_ca_sg_reset(PyObject *self, PyObject *args)
     CA_SYNC_GID gid;
     int status;
 
-    if(!PyArg_ParseTuple(args, "l", &gid))
+    if(!PyArg_ParseTuple(args, "I", &gid))
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
@@ -1811,7 +1811,7 @@ static PyObject *Py_ca_sg_block(PyObject *self, PyObject *args)
     double timeout;
     int status;
 
-    if(!PyArg_ParseTuple(args, "ld", &gid, &timeout))
+    if(!PyArg_ParseTuple(args, "Id", &gid, &timeout))
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
@@ -1826,7 +1826,7 @@ static PyObject *Py_ca_sg_test(PyObject *self, PyObject *args)
     CA_SYNC_GID gid;
     int status;
 
-    if(!PyArg_ParseTuple(args, "l", &gid))
+    if(!PyArg_ParseTuple(args, "I", &gid))
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
