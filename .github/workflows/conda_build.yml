@@ -22,15 +22,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Dump env
-        run: |
-            printenv
-            echo "USER_ID=$(id -u)" >> $GITHUB_ENV
       - name: Setup miniconda
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           auto-update-conda: false
-          conda-build-version: 3
           auto-activate-base: true
           activate-environment: ""
       - name: Setup Xcode and SDK on macOS
@@ -51,8 +46,6 @@ jobs:
         uses: docker://ghcr.io/paulscherrerinstitute/manylinux_conda_epics:main
         with:
           args: bash -c "conda config --add channels paulscherrerinstitute;conda info;cd /github/workspace;mkdir packages;conda build --output-folder packages conda-recipe"
-        env:
-          HOST_USER_ID: ${{ env.USER_ID }}
       - name: Upload Anaconda
         run: |
             conda install anaconda-client
