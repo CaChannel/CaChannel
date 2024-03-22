@@ -39,6 +39,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
             mkdir packages
+            conda info
             conda config --add channels paulscherrerinstitute
             conda build --output-folder packages conda-recipe
       - name: Build Linux
