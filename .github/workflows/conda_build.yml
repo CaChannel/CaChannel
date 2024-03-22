@@ -48,7 +48,7 @@ jobs:
             conda build --output-folder packages conda-recipe
       - name: Build Linux
         if: runner.os == 'linux'
-        uses: docker://condaforge/linux-anvil-comp7:latest
+        uses: docker://ghcr.io/paulscherrerinstitute/manylinux_conda_epics:main
         with:
           args: bash -c "conda config --add channels paulscherrerinstitute;conda info;cd /github/workspace;mkdir packages;conda build --output-folder packages conda-recipe"
         env:
@@ -62,5 +62,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          path: packages/*/*.tar.bz2
+          path: |
+              packages/*/*.whl
+              packages/*/*.tar.bz2
           retention-days: 1
