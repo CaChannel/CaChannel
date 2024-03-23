@@ -47,7 +47,7 @@ jobs:
         if: runner.os == 'linux'
         uses: docker://conda/miniconda3-centos7:latest
         with:
-          args: bash -c "conda config --add channels paulscherrerinstitute;conda info;cd /github/workspace;mkdir packages;conda build --output-folder packages conda-recipe"
+          args: bash -c "conda config --add channels paulscherrerinstitute;conda install conda-build;conda info;cd /github/workspace;mkdir packages;conda build --output-folder packages conda-recipe"
       - name: Upload Anaconda
         run: |
             conda install anaconda-client
