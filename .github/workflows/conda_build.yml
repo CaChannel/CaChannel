@@ -45,7 +45,7 @@ jobs:
             conda build --output-folder packages conda-recipe
       - name: Build Linux
         if: runner.os == 'linux'
-        uses: docker://ghcr.io/paulscherrerinstitute/manylinux_conda_epics:main@sha256:a39e1b413cd4dc06a8183282905c1446036c29f28ad0b8b9b31d2cff6f06182b
+        uses: docker://ghcr.io/paulscherrerinstitute/manylinux_conda_epics:2_28
         with:
           args: bash -c "conda config --add channels paulscherrerinstitute;conda info;cd /github/workspace;mkdir packages;conda build --output-folder packages conda-recipe"
       - name: Upload Anaconda
