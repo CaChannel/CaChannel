@@ -27,6 +27,6 @@ if [ $PLATFORM == "linux" ]; then
     cp -f dist/*.tar.gz ${OUTPUT_PATH}
     $PYTHON -m pip install .
 elif [ $PLATFORM == "darwin" ]; then
-    $PYTHON setup.py install bdist_wheel
+    $PYTHON -m pip install wheel .
     cp dist/*.whl ${OUTPUT_PATH}
 fi
