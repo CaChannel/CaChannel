@@ -54,10 +54,17 @@ jobs:
             [[ -z ${MY_CONDA_TOKEN} ]] || anaconda -v -t ${MY_CONDA_TOKEN} upload --force packages/*/*.tar.bz2
         env:
           MY_CONDA_TOKEN: ${{ secrets.MY_CONDA_TOKEN }}
-      - name: Upload Artifact
+      - name: Upload Conda Artifact
         uses: actions/upload-artifact@v2
         with:
+          name: conda-packages
+          path: packages/*/*.tar.bz2
+          retention-days: 1
+      - name: Upload Wheel Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: conda-packages
           path: |
               packages/*/*.whl
-              packages/*/*.tar.bz2
+              wheelhouse/*.whl
           retention-days: 1
