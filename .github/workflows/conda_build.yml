@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
+        os: ["ubuntu-latest", "macos-latest", "macos-14"]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -32,8 +32,12 @@ jobs:
       - name: Setup Xcode and SDK on macOS
         if: runner.os == 'macOS'
         run: |
-            MACOS_SDK=MacOSX10.9.sdk
-            curl -OL https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/${MACOS_SDK}.tar.xz
+            if [[ $RUNNER_ARCH == "ARM64" ]]; then
+                MACOS_SDK=MacOSX11.0.sdk
+            else
+                MACOS_SDK=MacOSX10.9.sdk
+            fi
+            curl -OL https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/${MACOS_SDK}.tar.xz
             sudo tar xf ${MACOS_SDK}.tar.xz -C /opt
             printf "CONDA_BUILD_SYSROOT:\n    - /opt/${MACOS_SDK}\n" >> conda-recipe/conda_build_config.yaml
       - name: Build macOS
