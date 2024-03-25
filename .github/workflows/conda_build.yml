@@ -67,7 +67,7 @@ jobs:
       - name: Upload Wheel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: conda-packages
+          name: wheel-packages
           path: |
               packages/*/*.whl
               wheelhouse/*.whl
