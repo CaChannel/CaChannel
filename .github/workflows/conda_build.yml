@@ -21,7 +21,7 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "macos-14"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup miniconda
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -59,13 +59,13 @@ jobs:
         env:
           MY_CONDA_TOKEN: ${{ secrets.MY_CONDA_TOKEN }}
       - name: Upload Conda Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: conda-packages
           path: packages/*/*.tar.bz2
           retention-days: 1
       - name: Upload Wheel Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: conda-packages
           path: |
