@@ -13,22 +13,16 @@ Packages for Anaconda can be installed via::
 Wheel
 ^^^^^
 The binary packages are distributed at `PyPI <https://pypi.python.org/pypi/CaChannel>`_.
-They have EPICS 3.14.12.6 libraries statically builtin. Make sure you have `pip <https://pypi.python.org/pypi/pip>`_
+They have EPICS 3.14.12.8 libraries statically builtin. Make sure you have `pip <https://pypi.python.org/pypi/pip>`_
 and `wheel <https://pypi.python.org/pypi/wheel>`_  installed, ::
 
-    $ sudo pip install cachannel # macOS
-    > C:\Python27\Scripts\pip.exe install cachannel :: Windows
+    pip install cachannel
 
-Egg
-^^^
-PyPI does not allow upload linux-specific wheels package, yet (as of 2014).
-The old *egg* format is used then::
-
-    $ sudo easy_install cachannel
-
-Or install only for the current user::
-
-    $ easy_install --user cachannel
+.. note::
+   The binary packages are built by CI/CD at the release time.
+   The supported Python versions are up to the most recent release at that time point.
+   That means newer Python released after that point will not have binary packages.
+   In that case please build from source, or stay with an older Python or raise an issue to request a new build.
 
 Source
 ------
@@ -44,7 +38,7 @@ The source can be downloaded in various ways:
     each release can be downloaded as a zip package.
   * Clone the repository if you feel adventurous::
 
-    $ git clone https://github.com/CaChannel/CaChannel.git
+    git clone https://github.com/CaChannel/CaChannel.git
 
 On Linux, the python header files are normally provided by package like *python-devel* or *python-dev*.
 
@@ -88,24 +82,10 @@ Here is a short guide,
 
 Build
 ^^^^^
-As soon as the epics base libraries are ready, it is simple,
-    
-- On Widnows::
+As soon as the epics base libraries are ready, it is simple,::
 
-    > C:\Python27\python.exe setup.py install
+    python setup.py install
 
-- On Linux/macOS::
-
-    $ [sudo] python setup.py install
-
-
-.. note:: You might need to pass *-E* flag to sudo to preserve the EPICS environment variables. If your user account
-          is not allowed to do so, a normal procedure should be followed, ::
-
-              $ su -
-              # export EPICS_BASE=<epics base path>
-              # export EPICS_HOST_ARCH=<epics host arch>
-              # python setup.py install
 
 Package
 -------
@@ -115,19 +95,19 @@ Anaconda
 ^^^^^^^^
 Conda recipe is included::
 
-    $ conda build -c paulscherrerinstitute conda-recipe
+    conda build -c paulscherrerinstitute conda-recipe
 
 Wheel
 ^^^^^
 ::
 
-    $ python setup.py bdist_wheel
+    python setup.py bdist_wheel
 
 RPM
 ^^^
 The spec file *python-CaChannel.spec* is included. Get the source tarball either from PyPI or create it by
 ``python setup.py sdist``, and run::
 
-    $ rpmbuild -ta CaChannel-3.0.0.tar.gz
+    rpmbuild -ta CaChannel-3.0.0.tar.gz
 
 The binary and source RPM will be created. The package name is *python-CaChannel*.
