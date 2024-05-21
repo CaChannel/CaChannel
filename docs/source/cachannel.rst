@@ -97,6 +97,7 @@ Class :class:`CaChannel`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: CaChannel
+   :members: ca_timeout
 
 Connect
 ~~~~~~~

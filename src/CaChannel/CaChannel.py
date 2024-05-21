@@ -64,6 +64,8 @@ class CaChannel(object):
     __context = None
     __callbacks = {}
 
+    #: float: Default ca timeout in seconds. It can be changed and will affect all subsequently
+    #: created objects. :meth:`setTimeout` changes ca timeout on the specific object.
     ca_timeout = 3.0
 
     # A wrapper to automatically attach to default CA context
