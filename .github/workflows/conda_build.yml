@@ -28,7 +28,7 @@ jobs:
           auto-update-conda: false
           auto-activate-base: true
           activate-environment: ""
-          conda-build-version: 24
+          conda-build-version: 25
       - name: Setup Xcode and SDK on macOS
         if: runner.os == 'macOS'
         run: |
